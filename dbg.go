@@ -1,0 +1,32 @@
+package main
+
+import (
+	"log"
+)
+
+type LogLevel int
+
+const (
+	TRACE = LogLevel(iota)
+	DEBUG
+	INFO
+	WARN
+	ERROR
+)
+		
+var CurrentLogLevel LogLevel = INFO
+var LogDefault func(v...interface{}) = log.Stdout
+var LogDefaultf func(fmt string, v...interface{}) = log.Stdoutf
+
+func Log(ll LogLevel, a ...interface{}) {
+	if ll >= CurrentLogLevel {
+		LogDefault(a)
+	}
+}
+
+func Logf(ll LogLevel, fmt string, a ...interface{}) {
+	if ll >= CurrentLogLevel {
+		LogDefaultf(fmt, a)
+	}
+}
+

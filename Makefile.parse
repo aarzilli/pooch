@@ -1,0 +1,11 @@
+include $(GOROOT)/src/Make.inc
+
+TARG=parse
+
+GOFILES=\
+	dbg.go types.go parse.go\
+	parsemain.go
+
+include $(GOROOT)/src/Make.cmd
+
+

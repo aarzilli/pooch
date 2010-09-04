@@ -1,0 +1,62 @@
+* {
+    font-family: sans-serif;
+}
+
+table {
+    font-size: 10pt;
+}
+
+.prchange > td {
+    padding-top: 10px;
+    font-size: large;
+    font-weight: bold;
+}
+
+.entry {
+    background: none repeat scroll 0 0 #F3F5FC;
+    border: 1px solid #CCCCCC;
+}
+
+.entry > td {
+    padding: 4px;
+}
+
+.eid {
+    width: 15%;
+    font-size: small;
+}
+.etitle {
+    width: 50%;
+    font-weight: bold;
+}
+.epr {
+    width: 10%;
+}
+.etime {
+    width: 25%;
+}
+
+.priorityclass_now {
+    width: 60px;
+    background-color: lightgreen;
+}
+.priorityclass_later {
+    width: 60px;
+    background-color: yellow;
+}
+.priorityclass_timed {
+    width: 60px;
+    background-color: orange;
+}
+.priorityclass_done {
+    width: 60px;
+    background-color: lightgray;
+}
+.priorityclass_sticky {
+    width: 60px;
+    background-color: lightblue;
+}
+.priorityclass_notes {
+    width: 60px;
+    background-color: lightblue;
+}
