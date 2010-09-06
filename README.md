@@ -83,4 +83,3 @@ You can also create an entry with a specific priority by using a quick tag in th
 * @$$, @StickyNotes -> STICKY note
 * @<date> -> TIMED (will trigger when <date> is reached)
 * @<date>+<number> -> TIMED like @<date> but the event will repeat every <number> days
-

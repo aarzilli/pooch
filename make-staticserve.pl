@@ -2,6 +2,9 @@
 use warnings;
 use strict;
 
+# This program is distributed under the terms of GPLv3
+# Copyright 2010, Alessandro Arzilli
+
 use MIME::Base64;
 
 print "package main\n\n";

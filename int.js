@@ -1,3 +1,8 @@
+/*
+ This program is distributed under the terms of GPLv3
+ Copyright 2010, Alessandro Arzilli
+ */
+
 function setup(tlname) {
     shortcut.add("Alt+s", function() { save_open_editor(tlname, false); });
 }
