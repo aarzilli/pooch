@@ -193,7 +193,7 @@ func SaveServer(c *http.Conn, req *http.Request) {
 
 	entry := DemarshalEntry(umentry)
 
-	Log(DEBUG, "Saving entry:\n", Deparse(entry))
+	Log(DEBUG, "Saving entry:\n", entry)
 
 	tl.Update(entry);
 

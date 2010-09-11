@@ -11,10 +11,8 @@ import (
 	"os"
 	"tabwriter"
 	"bufio"
-	"io/ioutil"
 	"strings"
 	"container/vector"
-	"path"
 	"strconv"
 )
 
@@ -22,31 +20,36 @@ import (
 var commands map[string](func (args []string) int) = map[string](func (args []string) int){
 	"help": CmdHelp,
 	"create": CmdCreate,
-	"add": CmdAdd,
-	"update": CmdUpdate,
 	"get": CmdGet,
 	"list": CmdList,
 	"remove": CmdRemove,
-	"import": CmdImport,
 	"serve": CmdServe,
-	"qadd": CmdQuickAdd,
+	"add": CmdQuickAdd,
 	"search": CmdSearch,
 	"tsvup": CmdTsvUpdate,
+
+	"old-add": CmdAdd,
+	"old-update": CmdUpdate,
+	"old-import": CmdImport,
+	"old-get": CmdCompatGet,
 }
 
 var help_commands map[string](func ()) = map[string](func ()){
 	"help": HelpHelp,
 	"create": HelpCreate,
-	"add": HelpAdd,
-	"update": HelpUpdate,
 	"get": HelpGet,
 	"list": HelpList,
 	"remove": HelpRemove,
-	"import": HelpImport,
 	"serve": HelpServe,
-	"qadd": HelpQuickAdd,
+	"add": HelpQuickAdd,
 	"search": HelpSearch,
 	"tsvup": HelpTsvUpdate,
+	"compat": CompatHelp,
+
+	"old-add": HelpAdd,
+	"old-update": HelpUpdate,
+	"old-import": HelpImport,
+	"old-get": HelpCompatGet,
 }
 
 func Complain(usage bool, format string, a ...interface{}) {
@@ -111,47 +114,8 @@ func HelpCreate() {
 	fmt.Fprintf(os.Stderr, "\tCreates a new empty db named <db>\n")
 }
 
-func ParseFile(in *os.File, id string) *Entry {
-	buf, ioerr := ioutil.ReadAll(in)
-	CheckCondition(ioerr != nil, "Error reading: %s\n", ioerr)
-	s := string(buf)
-
-	entry, parse_errors := Parse(s)
-
-	fmt.Fprintf(os.Stderr, "%s\n", strings.Join(*parse_errors, "\n"))
-
-	entry.SetId(id)
-
-	return entry
-}
-
-func CmdAdd(args []string) int {
-	tl := CheckArgsOpenDb(args, 1, 2, "add")
-	defer tl.Close()
-	
-	var id string
-	if len(args) > 1 {
-		id = args[1]
-		exists := tl.Exists(id)
-		CheckCondition(exists, "Cannot add, id already exists: %s\n", id)
-	} else {
-		id = tl.MakeRandomId()
-	}
-
-	Log(DEBUG, "Adding:", id)
-
-	tl.Add(ParseFile(os.Stdin, id))
-
-	return 0
-}
-
-func HelpAdd() {
-	fmt.Fprintf(os.Stderr, "Usage: add <db> <id>?\n\n")
-	fmt.Fprintf(os.Stderr, "\tReads a new entry from standard input and adds it to <db> with the id <id>.\nIf <id> is not provided a new one is generated randomly. If the specified <id> collides with an existing id the command fails.\n")
-}
-
 func CmdQuickAdd(args []string) int {
-	tl := CheckArgsOpenDb(args, 1, 1000, "qadd")
+	tl := CheckArgsOpenDb(args, 1, 1000, "add")
 	defer tl.Close()
 
 	qaddstr := strings.Join(args[1:], " ")
@@ -170,7 +134,7 @@ func CmdQuickAdd(args []string) int {
 }
 
 func HelpQuickAdd() {
-	fmt.Fprintf(os.Stderr, "Usage: qadd <db> <quickadd string>\n\n")
+	fmt.Fprintf(os.Stderr, "Usage: add <db> <quickadd string>\n\n")
 	fmt.Fprintf(os.Stderr, "\tInterprest the quickadd string and adds it to the db")
 }
 
@@ -192,55 +156,12 @@ func HelpSearch() {
 	fmt.Fprintf(os.Stderr, "\tLike list but only returns matching entries")
 }
 
-func CmdUpdate(args []string) int {
-	tl := CheckArgsOpenDb(args, 2, 2, "update")
-	defer tl.Close()
-
-	id := args[1]
-	CheckId(tl, id, "update")
-
-	entry := ParseFile(os.Stdin, id)
-	tl.Remove(id)
-	tl.Add(entry)
-
-	return 0
-}
-
-func HelpUpdate() {
-	fmt.Fprintf(os.Stderr, "Usage: update <db> <id>\n\n")
-	fmt.Fprintf(os.Stderr, "\tReads a new entry from standard input and uses it to replace the entry associated with <id> in the <db>.\nIf the specified <id> does not exist the command fails.\n")
-}
-
-func CmdGet(args []string) int {
-	tl := CheckArgsOpenDb(args, 2, 2, "get")
-	defer tl.Close()
-
-	id := args[1]
-	CheckId(tl, id, "get")
-
-	entry := tl.Get(id)
-	
-	s := Deparse(entry)
-
-	fmt.Printf("%s", s)
-
-	return 0
-}
-
-func HelpGet() {
-	fmt.Fprintf(os.Stderr, "Usage: get <db> <id>\n\n")
-	fmt.Fprintf(os.Stderr, "\tPrints the entry associated with <id> inside <db>\n")
-}
-
 func CmdRemove(args []string) int {
 	tl := CheckArgsOpenDb(args, 2, 2, "remove")
 	defer tl.Close()
 
-	id := args[1]
-	CheckId(tl, id, "remove")
-
-	tl.Remove(id)
-
+	CheckId(tl, args[1], "remove")
+	tl.Remove(args[1])
 	return 0
 }
 
@@ -314,40 +235,6 @@ func HelpList() {
 	fmt.Fprintf(os.Stderr, "\tLists contents of <db>\n")
 }
 
-func CmdImport(argv []string) int {
-	tl := CheckArgsOpenDb(argv, 2, 2, "import")
-	defer tl.Close()
-
-	dirname := argv[1]
-
-	infos := FileList(dirname)
-
-	for _, info := range infos {
-		if info.IsDirectory() { continue }
-
-		filename := path.Join(dirname, info.Name)
-
-		exists := tl.Exists(info.Name)
-		if exists { continue }
-
-		file, operr := os.Open(filename, os.O_RDONLY, 0666)
-		if operr != nil {
-			fmt.Fprintf(os.Stderr, "ERROR: Can not open %s for import\n", filename)
-			continue
-		}
-		defer file.Close()
-
-		tl.Add(ParseFile(file, info.Name))
-	}
-	
-	return 0
-}
-
-func HelpImport() {
-	fmt.Fprintf(os.Stderr, "usage: import <db> <directory>\n\n")
-	fmt.Fprintf(os.Stderr, "\tImports the content of <directory> inside <db>\n\n")
-}
-
 func CmdServe(args []string) int {
 	CheckArgs(args, 1, 20, "serve")
 
@@ -412,6 +299,45 @@ func HelpTsvUpdate() {
 	fmt.Fprintf(os.Stderr, "The last field is interpreted as either a triggerAt field if priority is timed, or as the sort field otherwise\n\n")
 }
 
+func CmdGet(args []string) int {
+	tl := CheckArgsOpenDb(args, 2, 2, "get")
+	defer tl.Close()
+
+	id := args[1]
+	CheckId(tl, id, "get")
+
+	entry := tl.Get(id)
+
+	tw := tabwriter.NewWriter(os.Stdout, 8, 8, 4, ' ', 0)
+	w := bufio.NewWriter(tw)
+
+	w.WriteString(fmt.Sprintf("Id:\t%s\n", entry.Id()))
+	pr := entry.Priority()
+	w.WriteString(fmt.Sprintf("Priority:\t%s\n", pr.String()))
+	if entry.TriggerAt() != nil {
+		w.WriteString(fmt.Sprintf("When:\t%s\n", entry.TriggerAt()))
+	} else {
+		w.WriteString("When:\tN/A\n")
+	}
+	fr := entry.Freq()
+	w.WriteString(fmt.Sprintf("Recur:\t%s\n", fr.String()))
+	w.WriteString(fmt.Sprintf("Sort:\t%s\n", entry.Sort()))
+	w.WriteString(fmt.Sprintf("Title:\t%s\n", entry.Title()))
+	w.WriteString("\n")
+	w.Flush()
+	tw.Flush()
+
+	fmt.Printf("%s\n", entry.Text())
+	
+	return 0
+}
+	
+func HelpGet() {
+	fmt.Fprintf(os.Stderr, "Usage: get <db> <id>\n\n")
+	fmt.Fprintf(os.Stderr, "\tPrints the entry associated with <id> inside <db>\n")
+}
+
+
 func CmdHelp(args []string) int {
 	CheckArgs(args, 0, 1, "help")
 	if len(args) <= 0 {
@@ -436,17 +362,20 @@ func main() {
 		tw := tabwriter.NewWriter(os.Stderr, 8, 8, 4, ' ', 0)
 		w := bufio.NewWriter(tw)
 		w.WriteString("\thelp\tHelp system\n")
+		w.WriteString("\thelp compat\tShows backwards compatibility commands\n")
+		w.WriteString("\n")
 		w.WriteString("\tcreate\tCreates new tasklist\n")
-		w.WriteString("\tadd\tAdds entry to tasklist\n")
-		w.WriteString("\tupdate\tUpdates entry in tasklist\n")
-		w.WriteString("\tget\tDisplays an entry of the tasklist\n")
+		w.WriteString("\n")
 		w.WriteString("\tlist\tLists entries\n")
-		w.WriteString("\tremove\tRemove entry\n")
-		w.WriteString("\timprot\tImports directory in old pooch format\n")
-		w.WriteString("\tserve\tStart http server\n")
-		w.WriteString("\tqadd\tQuick add command\n")
 		w.WriteString("\tsearch\tSearch\n")
+		w.WriteString("\n")
+		w.WriteString("\tget\tDisplays an entry of the tasklist\n")
+		w.WriteString("\tadd\tQuick add command\n")
 		w.WriteString("\ttsvup\tAdd or update from tsv file\n")
+		w.WriteString("\tremove\tRemove entry\n")
+		w.WriteString("\n")
+		w.WriteString("\tserve\tStart http server\n")
+
 		w.Flush()
 		tw.Flush()
 	}

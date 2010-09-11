@@ -5,7 +5,7 @@ TARG=pooch
 
 GOFILES=\
 	dbg.go types.go parse.go\
-	dbname.go backend.go staticserve.go htmlformat.go serve.go oldimport.go\
+	dbname.go backend.go staticserve.go htmlformat.go serve.go compat.go\
 	pooch.go
 
 include $(GOROOT)/src/Make.cmd
