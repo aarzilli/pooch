@@ -82,8 +82,7 @@ func CmdUpdate(args []string) int {
 	CheckId(tl, id, "update")
 
 	entry := CompatParseFile(os.Stdin, id)
-	tl.Remove(id)
-	tl.Add(entry)
+	tl.Update(entry)
 
 	return 0
 }
