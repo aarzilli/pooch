@@ -59,7 +59,7 @@ func (freq *Frequency) String() string {
 	case 365:
 		return "yearly"
 	}
-	
+
 	return fmt.Sprintf("%d", int64(*freq))
 }
 
@@ -125,56 +125,71 @@ func (e *Entry) Before(time int64) bool {
 }
 
 /*
-	  +--------+	                 +--------+
-	  | STICKY |<=================== | NOTES  |
-	  +--------+	                 +--------+
-			====   	   	   	   	   		^
-			    ======				    =
-				      ======		    =
- 		   +----------------======------=---------------------------------+
-		   V			          ==V	=								  |
- 	  +--------+	              +--------+		                  +--------+
-	  | LATER  |----------------->| NOW    |------------------------->| DONE   |
-   	  +--------+	              +--------+		                  +--------+
-		  == 						  ^
-			====					  |
-			    ====				  |
-				    ===				  |
-				       ====			  |
-                           ====  +---------+
-	                           =>| TIMED   |
-	                             +---------+
+		 +--------+		   +---------+
+		 |        |------->|         |
+		 | STICKY |		   | NOTES   |
+		 |        |<-------|         |
+		 +--------+		   +---------+
+			   ===				 =
+				  ====			 =
+					  =====		 =	 Special transitions (press SHIFT)
+						   ====	 =
+ 							   ==V
+			 +---------+ 	 +--------+  	+---------+
+			 |     	   | 	 |        |  	|         |
+			 | LATER   |---->| NOW    |---->| DONE    |
+			 |         | 	 |        |  	|         |
+			 +---------+ 	 +--------+  	+---------+
+				 A                               |
+				 |                               |
+				 +-------------------------------|
+
+ When there is a triggerAt (When) field set:
+
+
+	   +----------+			+----------+		+-----------+
+	   |          |			|          |------->|           |
+	   | ANYTHING |-------->| TIMED    |		| DONE      |
+       |          |			|          |<-------|           |
+ 	   +----------+			+----------+		+-----------+
+
+
  */
 func (e *Entry) UpgradePriority(special bool) {
-	switch e.Priority() {
-	case STICKY:
-		if special {
-			e.priority = NOW
-		} else {
-			e.priority = STICKY
-		}
-	case NOW:
-		if special {
-			e.priority = NOTES
-		} else {
+	if e.triggerAt != nil {
+		switch e.Priority() {
+		case NOW:
 			e.priority = DONE
-		}
-	case LATER:
-		if special {
+		case TIMED:
+			e.priority = DONE
+		default:
 			e.priority = TIMED
-		} else {
-			e.priority = NOW
 		}
-	case NOTES:
+	} else if (e.priority == NOTES) || (e.priority == STICKY) {
 		if special {
-			e.priority = STICKY
+			e.priority = NOW
 		} else {
-			e.priority = NOTES
+			switch e.Priority() {
+			case STICKY: e.priority = NOTES
+			case NOTES: e.priority = STICKY
+			}
 		}
-	case TIMED:
-		e.priority = NOW
-	case DONE:
-		e.priority = LATER
+	} else { // anything else
+		if special {
+			e.priority = NOTES
+		} else {
+			switch e.Priority() {
+			case TIMED:
+				e.priority = LATER
+			case DONE:
+				e.priority = LATER
+			case LATER:
+				e.priority = NOW
+			case NOW:
+				e.priority = DONE
+			}
+		}
 	}
 }
+
 
