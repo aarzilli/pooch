@@ -156,14 +156,19 @@ func (e *Entry) Before(time int64) bool {
 
  */
 func (e *Entry) UpgradePriority(special bool) {
-	if e.triggerAt != nil {
+	if e.TriggerAt() != nil {
 		switch e.Priority() {
 		case NOW:
 			e.priority = DONE
 		case TIMED:
 			e.priority = DONE
 		default:
-			e.priority = TIMED
+			//fmt.Printf("trigger: %d cur: %d\n", e.TriggerAt().Seconds(), time.LocalTime().Seconds())
+			if e.TriggerAt().Seconds() > time.LocalTime().Seconds() { // trigger time is in the future
+				e.priority = TIMED
+			} else {
+				e.priority = NOW
+			}
 		}
 	} else if (e.priority == NOTES) || (e.priority == STICKY) {
 		if special {
