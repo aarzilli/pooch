@@ -127,15 +127,15 @@ func SortFromTriggerAt(triggerAt *time.Time) string {
 
 
 /*
- Supported @ syntax:
+ Supported # syntax:
 
- @<date> - triggerAt set to <date> (using ParseDateTime and a split to space)
- @<date>+<recur> - triggerAt set to <date> plus recurring field, use ParseFrequency (and split with space)
- @l, @later - later
- @n, @now - now
- @d, @done - done
- @$, @N, @Notes - notes
- @$$, @StickyNotes - sticky notes
+ #<date> - triggerAt set to <date> (using ParseDateTime and a split to space)
+ #<date>+<recur> - triggerAt set to <date> plus recurring field, use ParseFrequency (and split with space)
+ #l, #later - later
+ #n, #now - now
+ #d, #done - done
+ #$, #N, #Notes - notes
+ #$$, #StickyNotes - sticky notes
  */
 
 func QuickParse(input string) (*Entry, *vector.StringVector) {
@@ -151,7 +151,7 @@ func QuickParse(input string) (*Entry, *vector.StringVector) {
 	for i := 0; i < len(input); i++ {
 		ch := input[i]
 
-		if ch != '@' {
+		if ch != '#' {
 			continue
 		}
 
@@ -197,7 +197,7 @@ func QuickParse(input string) (*Entry, *vector.StringVector) {
 			if (triggerAt == nil) {
 				Logf(DEBUG, "Found quickTag:[%s] -- not a quickTag, discarding")
 				// this is not a quickTag, leave it alone
-				r += "@" + quickTag
+				r += "#" + quickTag
 				if removedASpace { r += " " }
 			} else {
 				priority = TIMED
