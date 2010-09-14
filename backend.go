@@ -31,14 +31,16 @@ func Create(filename string) {
 
 	defer conn.Close()
 
-	err = conn.Exec("CREATE TABLE tasks(id TEXT, title_field TEXT, text_field TEXT, priority INTEGER, repeat_field INTEGER, trigger_at_field DATE, sort TEXT);")
-	if err != nil {
+	if err = conn.Exec("CREATE TABLE tasks(id TEXT, title_field TEXT, text_field TEXT, priority INTEGER, repeat_field INTEGER, trigger_at_field DATE, sort TEXT);"); err != nil {
 		panic(fmt.Sprintf("Unable to execute CREATE TABLE statement in backend.Create function: %s", err))
 	}
 
-	err = conn.Exec("CREATE VIRTUAL TABLE ridx USING fts3(id TEXT, title_field TEXT, text_field TEXT);")
-	if err != nil {
+	if err := conn.Exec("CREATE VIRTUAL TABLE ridx USING fts3(id TEXT, title_field TEXT, text_field TEXT);"); err != nil {
 		panic(fmt.Sprintf("Unable to execute CREATE VIRTUAL TABLE statement in backend.Create function: %s", err))
+	}
+
+	if err := conn.Exec("CREATE TABLE columns(id TEXT, name TEXT, value TEXT)"); err != nil {
+		panic(fmt.Sprintf("Unable to execute CREATE TABLE (for columns) statement in backend.Create function: %s", err))
 	}
 
 	return
