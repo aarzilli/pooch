@@ -8,7 +8,7 @@ function setup(tlname) {
 }
 
 function remove_entry(tasklist, name) {
-    var req = XMLHttpRequest();
+    var req = new XMLHttpRequest();
     req.open("GET", "remove?id=" + encodeURIComponent(name) + "&tl=" + encodeURIComponent(tasklist), true);
     req.onreadystatechange = function() {
         if (req.readyState == 4) {
@@ -45,7 +45,7 @@ function save_editor(tasklist, form) {
     obj.tasklist = tasklist;
     
     var ts = document.getElementById("ts_"+obj.id);
-    var req = XMLHttpRequest();
+    var req = new XMLHttpRequest();
     req.open("POST", "/save", true);
     req.onreadystatechange = function() {
         if (req.readyState == 4) {
@@ -60,7 +60,7 @@ function save_editor(tasklist, form) {
 }
 
 function add_row(tasklist, id) {
-    var req = XMLHttpRequest();
+    var req = new XMLHttpRequest();
     req.open("GET", "htmlget?type=add&tl=" + encodeURIComponent(tasklist) + "&id=" + encodeURIComponent(id), true);
     req.onreadystatechange = function() {
         if (req.readyState == 4) {
@@ -88,7 +88,7 @@ function add_row(tasklist, id) {
 function add_entry(tasklist) {
     var netext = document.getElementById('newentry').value;
 
-    var req = XMLHttpRequest()
+    var req = new XMLHttpRequest()
     req.open("GET", "qadd?tl=" + encodeURIComponent(tasklist) + "&text=" + encodeURIComponent(netext), true);
     req.onreadystatechange = function() {
         if (req.readyState == 4) {
@@ -110,7 +110,7 @@ function add_entry(tasklist) {
 
 function fill_editor(tasklist, name) {
     var ed = document.getElementById("ediv_"+name);
-    var req = XMLHttpRequest();
+    var req = new XMLHttpRequest();
     req.open("GET", "get?id=" + encodeURIComponent(name) + "&tl=" + encodeURIComponent(tasklist), true);
     req.onreadystatechange = function() {
         if (req.readyState == 4) {
@@ -189,15 +189,21 @@ function toggle_editor(tasklist, name, event) {
 }
 
 function change_priority(tasklist, name, event) {
-    var req = XMLHttpRequest();
+    var req = new XMLHttpRequest();
     req.open("GET", "change-priority?id=" + encodeURIComponent(name) + "&tl=" + encodeURIComponent(tasklist) + "&special=" + event.shiftKey, true);
     req.onreadystatechange = function() {
         if (req.readyState == 4) {
             if (req.responseText.match(/^priority-change-to: /)) {
                 priority = req.responseText.substr("priority-change-to: ".length);
+                priorityNum = priority[0]
+                priority = priority.substr(2)
                 var epr = document.getElementById('epr_'+name);
-                epr.innerHTML = priority;
+                epr.value = priority;
                 epr.setAttribute("class", "priorityclass_" + priority);
+
+                // changes the value saved inside the editor div so that saving the editor contents doesn't revert a changed priority
+                var ed = document.getElementById("ediv_"+name);
+                ed.elements["edprio"].value = priorityNum;
             } else {
                 alert(req.responseText)
             }

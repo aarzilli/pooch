@@ -44,24 +44,30 @@ table {
 .priorityclass_now {
     width: 60px;
     background-color: lightgreen;
+    color: black;
 }
 .priorityclass_later {
     width: 60px;
     background-color: yellow;
+    color: black;
 }
 .priorityclass_timed {
     width: 60px;
     background-color: orange;
+    color: black;
 }
 .priorityclass_done {
     width: 60px;
     background-color: lightgray;
+    color: black;
 }
 .priorityclass_sticky {
     width: 60px;
     background-color: lightblue;
+    color: black;
 }
 .priorityclass_notes {
     width: 60px;
     background-color: lightblue;
+    color: black;
 }

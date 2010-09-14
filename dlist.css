@@ -55,29 +55,35 @@ table {
     width: 60px;
     color: black;
     background-color: green;
+    font-size: xx-small;
 }
 .priorityclass_later {
     width: 60px;
     color: black;
     background-color: yellow;
+    font-size: xx-small;
 }
 .priorityclass_timed {
     width: 60px;
     color: black;
     background-color: orange;
+    font-size: xx-small;
 }
 .priorityclass_done {
     width: 60px;
     color: black;
     background-color: lightgray;
+    font-size: xx-small;
 }
 .priorityclass_sticky {
     width: 60px;
     color: black;
     background-color: lightblue;
+    font-size: xx-small;
 }
 .priorityclass_notes {
     width: 60px;
     color: black;
     background-color: lightblue;
+    font-size: xx-small;
 }

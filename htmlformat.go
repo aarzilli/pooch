@@ -103,8 +103,8 @@ var EntryListEntryHTML ExecutableTemplate = MakeExecutableTemplate(`
       <td class='eid'>{id|html}</td>
       <td class='etitle' onclick='javascript:toggle_editor("{tlname|html}", "{id|html}", event)'>{title|html}</td>
 
-      <td class='epr' onclick='javascript:change_priority("{tlname|html}", "{id|html}", event)'>
-        <div class='priorityclass_{priority|priority}' id='epr_{id|html}'>{priority|priority}</div>
+      <td class='epr'>
+        <input type='button' class='priorityclass_{priority|priority}' id='epr_{id|html}' value='{priority|priority}' onclick='javascript:change_priority("{tlname|html}", "{id|html}", event)'/>
       </td>
 
       <td class='etime'>{etime}</td>
@@ -122,7 +122,7 @@ var EntryListEntryEditorHTML ExecutableTemplate = MakeExecutableTemplate(`
 		  <input name='edid' id='edid' type='hidden'/>
 		  <input name='edprio' id='edprio' type='hidden'/>
 
-		  <p>Trigger at: <input type='text' id='edat_{id|html}' name='edat' size=10/>
+		  <p>When: <input type='text' id='edat_{id|html}' name='edat' size=10/>
           <script>calendar.set("edat_{id|html}")</script>
 		  &nbsp Repeat: <input type='text' id='edfreq' name='edfreq' size=10/>
 		  &nbsp; Sort by: <input type='text' id='edsort' name='edsort' size=10/>

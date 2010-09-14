@@ -56,6 +56,18 @@ func HelloServer(c *http.Conn, req *http.Request) {
  * Serves static pages (or 404s)
  */
 func StaticInMemoryServer(c *http.Conn, req *http.Request) {
+	var ct string
+	switch {
+	case strings.HasSuffix(req.URL.Path, ".js"):
+		ct = "text/javascript"
+	case strings.HasSuffix(req.URL.Path, ".css"):
+		ct = "text/css"
+	default:
+		ct = "text/html"
+	}
+
+	c.SetHeader("Content-Type", ct + "; charset=utf-8")
+	
 	if content := FILES[req.URL.Path[1:]]; content == "" {
 		io .WriteString(c, "404, Not found")
 	} else {
@@ -141,8 +153,7 @@ func ChangePriorityServer(c *http.Conn, req *http.Request) {
 	
 	priority := tl.UpgradePriority(id, special)
 
-	io.WriteString(c, "priority-change-to: ")
-	io.WriteString(c, strings.ToUpper(priority.String()))
+	io.WriteString(c, fmt.Sprintf("priority-change-to: %d %s", priority, strings.ToUpper(priority.String())))
 }
 
 func GetServer(c *http.Conn, req *http.Request) {
