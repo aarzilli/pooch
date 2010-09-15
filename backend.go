@@ -128,7 +128,6 @@ func (tasklist *Tasklist) MakeRandomId() string {
 func (tasklist *Tasklist) Remove(id string) {
 	tasklist.MustExec("DELETE for tasklist.Remove", "DELETE FROM tasks WHERE id = ?", id)
 	tasklist.MustExec("DELETE for tasklist.Remove (ridx)", "DELETE FROM ridx WHERE id = ?", id)
-	//TODO: remove associated columns
 	return
 }
 
@@ -212,7 +211,7 @@ func StatementScan(stmt *sqlite.Stmt) (*Entry, os.Error) {
 }
 
 func (tl *Tasklist) Get(id string) *Entry {
-	stmt, serr := tl.conn.Prepare("SELECT tasks.id, tasks.title_field, tasks.text_field, tasks.priority, tasks.repeat_field, tasks.trigger_at_field, tasks.sort, group_concat(columns.name||':'||columns.value, '\n') FROM tasks, columns WHERE tasks.id = columns.id AND tasks.id = ? GROUP BY tasks.id")
+	stmt, serr := tl.conn.Prepare("SELECT tasks.id, tasks.title_field, tasks.text_field, tasks.priority, tasks.repeat_field, tasks.trigger_at_field, tasks.sort, group_concat(columns.name||':'||columns.value, '\n') FROM tasks NATURAL JOIN columns WHERE tasks.id = ? GROUP BY tasks.id")
 	if serr != nil {
 		panic(fmt.Sprintf("Error preparing SELECT statement for Tasklist.Get: %s", serr.String()))
 	}
@@ -252,13 +251,13 @@ func GetListEx(stmt *sqlite.Stmt, v *vector.Vector) {
 func (tl *Tasklist) GetList(includeDone bool) (v *vector.Vector) {
 	v = new(vector.Vector);
 
-	stmtStr := "SELECT id, title_field, text_field, priority, repeat_field, trigger_at_field, sort FROM tasks";
+	stmtStr := "SELECT tasks.id, tasks.title_field, tasks.text_field, tasks.priority, tasks.repeat_field, tasks.trigger_at_field, tasks.sort, group_concat(columns.name||':'||columns.value, '\n') FROM tasks NATURAL JOIN columns";
 
 	if !includeDone {
-		stmtStr += " WHERE priority <> 5"
+		stmtStr += " WHERE tasks.priority <> 5"
 	}
 
-	stmtStr += " ORDER BY priority, trigger_at_field ASC, sort DESC";
+	stmtStr += " GROUP BY tasks.id ORDER BY tasks.priority, tasks.trigger_at_field ASC, tasks.sort DESC";
 	
 	stmt, serr := tl.conn.Prepare(stmtStr);
 	if serr != nil {
@@ -279,7 +278,7 @@ func (tl *Tasklist) GetList(includeDone bool) (v *vector.Vector) {
 func (tl *Tasklist) GetEventList(start, end string) (v *vector.Vector) {
 	v = new(vector.Vector)
 
-	stmtStr := "SELECT id, title_field, text_field, priority, repeat_field, trigger_at_field, sort FROM tasks WHERE trigger_at_field IS NOT NULL AND trigger_at_field > ? AND trigger_at_field < ?"
+	stmtStr := "SELECT tasks.id, tasks.title_field, tasks.text_field, tasks.priority, tasks.repeat_field, tasks.trigger_at_field, tasks.sort, group_concat(columns.name||':'||columns.value, '\n') FROM tasks NATURAL JOIN column WHERE tasks.trigger_at_field IS NOT NULL AND tasks.trigger_at_field > ? AND tasks.trigger_at_field < ? GROUP BY tasks.id"
 
 	stmt, serr := tl.conn.Prepare(stmtStr)
 	if serr != nil {
@@ -300,7 +299,7 @@ func (tl *Tasklist) GetEventList(start, end string) (v *vector.Vector) {
 func (tl *Tasklist) Search(query string) (v *vector.Vector) {
 	v = new(vector.Vector);
 
-	stmtStr := "SELECT id, title_field, text_field, priority, repeat_field, trigger_at_field, sort FROM tasks WHERE id IN (SELECT id FROM ridx WHERE title_field MATCH ? UNION SELECT id FROM ridx WHERE text_field MATCH ?) ORDER BY priority, sort ASC";
+	stmtStr := "SELECT tasks.id, tasks.title_field, tasks.text_field, tasks.priority, tasks.repeat_field, tasks.trigger_at_field, tasks.sort, group_concat(columns.name||':'||columns.value, '\n') FROM tasks NATURAL JOIN columns WHERE id IN (SELECT id FROM ridx WHERE title_field MATCH ? UNION SELECT id FROM ridx WHERE text_field MATCH ?) GROUP BY tasks.id ORDER BY priority, sort ASC";
 
 	stmt, serr := tl.conn.Prepare(stmtStr);
 	if serr != nil {
