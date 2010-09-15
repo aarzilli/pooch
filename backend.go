@@ -192,8 +192,8 @@ func (tasklist *Tasklist) Update(e *Entry) {
 func StatementScan(stmt *sqlite.Stmt) (*Entry, os.Error) {
 	var priority_num int
 	var freq_num int
-	var trigger_str, id, title, text, sort string
-	scanerr := stmt.Scan(&id, &title, &text, &priority_num, &freq_num, &trigger_str, &sort)
+	var trigger_str, id, title, text, sort, columns string
+	scanerr := stmt.Scan(&id, &title, &text, &priority_num, &freq_num, &trigger_str, &sort, &columns)
 	triggerAt, _ := ParseDateTime(trigger_str)
 	freq := Frequency(freq_num)
 	priority := Priority(priority_num)
@@ -202,14 +202,17 @@ func StatementScan(stmt *sqlite.Stmt) (*Entry, os.Error) {
 		return nil, scanerr
 	}
 
-	//TODO: read columns here
 	cols := make(Columns)
+	for _, v := range strings.Split(columns, "\n", -1) {
+		col := strings.Split(v, ":", 2)
+		cols[col[0]] = cols[col[1]]
+	}
 
 	return MakeEntry(id, title, text, priority, freq, triggerAt, sort, cols), nil
 }
 
 func (tl *Tasklist) Get(id string) *Entry {
-	stmt, serr := tl.conn.Prepare("SELECT id, title_field, text_field, priority, repeat_field, trigger_at_field, sort FROM tasks WHERE id = ?")
+	stmt, serr := tl.conn.Prepare("SELECT tasks.id, tasks.title_field, tasks.text_field, tasks.priority, tasks.repeat_field, tasks.trigger_at_field, tasks.sort, group_concat(columns.name||':'||columns.value, '\n') FROM tasks, columns WHERE tasks.id = columns.id AND tasks.id = ? GROUP BY tasks.id")
 	if serr != nil {
 		panic(fmt.Sprintf("Error preparing SELECT statement for Tasklist.Get: %s", serr.String()))
 	}

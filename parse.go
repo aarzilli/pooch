@@ -196,7 +196,7 @@ func QuickParse(input string) (*Entry, *vector.StringVector) {
 
 			if (triggerAt == nil) {
 				Logf(DEBUG, "Found quickTag:[%s] -- no special meaning found, using it as a category", quickTag)
-				cols[quickTag] = nil
+				cols[quickTag] = ""
 			} else {
 				priority = TIMED
 				if (len(quickTagSplit) > 1) {

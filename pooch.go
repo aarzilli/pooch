@@ -327,10 +327,11 @@ func CmdGet(args []string) int {
 
 	entry := tl.Get(id)
 
+	fmt.Printf("%s\n%s\n", entry.Title(), entry.Text())
+
 	tw := tabwriter.NewWriter(os.Stdout, 8, 8, 4, ' ', 0)
 	w := bufio.NewWriter(tw)
 
-	w.WriteString(fmt.Sprintf("Id:\t%s\n", entry.Id()))
 	pr := entry.Priority()
 	w.WriteString(fmt.Sprintf("Priority:\t%s\n", pr.String()))
 	if entry.TriggerAt() != nil {
@@ -341,13 +342,15 @@ func CmdGet(args []string) int {
 	fr := entry.Freq()
 	w.WriteString(fmt.Sprintf("Recur:\t%s\n", fr.String()))
 	w.WriteString(fmt.Sprintf("Sort:\t%s\n", entry.Sort()))
-	w.WriteString(fmt.Sprintf("Title:\t%s\n", entry.Title()))
+	for k, v := range entry.Columns() {
+		pv := v
+		if v == "" { pv = "<category>" }
+		w.WriteString(fmt.Sprintf("%s:\t%v\n", k, pv))
+	}
 	w.WriteString("\n")
 	w.Flush()
 	tw.Flush()
 
-	fmt.Printf("%s\n", entry.Text())
-	
 	return 0
 }
 	

@@ -86,7 +86,7 @@ type CalendarEvent struct {
 	className string
 }
 
-type Columns map[string](*string)
+type Columns map[string]string
 
 type Entry struct {
 	id string
