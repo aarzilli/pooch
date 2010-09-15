@@ -25,6 +25,7 @@ var commands map[string](func (args []string) int) = map[string](func (args []st
 	"remove": CmdRemove,
 	"serve": CmdServe,
 	"add": CmdQuickAdd,
+	"update": CmdQuickUpdate,
 	"search": CmdSearch,
 	"tsvup": CmdTsvUpdate,
 
@@ -42,6 +43,7 @@ var help_commands map[string](func ()) = map[string](func ()){
 	"remove": HelpRemove,
 	"serve": HelpServe,
 	"add": HelpQuickAdd,
+	"update": HelpQuickUpdate,
 	"search": HelpSearch,
 	"tsvup": HelpTsvUpdate,
 	"compat": CompatHelp,
@@ -118,11 +120,7 @@ func CmdQuickAdd(args []string) int {
 	tl := CheckArgsOpenDb(args, 1, 1000, "add")
 	defer tl.Close()
 
-	qaddstr := strings.Join(args[1:], " ")
-
-	Logf(DEBUG, "qadding: [%s]", qaddstr)
-
-	entry, parse_errors := QuickParse(qaddstr)
+	entry, parse_errors := QuickParse(strings.Join(args[1:], " "))
 	
 	fmt.Fprintf(os.Stderr, "%s\n", strings.Join(*parse_errors, "\n"))
 	
@@ -135,7 +133,28 @@ func CmdQuickAdd(args []string) int {
 
 func HelpQuickAdd() {
 	fmt.Fprintf(os.Stderr, "Usage: add <db> <quickadd string>\n\n")
-	fmt.Fprintf(os.Stderr, "\tInterprest the quickadd string and adds it to the db")
+	fmt.Fprintf(os.Stderr, "\tInterprets the quickadd string and adds it to the db")
+}
+
+func CmdQuickUpdate(args []string) int {
+	tl := CheckArgsOpenDb(args, 1, 1000, "update")
+	defer tl.Close()
+
+	CheckId(tl, args[1], "update")
+
+	entry, parse_errors := QuickParse(strings.Join(args[2:], " "))
+	
+	fmt.Fprintf(os.Stderr, "%s\n", strings.Join(*parse_errors, "\n"))
+
+	entry.SetId(args[1])
+	tl.Update(entry)
+
+	return 0
+}
+
+func HelpQuickUpdate() {
+	fmt.Fprintf(os.Stderr, "Usage: update <db> <id> <quickadd string>\n\n")
+	fmt.Fprintf(os.Stderr, "\tInterprets the quickadd string and updates selected entry in the db")
 }
 
 func CmdSearch(args []string) int {
@@ -370,7 +389,8 @@ func main() {
 		w.WriteString("\tsearch\tSearch\n")
 		w.WriteString("\n")
 		w.WriteString("\tget\tDisplays an entry of the tasklist\n")
-		w.WriteString("\tadd\tQuick add command\n")
+		w.WriteString("\tadd\tAdd command\n")
+		w.WriteString("\tupdate\tUpdate command\n")
 		w.WriteString("\ttsvup\tAdd or update from tsv file\n")
 		w.WriteString("\tremove\tRemove entry\n")
 		w.WriteString("\n")
