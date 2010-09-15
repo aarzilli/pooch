@@ -23,6 +23,26 @@ type Tasklist struct {
 	conn *sqlite.Conn
 }
 
+func (tasklist *Tasklist) MustExec(name string, stmt string, v...interface{}) {
+	if err := tasklist.conn.Exec(stmt, v); err != nil {
+		panic(fmt.Sprintf("Error executing %s: %s", name, err))
+	}
+}
+
+func (tasklist *Tasklist) WithTransaction(name string, f func()) {
+	tasklist.MustExec(fmt.Sprintf("BEGIN TRANSACTION for %s", name), "BEGIN TRANSACTION")
+	defer func() {
+		if rerr := recover(); rerr != nil {
+			tasklist.conn.Exec("ROLLBACK TRANSACTION")
+			panic(rerr)
+		} else {
+			tasklist.MustExec(fmt.Sprintf("COMMIT TRANSACTION for %s", name), "COMMIT TRANSACTION")
+		}
+	}()
+
+	f()
+}
+
 func Create(filename string) {
 	conn, err := sqlite.Open(filename)
 	if err != nil {
@@ -31,7 +51,7 @@ func Create(filename string) {
 
 	defer conn.Close()
 
-	if err = conn.Exec("CREATE TABLE tasks(id TEXT, title_field TEXT, text_field TEXT, priority INTEGER, repeat_field INTEGER, trigger_at_field DATE, sort TEXT);"); err != nil {
+	if err = conn.Exec("CREATE TABLE tasks(id TEXT PRIMARY KEY, title_field TEXT, text_field TEXT, priority INTEGER, repeat_field INTEGER, trigger_at_field DATE, sort TEXT);"); err != nil {
 		panic(fmt.Sprintf("Unable to execute CREATE TABLE statement in backend.Create function: %s", err))
 	}
 
@@ -39,7 +59,7 @@ func Create(filename string) {
 		panic(fmt.Sprintf("Unable to execute CREATE VIRTUAL TABLE statement in backend.Create function: %s", err))
 	}
 
-	if err := conn.Exec("CREATE TABLE columns(id TEXT, name TEXT, value TEXT)"); err != nil {
+	if err := conn.Exec("CREATE TABLE columns(id TEXT, name TEXT, value TEXT, FOREIGN KEY (id) REFERENCES tasks (id) ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED)"); err != nil {
 		panic(fmt.Sprintf("Unable to execute CREATE TABLE (for columns) statement in backend.Create function: %s", err))
 	}
 
@@ -53,6 +73,7 @@ func Open(name string) (tasklist *Tasklist) {
 	}
 
 	tasklist = &Tasklist{name, conn}
+	tasklist.MustExec("PRAGMA on tasklist.Open", "PRAGMA foreign_keys = ON;")
 	tasklist.RunTimedTriggers()
 	
 	return
@@ -78,7 +99,7 @@ func (tasklist *Tasklist) Exists(id string) bool {
 	}
 
 	hasnext := stmt.Next()
-	Log(DEBUG, "Existence of", id, hasnext)
+	Log(DEBUG, "Existence of ", id, " ", hasnext)
 	
 	return hasnext
 }
@@ -105,16 +126,9 @@ func (tasklist *Tasklist) MakeRandomId() string {
 }
 
 func (tasklist *Tasklist) Remove(id string) {
-	err := tasklist.conn.Exec("DELETE FROM tasks WHERE id = ?", id)
-	if err != nil {
-		panic(fmt.Sprintf("Could not remove entry %s: %s", id, err.String()))
-	}
-
-	err = tasklist.conn.Exec("DELETE FROM ridx WHERE id = ?", id)
-	if err != nil {
-		panic(fmt.Sprintf("Could not remove enry %s from reversed index: %s", id, err))
-	}
-
+	tasklist.MustExec("DELETE for tasklist.Remove", "DELETE FROM tasks WHERE id = ?", id)
+	tasklist.MustExec("DELETE for tasklist.Remove (ridx)", "DELETE FROM ridx WHERE id = ?", id)
+	//TODO: remove associated columns
 	return
 }
 
@@ -129,29 +143,31 @@ func FormatTriggerAtForAdd(e *Entry) string {
 	return triggerAtString
 }
 
+func (tasklist *Tasklist) addColumns(e *Entry) {
+	for k, v := range e.Columns() {
+		Logf(DEBUG, "Adding column %s\n", k)
+		tasklist.MustExec("INSERT for extra columns for Tasklist.Add", "INSERT INTO columns(id, name, value) VALUES (?, ?, ?)", e.Id(), k, v)
+	}
+}
+
 func (tasklist *Tasklist) Add(e *Entry) {
 	triggerAtString := FormatTriggerAtForAdd(e)
 
-	priority := e.Priority()
-	freq := e.Freq()
-	err := tasklist.conn.Exec("INSERT INTO tasks(id, title_field, text_field, priority, repeat_field, trigger_at_field, sort) VALUES (?, ?, ?, ?, ?, ?, ?)", e.Id(), e.Title(), e.Text(), priority.ToInteger(), freq.ToInteger(), triggerAtString, e.Sort())
-	if err != nil {
-		panic(fmt.Sprintf("Error executing INSERT statement for Tasklist.Add: %s", err))
-	}
-
-	err = tasklist.conn.Exec("INSERT INTO ridx(id, title_field, text_field) VALUES (?, ?, ?)",
-		e.Id(), e.Title(), e.Text())
-	if err != nil {
-		panic(fmt.Sprintf("Error executing INSERT statement for Tasklist.Add (in ridx): %s", err))
-	}
-
-	if CurrentLogLevel <= DEBUG {
-		exists := tasklist.Exists(e.Id())
-		Log(DEBUG, "Existence check:", exists)
-	}
-
+	tasklist.WithTransaction("backend.Add", func() {
+		priority := e.Priority()
+		freq := e.Freq()
+		tasklist.MustExec("INSERT statement for Tasklist.Add", "INSERT INTO tasks(id, title_field, text_field, priority, repeat_field, trigger_at_field, sort) VALUES (?, ?, ?, ?, ?, ?, ?)", e.Id(), e.Title(), e.Text(), priority.ToInteger(), freq.ToInteger(), triggerAtString, e.Sort())
+		tasklist.MustExec("INSERT statement for Tasklist.Add (in ridx)", "INSERT INTO ridx(id, title_field, text_field) VALUES (?, ?, ?)", e.Id(), e.Title(), e.Text())
+		tasklist.addColumns(e);
+		
+		if CurrentLogLevel <= DEBUG {
+			exists := tasklist.Exists(e.Id())
+			Log(DEBUG, "Existence check:", exists)
+		}
+	})
+		
 	Log(DEBUG, "Add finished!")
-
+		
 	return
 }
 
@@ -160,16 +176,12 @@ func (tasklist *Tasklist) Update(e *Entry) {
 	priority := e.Priority()
 	freq := e.Freq()
 
-	err := tasklist.conn.Exec("UPDATE tasks SET title_field = ?, text_field = ?, priority = ?, repeat_field = ?, trigger_at_field = ?, sort = ? WHERE id = ?", e.Title(), e.Text(), priority.ToInteger(), freq.ToInteger(), triggerAtString, e.Sort(), e.Id())
-	if err != nil {
-		panic(fmt.Sprintf("Error executing UPDATE statement for Tasklist.Update: %s", err))
-	}
-
-	err = tasklist.conn.Exec("UPDATE ridx SET title_field = ?, text_field = ? WHERE id = ?",
-		e.Title(), e.Text(), e.Id())
-	if err != nil {
-		panic(fmt.Sprintf("Error executing UPDATE statement on ridx for Tasklist.Update: %s", err))
-	}
+	tasklist.WithTransaction("backend.Update", func() {
+		tasklist.MustExec("UPDATE for tasklist.Update", "UPDATE tasks SET title_field = ?, text_field = ?, priority = ?, repeat_field = ?, trigger_at_field = ?, sort = ? WHERE id = ?", e.Title(), e.Text(), priority.ToInteger(), freq.ToInteger(), triggerAtString, e.Sort(), e.Id())
+		tasklist.MustExec("UPDATE for tasklist.Update (in ridx)", "UPDATE ridx SET title_field = ?, text_field = ? WHERE id = ?", e.Title(), e.Text(), e.Id())
+		tasklist.MustExec("DELETE of columns for tasklist.Update", "DELETE FROM columns WHERE id = ?", e.Id())
+		tasklist.addColumns(e);
+	})
 
 	Log(DEBUG, "Update finished!")
 
@@ -190,7 +202,10 @@ func StatementScan(stmt *sqlite.Stmt) (*Entry, os.Error) {
 		return nil, scanerr
 	}
 
-	return MakeEntry(id, title, text, priority, freq, triggerAt, sort), nil
+	//TODO: read columns here
+	cols := make(Columns)
+
+	return MakeEntry(id, title, text, priority, freq, triggerAt, sort, cols), nil
 }
 
 func (tl *Tasklist) Get(id string) *Entry {
@@ -331,11 +346,7 @@ func (tl *Tasklist) RunTimedTriggers() {
 
 		Log(DEBUG, "   updating now")
 
-		serr2 := tl.conn.Exec("UPDATE tasks SET priority = ? WHERE id = ?", NOW, entry.Id());
-
-		if serr2 != nil {
-			panic(fmt.Sprintf("Error executing UPDATE statement in Tasklist.RunTimedTriggers: %s", serr2))
-		}
+		tl.MustExec("UPDATE for Tasklist.RunTimedTriggers", "UPDATE tasks SET priority = ? WHERE id = ?", NOW, entry.Id());
 	}
 
 	return

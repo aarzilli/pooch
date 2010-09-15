@@ -147,11 +147,12 @@ func QuickParse(input string) (*Entry, *vector.StringVector) {
 	
 	var freq Frequency = 0
 	var triggerAt *time.Time = nil
+	cols := make(Columns)
 
 	for i := 0; i < len(input); i++ {
 		ch := input[i]
 
-		if ch != '#' {
+		if (ch != '#') && (ch != '@') {
 			continue
 		}
 
@@ -161,13 +162,12 @@ func QuickParse(input string) (*Entry, *vector.StringVector) {
 		i += j
 		lastEnd = i+1
 
-		removedASpace := false
+		//removedASpace := false
 		// skips a space if there are two contiguous
 		if lastEnd < len(input) && input[lastEnd] == ' ' && r[len(r)-1] == ' ' {
-			removedASpace = true
+			//removedASpace = true
 			lastEnd++
 		}
-
 
 		switch quickTag {
 		case "later", "l":
@@ -195,10 +195,8 @@ func QuickParse(input string) (*Entry, *vector.StringVector) {
 			triggerAt, _ = ParseDateTime(quickTagSplit[0])
 
 			if (triggerAt == nil) {
-				Logf(DEBUG, "Found quickTag:[%s] -- not a quickTag, discarding")
-				// this is not a quickTag, leave it alone
-				r += "#" + quickTag
-				if removedASpace { r += " " }
+				Logf(DEBUG, "Found quickTag:[%s] -- no special meaning found, using it as a category", quickTag)
+				cols[quickTag] = nil
 			} else {
 				priority = TIMED
 				if (len(quickTagSplit) > 1) {
@@ -215,7 +213,7 @@ func QuickParse(input string) (*Entry, *vector.StringVector) {
 
 	sort := SortFromTriggerAt(triggerAt)
 
-	return MakeEntry("", r, "", priority, freq, triggerAt, sort), errors
+	return MakeEntry("", r, "", priority, freq, triggerAt, sort, cols), errors
 }
 
 func TimeString(triggerAt *time.Time, sort string) string {
@@ -261,6 +259,9 @@ func DemarshalEntry(umentry *UnmarshalEntry) *Entry {
 	if err != "" {
 		panic(err)
 	}
+
+	cols := make(Columns)
+	//TODO: Demarshalling of columns (must parse)
 	
 	return MakeEntry(
 		umentry.Id,
@@ -269,7 +270,8 @@ func DemarshalEntry(umentry *UnmarshalEntry) *Entry {
 		umentry.Priority,
 		freq,
 		triggerAt,
-		sort)
+		sort,
+		cols)
 }
 
 func MarshalEntry(entry *Entry) *UnmarshalEntry {
@@ -280,6 +282,8 @@ func MarshalEntry(entry *Entry) *UnmarshalEntry {
 	}
 
 	freq := entry.Freq()
+
+	//TODO: Marshalling of columns (must deparse)
 	
 	return MakeUnmarshalEntry(
 		entry.Id(),
@@ -325,6 +329,10 @@ func ParseTsvFormat(in string) *Entry {
 		sort = fields[3]
 	}
 
+	cols := make(Columns)
+
+	// TODO: parsing columns from tsv
+
 	return MakeEntry(
 		fields[0], // id
 		fields[1], // title
@@ -332,5 +340,6 @@ func ParseTsvFormat(in string) *Entry {
 		priority,
 		0,
 		triggerAt,
-		sort)
+		sort,
+		cols)
 }

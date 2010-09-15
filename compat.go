@@ -224,7 +224,7 @@ func CompatParse(input string) (*Entry, *vector.StringVector) {
 	Log(DEBUG, "Text:      ", text)
 	Log(DEBUG, "Errors:    ", errors)
 
-	return MakeEntry("", title, text, priority, freq, triggerAt, sort), errors
+	return MakeEntry("", title, text, priority, freq, triggerAt, sort, make(Columns)), errors
 }
 
 

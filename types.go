@@ -86,6 +86,8 @@ type CalendarEvent struct {
 	className string
 }
 
+type Columns map[string](*string)
+
 type Entry struct {
 	id string
 	title string
@@ -94,14 +96,15 @@ type Entry struct {
 	freq Frequency
 	triggerAt *time.Time
 	sort string
+	columns Columns
 }
 
 func MakeUnmarshalEntry(id string, title string, text string, priority Priority, freq string, triggerAt string, sort string, tasklist string) *UnmarshalEntry {
 	return &UnmarshalEntry{id, title, text, priority, freq, triggerAt, sort, tasklist}
 }
 
-func MakeEntry(id string, title string, text string, priority Priority, freq Frequency, triggerAt *time.Time, sort string) *Entry {
-	return &Entry{id, title, text, priority, freq, triggerAt, sort}
+func MakeEntry(id string, title string, text string, priority Priority, freq Frequency, triggerAt *time.Time, sort string, columns Columns) *Entry {
+	return &Entry{id, title, text, priority, freq, triggerAt, sort, columns}
 }
 
 func (e *Entry) Title() string { return e.title; }
@@ -112,12 +115,13 @@ func (e *Entry) Priority() Priority { return e.priority; }
 func (e *Entry) Freq() Frequency { return e.freq; }
 func (e *Entry) TriggerAt() *time.Time { return e.triggerAt; }
 func (e *Entry) Sort() string { return e.sort; }
+func (e *Entry) Columns() Columns { return e.columns; }
 
 func (entry *Entry) NextEntry(newId string) *Entry {
 	freq := entry.Freq()
 	newTriggerAt := time.SecondsToUTC(entry.TriggerAt().Seconds() + int64(freq.ToInteger() * 24 * 60 * 60))
 
-	return MakeEntry(newId, entry.Title(), entry.Text(), entry.Priority(), entry.Freq(), newTriggerAt, entry.Sort())
+	return MakeEntry(newId, entry.Title(), entry.Text(), entry.Priority(), entry.Freq(), newTriggerAt, entry.Sort(), entry.Columns())
 }
 
 func (e *Entry) Before(time int64) bool {
