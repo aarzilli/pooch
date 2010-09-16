@@ -148,22 +148,32 @@ func Strtok(input, chars string) []string {
 
 var SanitizeRE *regexp.Regexp = regexp.MustCompile("[^a-zA-Z0-9.,/\\^!?]")
 
-func SearchParseToken(input string) (op uint8, theselect string) {
+func SearchParseToken(input string, tl *Tasklist, set map[string]string) (op uint8, theselect string) {
 	var r vector.StringVector
 	
 	op = input[0]
 	//fmt.Printf("op: %c\n", op)
 	for _, col := range Strtok(input[1:len(input)], "@#") {
-		col = SanitizeRE.ReplaceAllString(col, "")
-		r.Push(fmt.Sprintf("SELECT id FROM columns WHERE name = '%s'", col))
+		colsplit := strings.Split(col, "=", 2)
+
+		if len(colsplit) == 1 {
+			col = SanitizeRE.ReplaceAllString(col, "")
+			r.Push(fmt.Sprintf("SELECT id FROM columns WHERE name = '%s'", col))
+			if set != nil { set[col] = "" }
+		} else {
+			colsplit[0] = SanitizeRE.ReplaceAllString(colsplit[0], "")
+			r.Push(fmt.Sprintf("SELECT id FROM columns WHERE name = '%s' AND value = %s", colsplit[0], tl.Quote(colsplit[1])))
+			if set != nil { set[colsplit[0]] = colsplit[1] }
+		}
+		
 		//fmt.Printf("   col: [%s]\n", col)
 	}
 	return op, strings.Join(([]string)(r), " INTERSECT ")
 }
 
-func SearchParseSub(input string, ored, removed *vector.StringVector) {
+func SearchParseSub(tl *Tasklist, input string, ored, removed *vector.StringVector) {
 	for _, token := range Strtok(input, "+-") {
-		op, theselect := SearchParseToken(token)
+		op, theselect := SearchParseToken(token, tl, nil)
 
 		switch op {
 		case '+': ored.Push(fmt.Sprintf("id IN (%s)", theselect))
@@ -172,7 +182,7 @@ func SearchParseSub(input string, ored, removed *vector.StringVector) {
 	}
 }
 
-func SearchParse(input string) (theselect, query string){
+func SearchParse(input string, wantsDone bool, tl *Tasklist) (theselect, query string){
 	lastEnd := 0
 	r := ""
 	
@@ -199,17 +209,18 @@ func SearchParse(input string) (theselect, query string){
 
 		//fmt.Printf("QuickTagParam: [%s]\n", quickTag)
 
-		SearchParseSub(quickTag, &ored, &removed)
+		SearchParseSub(tl, quickTag, &ored, &removed)
 	}
 
 	oredStr := strings.Join(([]string)(ored), " OR ")
 	removedStr := strings.Join(([]string)(removed), " OR ")
 
-	tagSelectStr := ""
+	var whereClauses vector.StringVector
+
 	if removed.Len() != 0 {
-		tagSelectStr = fmt.Sprintf("(%s AND NOT (%s))", oredStr, removedStr)
+		whereClauses.Push(fmt.Sprintf("(%s AND NOT (%s))", oredStr, removedStr))
 	} else if ored.Len() != 0 {
-		tagSelectStr = fmt.Sprintf("(%s)", oredStr)
+		whereClauses.Push(fmt.Sprintf("(%s)", oredStr))
 	}
 
 	if lastEnd < len(input) {
@@ -218,10 +229,12 @@ func SearchParse(input string) (theselect, query string){
 
 	r = strings.Trim(r, " \t\r\n\v")
 
-	whereClause := tagSelectStr
-	if r != "" { whereClause = "id IN (SELECT id FROM ridx WHERE title_field MATCH ? UNION SELECT id FROM ridx WHERE text_field MATCH ?) AND " + whereClause }
+	if r != "" { whereClauses.Push("id IN (SELECT id FROM ridx WHERE title_field MATCH ? UNION SELECT id FROM ridx WHERE text_field MATCH ?)") }
 
-	if whereClause != "" { whereClause = " WHERE " + whereClause }
+	if !wantsDone { whereClauses.Push("tasks.priority <> 5") }
+
+	whereClause := ""
+	if whereClauses.Len() != 0 { whereClause = " WHERE " + strings.Join(([]string)(whereClauses), " AND ") }
 	
 	return fmt.Sprintf("SELECT tasks.id, tasks.title_field, tasks.text_field, tasks.priority, tasks.repeat_field, tasks.trigger_at_field, tasks.sort, group_concat(columns.name||':'||columns.value, '\n') FROM tasks NATURAL JOIN columns %s GROUP BY tasks.id ORDER BY priority, sort ASC", whereClause), r
 }

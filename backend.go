@@ -142,6 +142,16 @@ func FormatTriggerAtForAdd(e *Entry) string {
 	return triggerAtString
 }
 
+func (tasklist *Tasklist) Quote(in string) string {
+	stmt, _ := tasklist.conn.Prepare("SELECT quote(?)")
+	defer stmt.Finalize()
+	stmt.Exec(in)
+	stmt.Next()
+	var r string
+	stmt.Scan(&r)
+	return r
+}
+
 func (tasklist *Tasklist) addColumns(e *Entry) {
 	for k, v := range e.Columns() {
 		Logf(DEBUG, "Adding column %s\n", k)
@@ -287,6 +297,30 @@ func (tl *Tasklist) Retrieve(theselect, query string) (v *vector.Vector) {
 	return
 }
 
+func (tl *Tasklist) GetSubcols(theselect string) []string {
+	var v vector.StringVector
+
+	stmtStr := "SELECT DISTINCT name FROM columns WHERE value = ''"
+	if theselect != "" { stmtStr += " AND id IN (" + theselect + ")"}
+
+	Logf(DEBUG, "Select for Subcols: [%s]\n", stmtStr)
+
+	stmt, serr := tl.conn.Prepare(stmtStr)
+	if serr != nil { panic(fmt.Sprintf("Error preparing SELECT statement for Tasklist.GetSubcols: %s", serr)) }
+	defer stmt.Finalize()
+	serr = stmt.Exec()
+	if serr != nil { panic(fmt.Sprintf("Error executing SELECT statement for Tasklist.GetSubcols: %s", serr)) }
+
+	for stmt.Next() {
+		var name string
+		serr = stmt.Scan(&name)
+		if serr != nil { panic(fmt.Sprintf("Error scanning for Tsklist.GetSubcols: %s", serr)) }
+		v.Push(name)
+	}
+
+	return ([]string)(v)
+}
+
 func (tl *Tasklist) RunTimedTriggers() {
 	stmt, serr := tl.conn.Prepare("SELECT id, title_field, text_field, priority, repeat_field, trigger_at_field, sort FROM tasks WHERE trigger_at_field < ? AND priority = ?");
 	defer stmt.Finalize()
@@ -299,7 +333,7 @@ func (tl *Tasklist) RunTimedTriggers() {
 		panic(fmt.Sprintf("Error executing SELECT statement for Tasklist.RunTimedTriggers: %s", serr.String()))
 	}
 
-	for (stmt.Next()) {
+	for stmt.Next() {
 		entry, scanerr := StatementScan(stmt)
 		
 		if scanerr != nil {

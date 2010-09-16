@@ -26,6 +26,7 @@ var commands map[string](func (args []string) int) = map[string](func (args []st
 	"add": CmdQuickAdd,
 	"update": CmdQuickUpdate,
 	"search": CmdSearch,
+	"colist": CmdColist,
 	"tsvup": CmdTsvUpdate,
 
 	"old-add": CmdAdd,
@@ -43,6 +44,7 @@ var help_commands map[string](func ()) = map[string](func ()){
 	"add": HelpQuickAdd,
 	"update": HelpQuickUpdate,
 	"search": HelpSearch,
+	"colist": HelpColist,
 	"tsvup": HelpTsvUpdate,
 	"compat": CompatHelp,
 
@@ -156,10 +158,10 @@ func HelpQuickUpdate() {
 }
 
 func CmdSearch(args []string) int {
-	tl := CheckArgsOpenDb(args, 1, 1000, "qadd")
+	tl := CheckArgsOpenDb(args, 1, 1000, "search")
 	defer tl.Close()
 
-	theselect, query := SearchParse(strings.Join(args[1:], " "))
+	theselect, query := SearchParse(strings.Join(args[1:], " "), false, tl)
 
 	Logf(DEBUG, "Search statement [%s] with query [%s]\n", theselect, query)
 
@@ -170,7 +172,35 @@ func CmdSearch(args []string) int {
 
 func HelpSearch() {
 	fmt.Fprintf(os.Stderr, "Usage: search <db> <search string>\n\n")
-	fmt.Fprintf(os.Stderr, "\tLike list but only returns matching entries")
+	fmt.Fprintf(os.Stderr, "\tReturns a list of matching entries")
+}
+
+func CmdColist(args []string) int {
+	tl := CheckArgsOpenDb(args, 1, 2, "colist")
+	defer tl.Close()
+
+	theselect, base := "", ""
+	set := make(map[string]string)
+	if len(args) > 1 {
+		base = args[1]
+		_, theselect = SearchParseToken("+"+base, tl, set)
+	}
+
+	fmt.Printf("Set: %v\n", set)
+
+	subcols := tl.GetSubcols(theselect);
+
+	for _, x := range subcols {
+		if _, ok := set[x]; ok { continue }
+		fmt.Printf("%s@%s\n", base, x)
+	}
+	
+	return 0
+}
+
+func HelpColist() {
+	fmt.Fprintf(os.Stderr, "Usage: colist <db> <list of columns>\n\n")
+	fmt.Fprintf(os.Stderr, "\tReturns categories associated with the list of columns (the list of columns colud be empty)")
 }
 
 func CmdRemove(args []string) int {
@@ -373,6 +403,7 @@ func main() {
 		w.WriteString("\tcreate\tCreates new tasklist\n")
 		w.WriteString("\n")
 		w.WriteString("\tsearch\tSearch (lists everything when called without a query)\n")
+		w.WriteString("\tcolist\tReturns lists of categories\n")
 		w.WriteString("\n")
 		w.WriteString("\tget\tDisplays an entry of the tasklist\n")
 		w.WriteString("\tadd\tAdd command\n")

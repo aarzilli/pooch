@@ -266,7 +266,7 @@ func ListServer(c *http.Conn, req *http.Request) {
 
 	query := req.FormValue("q")
 
-	v := tl.Retrieve(SearchParse(query))
+	v := tl.Retrieve(SearchParse(query, includeDone, tl))
 
 	ListHeaderHTML(map[string]string{ "tlname": tlname, "theme": css }, c)
 	JavascriptInclude(c, "/shortcut.js")
