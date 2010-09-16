@@ -21,7 +21,6 @@ var commands map[string](func (args []string) int) = map[string](func (args []st
 	"help": CmdHelp,
 	"create": CmdCreate,
 	"get": CmdGet,
-	"list": CmdList,
 	"remove": CmdRemove,
 	"serve": CmdServe,
 	"add": CmdQuickAdd,
@@ -39,7 +38,6 @@ var help_commands map[string](func ()) = map[string](func ()){
 	"help": HelpHelp,
 	"create": HelpCreate,
 	"get": HelpGet,
-	"list": HelpList,
 	"remove": HelpRemove,
 	"serve": HelpServe,
 	"add": HelpQuickAdd,
@@ -167,11 +165,6 @@ func CmdSearch(args []string) int {
 
 	CmdListEx(tl.Retrieve(theselect, query))
 
-	/* old implementation -- partial
-
-	CmdListEx(tl.Search(searchstr))
-	 */
-
 	return 0
 }
 
@@ -243,20 +236,6 @@ func CmdListEx(v *vector.Vector) {
 			entry.Title(), strings.Repeat(" ", title_size - len(entry.Title())),
 			timeString)
 	}
-}
-
-func CmdList(argv []string) int {
-	tl := CheckArgsOpenDb(argv, 1, 1, "list")
-	defer tl.Close()
-
-	CmdListEx(tl.GetList(false))
-
-	return 0
-}
-
-func HelpList() {
-	fmt.Fprintf(os.Stderr, "usage: list <db>\n\n")
-	fmt.Fprintf(os.Stderr, "\tLists contents of <db>\n")
 }
 
 func CmdServe(args []string) int {

@@ -170,8 +170,6 @@ func SearchParseSub(input string, ored, removed *vector.StringVector) {
 		case '-': removed.Push(fmt.Sprintf("id IN (%s)", theselect))
 		}
 	}
-
-
 }
 
 func SearchParse(input string) (theselect, query string){
@@ -207,13 +205,12 @@ func SearchParse(input string) (theselect, query string){
 	oredStr := strings.Join(([]string)(ored), " OR ")
 	removedStr := strings.Join(([]string)(removed), " OR ")
 
-	var tagSelectStr string
+	tagSelectStr := ""
 	if removed.Len() != 0 {
 		tagSelectStr = fmt.Sprintf("(%s AND NOT (%s))", oredStr, removedStr)
-	} else {
+	} else if ored.Len() != 0 {
 		tagSelectStr = fmt.Sprintf("(%s)", oredStr)
 	}
-
 
 	if lastEnd < len(input) {
 		r += input[lastEnd:len(input)]
@@ -221,10 +218,12 @@ func SearchParse(input string) (theselect, query string){
 
 	r = strings.Trim(r, " \t\r\n\v")
 
-	matchClause := ""
-	if r != "" { matchClause = "id IN (SELECT id FROM ridx WHERE title_field MATCH ? UNION SELECT id FROM ridx WHERE text_field MATCH ?) AND" }
+	whereClause := tagSelectStr
+	if r != "" { whereClause = "id IN (SELECT id FROM ridx WHERE title_field MATCH ? UNION SELECT id FROM ridx WHERE text_field MATCH ?) AND " + whereClause }
 
-	return fmt.Sprintf("SELECT tasks.id, tasks.title_field, tasks.text_field, tasks.priority, tasks.repeat_field, tasks.trigger_at_field, tasks.sort, group_concat(columns.name||':'||columns.value, '\n') FROM tasks NATURAL JOIN columns WHERE %s %s GROUP BY tasks.id ORDER BY priority, sort ASC", matchClause, tagSelectStr), r
+	if whereClause != "" { whereClause = " WHERE " + whereClause }
+	
+	return fmt.Sprintf("SELECT tasks.id, tasks.title_field, tasks.text_field, tasks.priority, tasks.repeat_field, tasks.trigger_at_field, tasks.sort, group_concat(columns.name||':'||columns.value, '\n') FROM tasks NATURAL JOIN columns %s GROUP BY tasks.id ORDER BY priority, sort ASC", whereClause), r
 }
 
 /*

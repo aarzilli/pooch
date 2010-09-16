@@ -248,33 +248,6 @@ func GetListEx(stmt *sqlite.Stmt, v *vector.Vector) {
 	}
 }
 
-func (tl *Tasklist) GetList(includeDone bool) (v *vector.Vector) {
-	v = new(vector.Vector);
-
-	stmtStr := "SELECT tasks.id, tasks.title_field, tasks.text_field, tasks.priority, tasks.repeat_field, tasks.trigger_at_field, tasks.sort, group_concat(columns.name||':'||columns.value, '\n') FROM tasks NATURAL JOIN columns";
-
-	if !includeDone {
-		stmtStr += " WHERE tasks.priority <> 5"
-	}
-
-	stmtStr += " GROUP BY tasks.id ORDER BY tasks.priority, tasks.trigger_at_field ASC, tasks.sort DESC";
-	
-	stmt, serr := tl.conn.Prepare(stmtStr);
-	if serr != nil {
-		panic(fmt.Sprintf("Error preparing SELECT statement for Tasklist.GetList: %s", serr))
-	}
-	defer stmt.Finalize()
-	
-	serr = stmt.Exec()
-	if serr != nil {
-		panic(fmt.Sprintf("Error executing SELECT statement for Tasklist.GetList: %s", serr))
-	}
-
-	GetListEx(stmt, v)
-
-	return
-}
-
 func (tl *Tasklist) GetEventList(start, end string) (v *vector.Vector) {
 	v = new(vector.Vector)
 
@@ -309,26 +282,6 @@ func (tl *Tasklist) Retrieve(theselect, query string) (v *vector.Vector) {
 		serr = stmt.Exec()
 	}
 	if serr != nil { panic(fmt.Sprintf("Error executing SELECT statement [%s] for tasklist.Retrieve: %s", theselect, serr)) }
-
-	GetListEx(stmt, v)
-	return
-}
-
-func (tl *Tasklist) Search(query string) (v *vector.Vector) {
-	v = new(vector.Vector);
-
-	stmtStr := "SELECT tasks.id, tasks.title_field, tasks.text_field, tasks.priority, tasks.repeat_field, tasks.trigger_at_field, tasks.sort, group_concat(columns.name||':'||columns.value, '\n') FROM tasks NATURAL JOIN columns WHERE id IN (SELECT id FROM ridx WHERE title_field MATCH ? UNION SELECT id FROM ridx WHERE text_field MATCH ?) GROUP BY tasks.id ORDER BY priority, sort ASC";
-
-	stmt, serr := tl.conn.Prepare(stmtStr);
-	if serr != nil {
-		panic(fmt.Sprintf("Error preparing SELECT statement for Tasklist.Search: %s", serr))
-	}
-	defer stmt.Finalize()
-	
-	serr = stmt.Exec(query, query)
-	if serr != nil {
-		panic(fmt.Sprintf("Error executing SELECT statement for Tasklist.GetList: %s", serr.String()))
-	}	
 
 	GetListEx(stmt, v)
 	return
