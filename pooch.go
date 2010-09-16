@@ -161,11 +161,16 @@ func CmdSearch(args []string) int {
 	tl := CheckArgsOpenDb(args, 1, 1000, "qadd")
 	defer tl.Close()
 
-	searchstr := strings.Join(args[1:], " ")
+	theselect, query := SearchParse(strings.Join(args[1:], " "))
 
-	Logf(DEBUG, "searching: [%s]", searchstr)
+	Logf(DEBUG, "Search statement [%s] with query [%s]\n", theselect, query)
+
+	CmdListEx(tl.Retrieve(theselect, query))
+
+	/* old implementation -- partial
 
 	CmdListEx(tl.Search(searchstr))
+	 */
 
 	return 0
 }

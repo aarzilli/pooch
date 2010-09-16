@@ -12,6 +12,7 @@ import (
 	"container/vector"
 	"time"
 	"strconv"
+	"regexp"
 )
 
 var TRIGGER_AT_FORMAT string = "2006-01-02 15:04:05"
@@ -126,6 +127,106 @@ func SortFromTriggerAt(triggerAt *time.Time) string {
 }
 
 
+func isQuickTagStart(ch uint8) bool {
+	return ch == '#' || ch == '@'
+}
+
+func Strtok(input, chars string) []string {
+	var r vector.StringVector
+	i, lastIdx := 0, 0
+	for {
+		i = strings.IndexAny(input[lastIdx+1:len(input)], chars)
+		if i == -1 { break }
+		r.Push(input[lastIdx:lastIdx+i+1])
+		lastIdx += i+1
+	}
+
+	r.Push(input[lastIdx:len(input)])
+
+	return ([]string)(r)
+}
+
+var SanitizeRE *regexp.Regexp = regexp.MustCompile("[^a-zA-Z0-9.,/\\^!?]")
+
+func SearchParseToken(input string) (op uint8, theselect string) {
+	var r vector.StringVector
+	
+	op = input[0]
+	//fmt.Printf("op: %c\n", op)
+	for _, col := range Strtok(input[1:len(input)], "@#") {
+		col = SanitizeRE.ReplaceAllString(col, "")
+		r.Push(fmt.Sprintf("SELECT id FROM columns WHERE name = '%s'", col))
+		//fmt.Printf("   col: [%s]\n", col)
+	}
+	return op, strings.Join(([]string)(r), " INTERSECT ")
+}
+
+func SearchParseSub(input string, ored, removed *vector.StringVector) {
+	for _, token := range Strtok(input, "+-") {
+		op, theselect := SearchParseToken(token)
+
+		switch op {
+		case '+': ored.Push(fmt.Sprintf("id IN (%s)", theselect))
+		case '-': removed.Push(fmt.Sprintf("id IN (%s)", theselect))
+		}
+	}
+
+
+}
+
+func SearchParse(input string) (theselect, query string){
+	lastEnd := 0
+	r := ""
+	
+	var ored, removed vector.StringVector
+	
+	for i := 0; i < len(input); i++ {
+		ch := input[i]
+
+		addPlus := true
+		if (i+1 < len(input)) && ((ch == '+') || (ch == '-')) {
+			addPlus = false
+			if !isQuickTagStart(input[i+1]) { continue }
+		} else if !isQuickTagStart(ch) {
+			continue
+		}
+
+		r += input[lastEnd:i]
+
+		quickTag, j := ExtractQuickTag(input[i:len(input)])
+		i += j
+		lastEnd = i+1
+
+		if addPlus { quickTag = "+" + quickTag }
+
+		//fmt.Printf("QuickTagParam: [%s]\n", quickTag)
+
+		SearchParseSub(quickTag, &ored, &removed)
+	}
+
+	oredStr := strings.Join(([]string)(ored), " OR ")
+	removedStr := strings.Join(([]string)(removed), " OR ")
+
+	var tagSelectStr string
+	if removed.Len() != 0 {
+		tagSelectStr = fmt.Sprintf("(%s AND NOT (%s))", oredStr, removedStr)
+	} else {
+		tagSelectStr = fmt.Sprintf("(%s)", oredStr)
+	}
+
+
+	if lastEnd < len(input) {
+		r += input[lastEnd:len(input)]
+	}
+
+	r = strings.Trim(r, " \t\r\n\v")
+
+	matchClause := ""
+	if r != "" { matchClause = "id IN (SELECT id FROM ridx WHERE title_field MATCH ? UNION SELECT id FROM ridx WHERE text_field MATCH ?) AND" }
+
+	return fmt.Sprintf("SELECT tasks.id, tasks.title_field, tasks.text_field, tasks.priority, tasks.repeat_field, tasks.trigger_at_field, tasks.sort, group_concat(columns.name||':'||columns.value, '\n') FROM tasks NATURAL JOIN columns WHERE %s %s GROUP BY tasks.id ORDER BY priority, sort ASC", matchClause, tagSelectStr), r
+}
+
 /*
  Supported # syntax:
 
@@ -152,9 +253,7 @@ func QuickParse(input string) (*Entry, *vector.StringVector) {
 	for i := 0; i < len(input); i++ {
 		ch := input[i]
 
-		if (ch != '#') && (ch != '@') {
-			continue
-		}
+		if !isQuickTagStart(ch) { continue }
 
 		r += input[lastEnd:i]
 

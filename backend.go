@@ -296,6 +296,24 @@ func (tl *Tasklist) GetEventList(start, end string) (v *vector.Vector) {
 	return
 }
 
+func (tl *Tasklist) Retrieve(theselect, query string) (v *vector.Vector) {
+	v = new(vector.Vector);
+
+	stmt, serr := tl.conn.Prepare(theselect)
+	if serr != nil { panic(fmt.Sprintf("Error preparing SELECT statement [%s] for tasklist.Retrieve: %s", theselect, serr)) }
+	defer stmt.Finalize()
+
+	if query != "" {
+		serr = stmt.Exec(query, query)
+	} else {
+		serr = stmt.Exec()
+	}
+	if serr != nil { panic(fmt.Sprintf("Error executing SELECT statement [%s] for tasklist.Retrieve: %s", theselect, serr)) }
+
+	GetListEx(stmt, v)
+	return
+}
+
 func (tl *Tasklist) Search(query string) (v *vector.Vector) {
 	v = new(vector.Vector);
 
@@ -313,7 +331,6 @@ func (tl *Tasklist) Search(query string) (v *vector.Vector) {
 	}	
 
 	GetListEx(stmt, v)
-
 	return
 }
 
