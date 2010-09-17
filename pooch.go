@@ -29,6 +29,7 @@ var commands map[string](func (args []string) int) = map[string](func (args []st
 	"colist": CmdColist,
 	"tsvup": CmdTsvUpdate,
 
+	"port": CmdPort,
 	"old-add": CmdAdd,
 	"old-update": CmdUpdate,
 	"old-import": CmdImport,
@@ -48,6 +49,7 @@ var help_commands map[string](func ()) = map[string](func ()){
 	"tsvup": HelpTsvUpdate,
 	"compat": CompatHelp,
 
+	"port": HelpPort,
 	"old-add": HelpAdd,
 	"old-update": HelpUpdate,
 	"old-import": HelpImport,

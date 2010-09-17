@@ -66,6 +66,19 @@ func Create(filename string) {
 	return
 }
 
+func Port(filename, tag string) {
+	conn, err := sqlite.Open(filename)
+	if err != nil { panic(fmt.Sprintf("Unable to open the database: %s", err)) }
+	defer conn.Close()
+
+	if err := conn.Exec("CREATE TABLE columns(id TEXT, name TEXT, value TEXT, FOREIGN KEY (id) REFERENCES tasks (id) ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED);"); err != nil {
+		panic(fmt.Sprintf("Unable to execute CREATE TABLE statment in backend.Port: %s", err))
+	}
+
+	err = conn.Exec("INSERT INTO columns(id, name, value) SELECT id, ?, '' FROM tasks", tag)
+	if err != nil { panic(fmt.Sprintf("Unable to execute INSERT INTO statement in backend.Port: %s", err)) }
+}
+
 func Open(name string) (tasklist *Tasklist) {
 	conn, sqerr := sqlite.Open(name)
 	if sqerr != nil {

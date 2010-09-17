@@ -126,6 +126,23 @@ func HelpImport() {
 	fmt.Fprintf(os.Stderr, "\tImports the content of <directory> inside <db>\n\n")
 }
 
+func CmdPort(args []string) int {
+	CheckArgs(args, 2, 2, "create")
+	
+	filename, _ := Resolve(args[0])
+	
+	Log(DEBUG, "Resolved filename: ", filename)
+
+	Port(filename, args[1])
+	
+	return 0
+
+}
+
+func HelpPort() {
+	fmt.Fprintf(os.Stderr, "porting older dbs\n")
+}
+
 func CmdCompatGet(args []string) int {
 	tl := CheckArgsOpenDb(args, 2, 2, "get")
 	defer tl.Close()
@@ -261,6 +278,7 @@ func CompatHelp() {
 	w.WriteString("\told-update\tUpdates entry in tasklist\n")
 	w.WriteString("\told-improt\tImports directory in old pooch format\n")
 	w.WriteString("\told-get\tPrints entry (format compatible with old-add)\n")
+	w.WriteString("\tport\tAdds a columns table to a database that doesn't have it and populates it with base informations\n")
 
 	w.Flush()
 	tw.Flush()
