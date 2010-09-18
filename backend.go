@@ -71,6 +71,22 @@ func Port(filename, tag string) {
 	if err != nil { panic(fmt.Sprintf("Unable to open the database: %s", err)) }
 	defer conn.Close()
 
+	if err := conn.Exec("ALTER TABLE tasks RENAME TO tasks_bku"); err != nil {
+		panic(fmt.Sprintf("Unable to execute ALTER TABLE statement in backend.Create function: %s", err))
+	}
+
+	if err := conn.Exec("CREATE TABLE tasks(id TEXT PRIMARY KEY, title_field TEXT, text_field TEXT, priority INTEGER, repeat_field INTEGER, trigger_at_field DATE, sort TEXT);"); err != nil {
+		panic(fmt.Sprintf("Unable to execute CREATE TABLE statement in backend.Create function: %s", err))
+	}
+
+	if err := conn.Exec("INSERT INTO tasks SELECT * FROM tasks_bku"); err != nil {
+		panic(fmt.Sprintf("Unable to execute INSERT INTO (tasks copy) statement in backend.Create function: %s", err))
+	}
+
+	if err := conn.Exec("DROP TABLE tasks_bku"); err != nil {
+		panic(fmt.Sprintf("Unable to execute DROP TABLE (tasks copy) statement in backend.Create function: %s", err))
+	}
+
 	if err := conn.Exec("CREATE TABLE columns(id TEXT, name TEXT, value TEXT, FOREIGN KEY (id) REFERENCES tasks (id) ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED);"); err != nil {
 		panic(fmt.Sprintf("Unable to execute CREATE TABLE statment in backend.Port: %s", err))
 	}
@@ -86,8 +102,8 @@ func Open(name string) (tasklist *Tasklist) {
 	}
 
 	tasklist = &Tasklist{name, conn}
-	tasklist.MustExec("PRAGMA on tasklist.Open", "PRAGMA foreign_keys = ON;")
 	tasklist.RunTimedTriggers()
+	tasklist.MustExec("PRAGMA on tasklist.Open", "PRAGMA foreign_keys = ON;")
 	
 	return
 }
@@ -185,6 +201,7 @@ func (tasklist *Tasklist) Add(e *Entry) {
 		priority := e.Priority()
 		freq := e.Freq()
 		tasklist.MustExec("INSERT statement for Tasklist.Add", "INSERT INTO tasks(id, title_field, text_field, priority, repeat_field, trigger_at_field, sort) VALUES (?, ?, ?, ?, ?, ?, ?)", e.Id(), e.Title(), e.Text(), priority.ToInteger(), freq.ToInteger(), triggerAtString, e.Sort())
+		fmt.Printf("BLAP\n")
 		tasklist.MustExec("INSERT statement for Tasklist.Add (in ridx)", "INSERT INTO ridx(id, title_field, text_field) VALUES (?, ?, ?)", e.Id(), e.Title(), e.Text())
 		tasklist.addColumns(e);
 		
@@ -217,11 +234,16 @@ func (tasklist *Tasklist) Update(e *Entry) {
 }
 
 
-func StatementScan(stmt *sqlite.Stmt) (*Entry, os.Error) {
+func StatementScan(stmt *sqlite.Stmt, hasCols bool) (*Entry, os.Error) {
 	var priority_num int
 	var freq_num int
 	var trigger_str, id, title, text, sort, columns string
-	scanerr := stmt.Scan(&id, &title, &text, &priority_num, &freq_num, &trigger_str, &sort, &columns)
+	var scanerr os.Error
+	if hasCols {
+		scanerr = stmt.Scan(&id, &title, &text, &priority_num, &freq_num, &trigger_str, &sort, &columns)
+	} else {
+		scanerr = stmt.Scan(&id, &title, &text, &priority_num, &freq_num, &trigger_str, &sort)
+	}
 	triggerAt, _ := ParseDateTime(trigger_str)
 	freq := Frequency(freq_num)
 	priority := Priority(priority_num)
@@ -231,9 +253,11 @@ func StatementScan(stmt *sqlite.Stmt) (*Entry, os.Error) {
 	}
 
 	cols := make(Columns)
-	for _, v := range strings.Split(columns, "\n", -1) {
-		col := strings.Split(v, ":", 2)
-		cols[col[0]] = cols[col[1]]
+	if hasCols {
+		for _, v := range strings.Split(columns, "\n", -1) {
+			col := strings.Split(v, ":", 2)
+			cols[col[0]] = cols[col[1]]
+		}
 	}
 
 	return MakeEntry(id, title, text, priority, freq, triggerAt, sort, cols), nil
@@ -254,7 +278,7 @@ func (tl *Tasklist) Get(id string) *Entry {
 		panic(fmt.Sprintf("Couldn't find request entry at Tasklist.Get"))
 	}
 
-	entry, err := StatementScan(stmt)
+	entry, err := StatementScan(stmt, true)
 	if err != nil {
 		panic(fmt.Sprintf("Error scanning result of SELECT for Tasklist.Get: %s", err.String()))
 	}
@@ -267,7 +291,7 @@ func (tl *Tasklist) Get(id string) *Entry {
 func GetListEx(stmt *sqlite.Stmt, v *vector.Vector) {
 
 	for (stmt.Next()) {
-		entry, scanerr := StatementScan(stmt)
+		entry, scanerr := StatementScan(stmt, true)
 
 		if scanerr != nil {
 			panic(fmt.Sprintf("Error scanning results for Tasklist.GetList: %s", scanerr.String()))
@@ -341,7 +365,8 @@ func (tl *Tasklist) GetSubcols(theselect string) []string {
 }
 
 func (tl *Tasklist) RunTimedTriggers() {
-	stmt, serr := tl.conn.Prepare("SELECT id, title_field, text_field, priority, repeat_field, trigger_at_field, sort FROM tasks WHERE trigger_at_field < ? AND priority = ?");
+	tl.MustExec("PRAGMA on tasklist.Open", "PRAGMA foreign_keys = OFF;")
+	stmt, serr := tl.conn.Prepare("SELECT tasks.id, tasks.title_field, tasks.text_field, tasks.priority, tasks.repeat_field, tasks.trigger_at_field, tasks.sort, group_concat(columns.name||':'||columns.value, '\n') FROM tasks NATURAL JOIN columns WHERE tasks.trigger_at_field < ? AND tasks.priority = ? GROUP BY id");
 	defer stmt.Finalize()
 	if serr != nil {
 		panic(fmt.Sprintf("Error preparing SELECT statement for Tasklist.RunTimedTriggers: %s", serr.String()))
@@ -353,7 +378,7 @@ func (tl *Tasklist) RunTimedTriggers() {
 	}
 
 	for stmt.Next() {
-		entry, scanerr := StatementScan(stmt)
+		entry, scanerr := StatementScan(stmt, true)
 		
 		if scanerr != nil {
 			panic(fmt.Sprintf("Error scanning results of SELECT statement for Tasklist.RunTimedTriggers: %s", scanerr.String()))
@@ -373,8 +398,8 @@ func (tl *Tasklist) RunTimedTriggers() {
 
 		tl.MustExec("UPDATE for Tasklist.RunTimedTriggers", "UPDATE tasks SET priority = ? WHERE id = ?", NOW, entry.Id());
 	}
-
-	return
+	
+	tl.MustExec("PRAGMA on tasklist.Open", "PRAGMA foreign_keys = ON;")
 }
 
 func (tl *Tasklist) UpgradePriority(id string, special bool) Priority {

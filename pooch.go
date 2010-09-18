@@ -140,7 +140,7 @@ func HelpQuickUpdate() {
 }
 
 func CmdSearch(args []string) {
-	CheckArgsOpenDb(args, 1, 1000, "search", func(tl *Tasklist) {
+	CheckArgsOpenDb(args, 0, 1000, "search", func(tl *Tasklist) {
 		theselect, query := SearchParse(strings.Join(args[0:], " "), false, tl)
 
 		Logf(DEBUG, "Search statement [%s] with query [%s]\n", theselect, query)
@@ -155,7 +155,7 @@ func HelpSearch() {
 }
 
 func CmdColist(args []string) {
-	CheckArgsOpenDb(args, 1, 2, "colist", func(tl *Tasklist) {
+	CheckArgsOpenDb(args, 0, 1, "colist", func(tl *Tasklist) {
 		theselect, base := "", ""
 		set := make(map[string]string)
 		if len(args) > 0 {
@@ -163,8 +163,6 @@ func CmdColist(args []string) {
 			_, theselect = SearchParseToken("+"+base, tl, set)
 		}
 
-		fmt.Printf("Set: %v\n", set)
-		
 		subcols := tl.GetSubcols(theselect);
 		
 		for _, x := range subcols {
@@ -180,7 +178,7 @@ func HelpColist() {
 }
 
 func CmdRemove(args []string) {
-	CheckArgsOpenDb(args, 2, 2, "remove", func (tl *Tasklist) {
+	CheckArgsOpenDb(args, 1, 1, "remove", func (tl *Tasklist) {
 		CheckId(tl, args[0], "remove")
 		tl.Remove(args[0])
 	})
@@ -243,7 +241,7 @@ func CmdListEx(v *vector.Vector) {
 }
 
 func CmdServe(args []string) {
-	CheckArgs(args, 1, 20, "serve")
+	CheckArgs(args, 1, 1, "serve")
 
 	port, converr := strconv.Atoi(args[0])
 	CheckCondition(converr != nil, "Invalid port number %s: %s\n", args[0], converr)
@@ -256,7 +254,7 @@ func HelpServe() {
 }
 
 func CmdTsvUpdate(argv []string) {
-	CheckArgsOpenDb(argv, 1, 1, "tsvup", func (tl *Tasklist) {
+	CheckArgsOpenDb(argv, 0, 0, "tsvup", func (tl *Tasklist) {
 		in := bufio.NewReader(os.Stdin)
 		
 		for line, err := in.ReadString('\n'); err == nil; line, err = in.ReadString('\n') {
@@ -281,7 +279,7 @@ func HelpTsvUpdate() {
 }
 
 func CmdGet(args []string) {
-	CheckArgsOpenDb(args, 2, 2, "get", func(tl *Tasklist) {
+	CheckArgsOpenDb(args, 1, 1, "get", func(tl *Tasklist) {
 		id := args[0]
 		CheckId(tl, id, "get")
 		
