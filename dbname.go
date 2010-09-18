@@ -20,6 +20,12 @@ func FixExtension(name string) string {
 	return name + ".pooch"
 }
 
+func WithOpenDefault(rest func(tl *Tasklist)) {
+	dbname := os.Getenv("POOCHDB")
+	if dbname == "" { panic("POOCHDB Not Set") }
+	WithOpen(dbname, rest)
+}
+
 func SearchFile(name string) (outname string, found bool) {
 	outname = name
 	found = false

@@ -3,13 +3,13 @@
  Copyright 2010, Alessandro Arzilli
  */
 
-function setup(tlname) {
-    shortcut.add("Alt+s", function() { save_open_editor(tlname, false); });
+function setup() {
+    shortcut.add("Alt+s", function() { save_open_editor(false); });
 }
 
-function remove_entry(tasklist, name) {
+function remove_entry(name) {
     var req = new XMLHttpRequest();
-    req.open("GET", "remove?id=" + encodeURIComponent(name) + "&tl=" + encodeURIComponent(tasklist), true);
+    req.open("GET", "remove?id=" + encodeURIComponent(name), true);
     req.onreadystatechange = function() {
         if (req.readyState == 4) {
             if (req.responseText.match(/^removed/)) {
@@ -33,7 +33,7 @@ function remove_entry(tasklist, name) {
     req.send(null);
 }
 
-function save_editor(tasklist, form) {
+function save_editor(form) {
     obj = new Object();
     obj.title = form.elements['edtitle'].value;
     obj.text = form.elements['edtext'].value;
@@ -42,7 +42,6 @@ function save_editor(tasklist, form) {
     obj.id = form.elements['edid'].value;
     obj.priority = parseInt(form.elements['edprio'].value);
     obj.freq = form.elements['edfreq'].value;
-    obj.tasklist = tasklist;
     
     var ts = document.getElementById("ts_"+obj.id);
     var req = new XMLHttpRequest();
@@ -59,9 +58,9 @@ function save_editor(tasklist, form) {
     req.send(obj.toJSONString())
 }
 
-function add_row(tasklist, id) {
+function add_row(id) {
     var req = new XMLHttpRequest();
-    req.open("GET", "htmlget?type=add&tl=" + encodeURIComponent(tasklist) + "&id=" + encodeURIComponent(id), true);
+    req.open("GET", "htmlget?type=add&id=" + encodeURIComponent(id), true);
     req.onreadystatechange = function() {
         if (req.readyState == 4) {
             var newrows = req.responseText.split("\u2029", 2);
@@ -78,23 +77,22 @@ function add_row(tasklist, id) {
             newrow2.setAttribute("style", "display: none")
             newrow2.innerHTML = newrows[1]
 
-            save_open_editor(tasklist, true);
-            //toggle_editor(tasklist, id, null);
+            save_open_editor(true);
         }
     }
     req.send(null)
 }
 
-function add_entry(tasklist) {
+function add_entry(query) {
     var netext = document.getElementById('newentry').value;
 
     var req = new XMLHttpRequest()
-    req.open("GET", "qadd?tl=" + encodeURIComponent(tasklist) + "&text=" + encodeURIComponent(netext), true);
+    req.open("GET", "qadd?q=" + encodeURIComponent(query) + "&text=" + encodeURIComponent(netext), true);
     req.onreadystatechange = function() {
         if (req.readyState == 4) {
             if (req.responseText.match(/^added: /)) {
                 newid = req.responseText.substr("added: ".length);
-                add_row(tasklist, newid)
+                add_row(newid)
                 
                 document.getElementById('newentry').value = "";
                 
@@ -108,10 +106,10 @@ function add_entry(tasklist) {
     return false;
 }
 
-function fill_editor(tasklist, name) {
+function fill_editor(name) {
     var ed = document.getElementById("ediv_"+name);
     var req = new XMLHttpRequest();
-    req.open("GET", "get?id=" + encodeURIComponent(name) + "&tl=" + encodeURIComponent(tasklist), true);
+    req.open("GET", "get?id=" + encodeURIComponent(name), true);
     req.onreadystatechange = function() {
         if (req.readyState == 4) {
             var timestamp = req.responseText.split("\n", 2)[0];
@@ -135,7 +133,7 @@ function editor_from_row(row) {
     return document.getElementById("ediv_"+row.id.substr("editor_".length))
 }
 
-function save_open_editor(tasklist, should_close_editor) {
+function save_open_editor(should_close_editor) {
     orows = document.getElementsByTagName("tr");
     for (var i in document.getElementsByTagName("tr")) {
         orow = orows[i];
@@ -146,25 +144,25 @@ function save_open_editor(tasklist, should_close_editor) {
         
         if ((orow.id.match(/^editor_/)) && (orow.style['display'] != 'none')) {
             if (should_close_editor) {
-                close_editor(tasklist, orow)
+                close_editor(orow)
             } else {
-                save_editor(tasklist, editor_from_row(orow));
+                save_editor(editor_from_row(orow));
             }
         }
     }
 }
 
-function save_editor_by_id(tasklist, name, event) {
+function save_editor_by_id(name, event) {
     var form = document.getElementById("ediv_"+name);
-    save_editor(tasklist, form);
+    save_editor(form);
 }
 
-function close_editor(tasklist, row) {
-    save_editor(tasklist, editor_from_row(row));
+function close_editor(row) {
+    save_editor(editor_from_row(row));
     row.style['display'] = 'none';
 }
 
-function toggle_editor(tasklist, name, event) {
+function toggle_editor(name, event) {
     var row = document.getElementById("editor_"+name);
     if (row.style['display'] == 'none') {
         orows = document.getElementsByTagName("tr");
@@ -176,21 +174,21 @@ function toggle_editor(tasklist, name, event) {
             if (orow.id == null) continue;
             
             if ((orow.id.match(/^editor_/)) && (orow.style['display'] != 'none')) {
-                close_editor(tasklist, orow)
+                close_editor(orow)
             }
         }
 
         row.style['display'] = '';
 
-        fill_editor(tasklist, name);
+        fill_editor(name);
     } else {
-        close_editor(tasklist, row)
+        close_editor(row)
     }
 }
 
-function change_priority(tasklist, name, event) {
+function change_priority(name, event) {
     var req = new XMLHttpRequest();
-    req.open("GET", "change-priority?id=" + encodeURIComponent(name) + "&tl=" + encodeURIComponent(tasklist) + "&special=" + event.shiftKey, true);
+    req.open("GET", "change-priority?id=" + encodeURIComponent(name) + "&special=" + event.shiftKey, true);
     req.onreadystatechange = function() {
         if (req.readyState == 4) {
             if (req.responseText.match(/^priority-change-to: /)) {

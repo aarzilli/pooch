@@ -17,7 +17,7 @@ import (
 )
 
 
-var commands map[string](func (args []string) int) = map[string](func (args []string) int){
+var commands map[string](func (args []string)) = map[string](func (args []string)){
 	"help": CmdHelp,
 	"create": CmdCreate,
 	"get": CmdGet,
@@ -30,10 +30,6 @@ var commands map[string](func (args []string) int) = map[string](func (args []st
 	"tsvup": CmdTsvUpdate,
 
 	"port": CmdPort,
-	"old-add": CmdAdd,
-	"old-update": CmdUpdate,
-	"old-import": CmdImport,
-	"old-get": CmdCompatGet,
 }
 
 var help_commands map[string](func ()) = map[string](func ()){
@@ -50,10 +46,6 @@ var help_commands map[string](func ()) = map[string](func ()){
 	"compat": CompatHelp,
 
 	"port": HelpPort,
-	"old-add": HelpAdd,
-	"old-update": HelpUpdate,
-	"old-import": HelpImport,
-	"old-get": HelpCompatGet,
 }
 
 func Complain(usage bool, format string, a ...interface{}) {
@@ -85,13 +77,9 @@ func CheckArgs(args []string, min int, max int, cmd string) {
 	}
 }
 
-func CheckArgsOpenDb(args []string, min int, max int, cmd string) *Tasklist {
+func CheckArgsOpenDb(args []string, min int, max int, cmd string, rest func(tl *Tasklist)) {
 	CheckArgs(args, min, max, cmd)
-
-	name, found := Resolve(args[0])
-	CheckCondition(!found, "Could not find database %s\n", name)
-
-	return Open(name)
+	WithOpenDefault(rest)
 }
 
 func CheckId(tl *Tasklist, id string, cmd string) {
@@ -99,7 +87,7 @@ func CheckId(tl *Tasklist, id string, cmd string) {
 	CheckCondition(!exists, "Cannot %s, id doesn't exists: %s\n", cmd, id)
 }
 
-func CmdCreate(args []string) int {
+func CmdCreate(args []string) {
 	CheckArgs(args, 1, 1, "create")
 
 	filename, found := Resolve(args[0])
@@ -109,8 +97,6 @@ func CmdCreate(args []string) int {
 	CheckCondition(found, "Database already exists at: %s\n", filename)
 
 	Create(filename)
-	
-	return 0
 }
 
 func HelpCreate() {
@@ -118,104 +104,90 @@ func HelpCreate() {
 	fmt.Fprintf(os.Stderr, "\tCreates a new empty db named <db>\n")
 }
 
-func CmdQuickAdd(args []string) int {
-	tl := CheckArgsOpenDb(args, 1, 1000, "add")
-	defer tl.Close()
-
-	entry, parse_errors := QuickParse(strings.Join(args[1:], " "))
-	
-	fmt.Fprintf(os.Stderr, "%s\n", strings.Join(*parse_errors, "\n"))
-	
-	entry.SetId(tl.MakeRandomId())
-
-	tl.Add(entry)
-
-	return 0
+func CmdQuickAdd(args []string) {
+	CheckArgsOpenDb(args, 0, 1000, "add", func(tl *Tasklist) {
+		entry, parse_errors := QuickParse(strings.Join(args[0:], " "))
+		
+		fmt.Fprintf(os.Stderr, "%s\n", strings.Join(*parse_errors, "\n"))
+		
+		entry.SetId(tl.MakeRandomId())
+		
+		tl.Add(entry)
+	})
 }
 
 func HelpQuickAdd() {
-	fmt.Fprintf(os.Stderr, "Usage: add <db> <quickadd string>\n\n")
+	fmt.Fprintf(os.Stderr, "Usage: add <quickadd string>\n\n")
 	fmt.Fprintf(os.Stderr, "\tInterprets the quickadd string and adds it to the db")
 }
 
-func CmdQuickUpdate(args []string) int {
-	tl := CheckArgsOpenDb(args, 1, 1000, "update")
-	defer tl.Close()
-
-	CheckId(tl, args[1], "update")
-
-	entry, parse_errors := QuickParse(strings.Join(args[2:], " "))
-	
-	fmt.Fprintf(os.Stderr, "%s\n", strings.Join(*parse_errors, "\n"))
-
-	entry.SetId(args[1])
-	tl.Update(entry)
-
-	return 0
+func CmdQuickUpdate(args []string) {
+	CheckArgsOpenDb(args, 1, 1000, "update", func (tl *Tasklist) {
+		CheckId(tl, args[0], "update")
+		
+		entry, parse_errors := QuickParse(strings.Join(args[1:], " "))
+		
+		fmt.Fprintf(os.Stderr, "%s\n", strings.Join(*parse_errors, "\n"))
+		
+		entry.SetId(args[0])
+		tl.Update(entry)
+	})
 }
 
 func HelpQuickUpdate() {
-	fmt.Fprintf(os.Stderr, "Usage: update <db> <id> <quickadd string>\n\n")
+	fmt.Fprintf(os.Stderr, "Usage: update <id> <quickadd string>\n\n")
 	fmt.Fprintf(os.Stderr, "\tInterprets the quickadd string and updates selected entry in the db")
 }
 
-func CmdSearch(args []string) int {
-	tl := CheckArgsOpenDb(args, 1, 1000, "search")
-	defer tl.Close()
+func CmdSearch(args []string) {
+	CheckArgsOpenDb(args, 1, 1000, "search", func(tl *Tasklist) {
+		theselect, query := SearchParse(strings.Join(args[0:], " "), false, tl)
 
-	theselect, query := SearchParse(strings.Join(args[1:], " "), false, tl)
+		Logf(DEBUG, "Search statement [%s] with query [%s]\n", theselect, query)
 
-	Logf(DEBUG, "Search statement [%s] with query [%s]\n", theselect, query)
-
-	CmdListEx(tl.Retrieve(theselect, query))
-
-	return 0
+		CmdListEx(tl.Retrieve(theselect, query))
+	})
 }
 
 func HelpSearch() {
-	fmt.Fprintf(os.Stderr, "Usage: search <db> <search string>\n\n")
+	fmt.Fprintf(os.Stderr, "Usage: search <search string>\n\n")
 	fmt.Fprintf(os.Stderr, "\tReturns a list of matching entries")
 }
 
-func CmdColist(args []string) int {
-	tl := CheckArgsOpenDb(args, 1, 2, "colist")
-	defer tl.Close()
+func CmdColist(args []string) {
+	CheckArgsOpenDb(args, 1, 2, "colist", func(tl *Tasklist) {
+		theselect, base := "", ""
+		set := make(map[string]string)
+		if len(args) > 0 {
+			base = args[0]
+			_, theselect = SearchParseToken("+"+base, tl, set)
+		}
 
-	theselect, base := "", ""
-	set := make(map[string]string)
-	if len(args) > 1 {
-		base = args[1]
-		_, theselect = SearchParseToken("+"+base, tl, set)
-	}
-
-	fmt.Printf("Set: %v\n", set)
-
-	subcols := tl.GetSubcols(theselect);
-
-	for _, x := range subcols {
-		if _, ok := set[x]; ok { continue }
-		fmt.Printf("%s@%s\n", base, x)
-	}
-	
-	return 0
+		fmt.Printf("Set: %v\n", set)
+		
+		subcols := tl.GetSubcols(theselect);
+		
+		for _, x := range subcols {
+			if _, ok := set[x]; ok { continue }
+			fmt.Printf("%s@%s\n", base, x)
+		}
+	})
 }
 
 func HelpColist() {
-	fmt.Fprintf(os.Stderr, "Usage: colist <db> <list of columns>\n\n")
+	fmt.Fprintf(os.Stderr, "Usage: colist <list of columns>\n\n")
 	fmt.Fprintf(os.Stderr, "\tReturns categories associated with the list of columns (the list of columns colud be empty)")
 }
 
-func CmdRemove(args []string) int {
-	tl := CheckArgsOpenDb(args, 2, 2, "remove")
-	defer tl.Close()
-
-	CheckId(tl, args[1], "remove")
-	tl.Remove(args[1])
-	return 0
+func CmdRemove(args []string) {
+	CheckArgsOpenDb(args, 2, 2, "remove", func (tl *Tasklist) {
+		CheckId(tl, args[0], "remove")
+		tl.Remove(args[0])
+	})
 }
 
 func HelpRemove() {
-	fmt.Fprintf(os.Stderr, "Usage: remove <db> <id>\n\n")
+	fmt.Fprintf(os.Stderr, "Usage: remove <id>\n\n")
 	fmt.Fprintf(os.Stderr, "\tRemoves specified entry from <db>\n")
 }
 
@@ -270,123 +242,92 @@ func CmdListEx(v *vector.Vector) {
 	}
 }
 
-func CmdServe(args []string) int {
+func CmdServe(args []string) {
 	CheckArgs(args, 1, 20, "serve")
 
 	port, converr := strconv.Atoi(args[0])
 	CheckCondition(converr != nil, "Invalid port number %s: %s\n", args[0], converr)
-	
-	dbs := args[1:]
-	names := make([]string, len(dbs))
-
-	if len(dbs) > 0 {
-		for i, db := range dbs {
-			var found bool
-			if dbs[i], found = Resolve(db); !found {
-				fmt.Fprintf(os.Stderr, "Failed to resolve %s, excluded", db)
-				dbs[i] = ""
-			} else {
-				names[i] = Base(dbs[i])
-				fmt.Printf("Inserted %s as %s\n", dbs[i], names[i])
-			}
-		}
-	} else {
-		dbs, names = GetAllDefaultDBs()
-	}
-
-	fmt.Printf("Serve on: %d, %s\n", port, dbs)
-
-	Serve(strconv.Itoa(port), names, dbs)
-
-	return 0
+	Serve(strconv.Itoa(port))
 }
 
 func HelpServe() {
-	fmt.Fprintf(os.Stderr, "usage: serve <port> <db>+\n\n")
-	fmt.Fprintf(os.Stderr, "\tStarts http server for pooch on <port> with specified <db>s\n\n")
+	fmt.Fprintf(os.Stderr, "usage: serve <port>\n\n")
+	fmt.Fprintf(os.Stderr, "\tStarts http server for pooch on <port>\n\n")
 }
 
-func CmdTsvUpdate(argv []string) int {
-	tl := CheckArgsOpenDb(argv, 1, 1, "tsvup")
-	defer tl.Close()
-
-	in := bufio.NewReader(os.Stdin)
-
-	for line, err := in.ReadString('\n'); err == nil; line, err = in.ReadString('\n') {
-		entry := ParseTsvFormat(strings.Trim(line, "\t\n "));
-		if tl.Exists(entry.Id()) {
-			fmt.Printf("UPDATING\t%s\t%s\n", entry.Id(), entry.TriggerAt().Format("2006-01-02"))
-			tl.Update(entry)
-		} else {
-			fmt.Printf("ADDING\t%s\t%s\n", entry.Id(), entry.TriggerAt().Format("2006-01-02"))
-			tl.Add(entry)
+func CmdTsvUpdate(argv []string) {
+	CheckArgsOpenDb(argv, 1, 1, "tsvup", func (tl *Tasklist) {
+		in := bufio.NewReader(os.Stdin)
+		
+		for line, err := in.ReadString('\n'); err == nil; line, err = in.ReadString('\n') {
+			entry := ParseTsvFormat(strings.Trim(line, "\t\n "));
+			if tl.Exists(entry.Id()) {
+				fmt.Printf("UPDATING\t%s\t%s\n", entry.Id(), entry.TriggerAt().Format("2006-01-02"))
+				tl.Update(entry)
+			} else {
+				fmt.Printf("ADDING\t%s\t%s\n", entry.Id(), entry.TriggerAt().Format("2006-01-02"))
+				tl.Add(entry)
+			}
 		}
-	}
-
-	return 0
+	})
 }
 
 func HelpTsvUpdate() {
-	fmt.Fprintf(os.Stderr, "usage: tsvup <db>\n\n")
+	fmt.Fprintf(os.Stderr, "usage: tsvup\n\n")
 	fmt.Fprintf(os.Stderr, "\tReads a tsv file from standard input and adds or updates every entry as specified\n")
 	fmt.Fprintf(os.Stderr, "Entries should be in the form:\n")
 	fmt.Fprintf(os.Stderr, "<id> <title> <priority> <at/sort>\n")
 	fmt.Fprintf(os.Stderr, "The last field is interpreted as either a triggerAt field if priority is timed, or as the sort field otherwise\n\n")
 }
 
-func CmdGet(args []string) int {
-	tl := CheckArgsOpenDb(args, 2, 2, "get")
-	defer tl.Close()
-
-	id := args[1]
-	CheckId(tl, id, "get")
-
-	entry := tl.Get(id)
-
-	fmt.Printf("%s\n%s\n", entry.Title(), entry.Text())
-
-	tw := tabwriter.NewWriter(os.Stdout, 8, 8, 4, ' ', 0)
-	w := bufio.NewWriter(tw)
-
-	pr := entry.Priority()
-	w.WriteString(fmt.Sprintf("Priority:\t%s\n", pr.String()))
-	if entry.TriggerAt() != nil {
-		w.WriteString(fmt.Sprintf("When:\t%s\n", entry.TriggerAt()))
-	} else {
-		w.WriteString("When:\tN/A\n")
-	}
-	fr := entry.Freq()
-	w.WriteString(fmt.Sprintf("Recur:\t%s\n", fr.String()))
-	w.WriteString(fmt.Sprintf("Sort:\t%s\n", entry.Sort()))
-	for k, v := range entry.Columns() {
-		pv := v
-		if v == "" { pv = "<category>" }
-		w.WriteString(fmt.Sprintf("%s:\t%v\n", k, pv))
-	}
-	w.WriteString("\n")
-	w.Flush()
-	tw.Flush()
-
-	return 0
+func CmdGet(args []string) {
+	CheckArgsOpenDb(args, 2, 2, "get", func(tl *Tasklist) {
+		id := args[0]
+		CheckId(tl, id, "get")
+		
+		entry := tl.Get(id)
+		
+		fmt.Printf("%s\n%s\n", entry.Title(), entry.Text())
+		
+		tw := tabwriter.NewWriter(os.Stdout, 8, 8, 4, ' ', 0)
+		w := bufio.NewWriter(tw)
+		
+		pr := entry.Priority()
+		w.WriteString(fmt.Sprintf("Priority:\t%s\n", pr.String()))
+		if entry.TriggerAt() != nil {
+			w.WriteString(fmt.Sprintf("When:\t%s\n", entry.TriggerAt()))
+		} else {
+			w.WriteString("When:\tN/A\n")
+		}
+		fr := entry.Freq()
+		w.WriteString(fmt.Sprintf("Recur:\t%s\n", fr.String()))
+		w.WriteString(fmt.Sprintf("Sort:\t%s\n", entry.Sort()))
+		for k, v := range entry.Columns() {
+			pv := v
+			if v == "" { pv = "<category>" }
+			w.WriteString(fmt.Sprintf("%s:\t%v\n", k, pv))
+		}
+		w.WriteString("\n")
+		w.Flush()
+		tw.Flush()
+	})
 }
 	
 func HelpGet() {
-	fmt.Fprintf(os.Stderr, "Usage: get <db> <id>\n\n")
+	fmt.Fprintf(os.Stderr, "Usage: get <id>\n\n")
 	fmt.Fprintf(os.Stderr, "\tPrints the entry associated with <id> inside <db>\n")
 }
 
 
-func CmdHelp(args []string) int {
+func CmdHelp(args []string) {
 	CheckArgs(args, 0, 1, "help")
 	if len(args) <= 0 {
 		flag.Usage()
-		return 0
 	} else {
 		helpfn := help_commands[args[0]]
 		CheckCondition(helpfn == nil, "Unknown command: %s", args[0])
 		helpfn()
 	}
-	return 0
 }
 
 func HelpHelp() {

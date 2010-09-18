@@ -92,6 +92,12 @@ func Open(name string) (tasklist *Tasklist) {
 	return
 }
 
+func WithOpen(name string, rest func(tl *Tasklist)) {
+	tl := Open(name)
+	defer tl.Close()
+	rest(tl)
+}
+
 func (tasklist *Tasklist) Close() {
 	Log(DEBUG, "Closing connection")
 	err := tasklist.conn.Close()
