@@ -304,7 +304,7 @@ func QuickParse(input string, query string, tl *Tasklist) (*Entry, *vector.Strin
 
 		//removedASpace := false
 		// skips a space if there are two contiguous
-		if lastEnd < len(input) && input[lastEnd] == ' ' && r[len(r)-1] == ' ' {
+		if lastEnd < len(input) && input[lastEnd] == ' ' && len(r) > 0 && r[len(r)-1] == ' ' {
 			//removedASpace = true
 			lastEnd++
 		}
