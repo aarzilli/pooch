@@ -42,6 +42,7 @@ function save_editor(form) {
     obj.id = form.elements['edid'].value;
     obj.priority = parseInt(form.elements['edprio'].value);
     obj.freq = form.elements['edfreq'].value;
+    obj.cols = form.elements['edcols'].value;
     
     var ts = document.getElementById("ts_"+obj.id);
     var req = new XMLHttpRequest();

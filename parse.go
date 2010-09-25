@@ -13,6 +13,8 @@ import (
 	"time"
 	"strconv"
 	"regexp"
+	"bufio"
+	"tabwriter"
 )
 
 var TRIGGER_AT_FORMAT string = "2006-01-02 15:04:05"
@@ -75,33 +77,24 @@ func ParseDateTime(input string) (datetime *time.Time, error string) {
 	}
 	
 	if (strings.Index(input, " ") != -1) { // has time
-		if datetime, err = time.Parse("2006-1-2 15:04", input); err == nil {
-			return
-		}
+		if datetime, err = time.Parse("2006-1-2 15:04", input); err == nil { return }
+		if datetime, err = time.Parse("2006-1-2,15:04", input); err == nil { return }
 
-		if datetime, err = time.Parse("2006-1-2 15:04:05", input); err == nil {
-			return
-		}
+		if datetime, err = time.Parse("2006-1-2 15:04:05", input); err == nil { return }
+		if datetime, err = time.Parse("2006-1-2,15:04:05", input); err == nil { return }
 
-		if datetime, err = time.Parse("2/1 15:04", input); err == nil {
-			FixYear(datetime)
-			return
-		}
+		if datetime, err = time.Parse("2/1 15:04:05", input); err == nil { FixYear(datetime); return }
+		if datetime, err = time.Parse("2/1,15:04:05", input); err == nil { FixYear(datetime); return }
 
-		if datetime, err = time.Parse("2/1 15:04:05", input); err == nil {
-			FixYear(datetime)			
-			return
-		}
+		if datetime, err = time.Parse("2/1 15:04", input); err == nil { FixYear(datetime); return }
+		if datetime, err = time.Parse("2/1,15:04", input); err == nil { FixYear(datetime); return }
+
+		if datetime, err = time.Parse("2/1 15", input); err == nil { FixYear(datetime); return }
+		if datetime, err = time.Parse("2/1,15", input); err == nil { FixYear(datetime); return }
 	} else { // doesn't have time
-		if datetime, err = time.Parse("2/1", input); err == nil {
-			FixYear(datetime)
-			return
-		}
+		if datetime, err = time.Parse("2/1", input); err == nil { FixYear(datetime); return }
 
-		if datetime, err = time.Parse("2006-1-2", input); err == nil {
-			FixYear(datetime)
-			return
-		}
+		if datetime, err = time.Parse("2006-1-2", input); err == nil { FixYear(datetime); return }
 	}
 
 	error = fmt.Sprintf("Unparsable date: %s", input)
@@ -400,6 +393,15 @@ func TimeString(triggerAt *time.Time, sort string) string {
 	return ""
 }
 
+var numberRE *regexp.Regexp = regexp.MustCompile("^[0-9.]+$")
+
+func isNumber(tk string) (n float, ok bool) {
+	if !numberRE.MatchString(tk) { return -1, false }
+	n, err := strconv.Atof(tk)
+	if err != nil { return -1, false }
+	return n, true
+}
+
 func DemarshalEntry(umentry *UnmarshalEntry) *Entry {
 	triggerAt, err := ParseDateTime(umentry.TriggerAt)
 
@@ -420,7 +422,48 @@ func DemarshalEntry(umentry *UnmarshalEntry) *Entry {
 	}
 
 	cols := make(Columns)
-	//TODO: Demarshalling of columns (must parse)
+
+	foundcat := false
+	for _, v := range strings.Split(umentry.Cols, "\n", -1) {
+		vs := strings.Split(v, ":", 2)
+
+		if len(vs) == 0 { continue }
+
+		if len(vs) == 1 {
+			// it's a category
+			x := strings.TrimSpace(v)
+			Logf(DEBUG, "Adding [%s]\n", x)
+			if x != "" {
+				cols[x] = ""
+				foundcat = true
+			}
+		} else {
+			// it (may) be a column
+			key := strings.TrimSpace(vs[0])
+			value := strings.TrimSpace(vs[1])
+			
+			if key != "" {
+				// Normalizes value
+				
+				Logf(DEBUG, "Normalizing: [%s]\n", value)
+				if t, _ := ParseDateTime(value); t != nil {
+					value = t.Format(TRIGGER_AT_FORMAT)
+				} else if n, ok := isNumber(value); ok {
+					value = fmt.Sprintf("%0.6f", n)
+				}
+
+				Logf(DEBUG, "Adding [%s] -> [%s]\n", key, value)
+
+				cols[key] = value
+
+				if value == "" { foundcat = true }
+			}
+		}
+	}
+
+	if !foundcat {
+		cols["uncat"] = ""
+	}
 	
 	return MakeEntry(
 		umentry.Id,
@@ -521,4 +564,30 @@ func (e *Entry) ColString() string {
 	}
 
 	return strings.Join(([]string)(r), "\n") + "\n"
+}
+
+func (entry *Entry) Print() {
+	fmt.Printf("%s\n%s\n", entry.Title(), entry.Text())
+	
+	tw := tabwriter.NewWriter(os.Stdout, 8, 8, 4, ' ', 0)
+	w := bufio.NewWriter(tw)
+	
+	pr := entry.Priority()
+	w.WriteString(fmt.Sprintf("Priority:\t%s\n", pr.String()))
+	if entry.TriggerAt() != nil {
+		w.WriteString(fmt.Sprintf("When:\t%s\n", entry.TriggerAt()))
+	} else {
+		w.WriteString("When:\tN/A\n")
+	}
+	fr := entry.Freq()
+	w.WriteString(fmt.Sprintf("Recur:\t%s\n", fr.String()))
+	w.WriteString(fmt.Sprintf("Sort:\t%s\n", entry.Sort()))
+	for k, v := range entry.Columns() {
+		pv := v
+		if v == "" { pv = "<category>" }
+		w.WriteString(fmt.Sprintf("%s:\t%v\n", k, pv))
+	}
+	w.WriteString("\n")
+	w.Flush()
+	tw.Flush()
 }

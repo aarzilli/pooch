@@ -16,7 +16,6 @@ import (
 	"strconv"
 )
 
-
 var commands map[string](func (args []string)) = map[string](func (args []string)){
 	"help": CmdHelp,
 	"create": CmdCreate,
@@ -284,30 +283,7 @@ func CmdGet(args []string) {
 		CheckId(tl, id, "get")
 		
 		entry := tl.Get(id)
-		
-		fmt.Printf("%s\n%s\n", entry.Title(), entry.Text())
-		
-		tw := tabwriter.NewWriter(os.Stdout, 8, 8, 4, ' ', 0)
-		w := bufio.NewWriter(tw)
-		
-		pr := entry.Priority()
-		w.WriteString(fmt.Sprintf("Priority:\t%s\n", pr.String()))
-		if entry.TriggerAt() != nil {
-			w.WriteString(fmt.Sprintf("When:\t%s\n", entry.TriggerAt()))
-		} else {
-			w.WriteString("When:\tN/A\n")
-		}
-		fr := entry.Freq()
-		w.WriteString(fmt.Sprintf("Recur:\t%s\n", fr.String()))
-		w.WriteString(fmt.Sprintf("Sort:\t%s\n", entry.Sort()))
-		for k, v := range entry.Columns() {
-			pv := v
-			if v == "" { pv = "<category>" }
-			w.WriteString(fmt.Sprintf("%s:\t%v\n", k, pv))
-		}
-		w.WriteString("\n")
-		w.Flush()
-		tw.Flush()
+		entry.Print()
 	})
 }
 	

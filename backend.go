@@ -254,13 +254,18 @@ func StatementScan(stmt *sqlite.Stmt, hasCols bool) (*Entry, os.Error) {
 		return nil, scanerr
 	}
 
+	Logf(DEBUG, "Reading columns: %v [%s]\n", hasCols, columns)
+
 	cols := make(Columns)
 	if hasCols {
 		for _, v := range strings.Split(columns, "\n", -1) {
 			col := strings.Split(v, ":", 2)
-			cols[col[0]] = cols[col[1]]
+			Logf(DEBUG, "   col: %s\n", col)
+			cols[col[0]] = col[1]
 		}
 	}
+
+	Logf(DEBUG, "Columns are: %v\n", cols)
 
 	return MakeEntry(id, title, text, priority, freq, triggerAt, sort, cols), nil
 }

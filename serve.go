@@ -154,8 +154,9 @@ func SaveServer(c *http.Conn, req *http.Request) {
 		if !tl.Exists(umentry.Id) { panic("Specified id does not exists") }
 	
 		entry := DemarshalEntry(umentry)
-		
-		Log(DEBUG, "Saving entry:\n", entry)
+
+		Log(DEBUG, "Saving entry:\n")
+		entry.Print()
 		
 		tl.Update(entry);
 		
