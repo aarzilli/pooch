@@ -163,7 +163,7 @@ func QuickParse(input string) (*Entry, *vector.StringVector) {
 
 		removedASpace := false
 		// skips a space if there are two contiguous
-		if lastEnd < len(input) && input[lastEnd] == ' ' && r[len(r)-1] == ' ' {
+		if lastEnd < len(input) && input[lastEnd] == ' ' && len(r) > 0 && r[len(r)-1] == ' ' {
 			removedASpace = true
 			lastEnd++
 		}
