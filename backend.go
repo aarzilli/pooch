@@ -36,6 +36,7 @@ func (tasklist *Tasklist) WithTransaction(name string, f func()) {
 			tasklist.conn.Exec("ROLLBACK TRANSACTION")
 			panic(rerr)
 		} else {
+			Logf(DEBUG, "Transaction committed\n")
 			tasklist.MustExec(fmt.Sprintf("COMMIT TRANSACTION for %s", name), "COMMIT TRANSACTION")
 		}
 	}()
@@ -205,11 +206,12 @@ func (tasklist *Tasklist) Add(e *Entry) {
 		tasklist.MustExec("INSERT statement for Tasklist.Add (in ridx)", "INSERT INTO ridx(id, title_field, text_field) VALUES (?, ?, ?)", e.Id(), e.Title(), e.Text())
 		tasklist.addColumns(e);
 		
-		if CurrentLogLevel <= DEBUG {
-			exists := tasklist.Exists(e.Id())
-			Log(DEBUG, "Existence check:", exists)
-		}
 	})
+
+	if CurrentLogLevel <= DEBUG {
+		exists := tasklist.Exists(e.Id())
+		Log(DEBUG, "Existence check:", exists)
+	}
 		
 	Log(DEBUG, "Add finished!")
 		
