@@ -87,6 +87,8 @@ var EntryListEntryHTML ExecutableTemplate = MakeExecutableTemplate(`
       </td>
 
       <td class='etime'>{etime}</td>
+
+      <td class='ecats'>{ecats}</td>
    {.end}
 `)
 
@@ -94,9 +96,12 @@ var EntryListEntryEditorHTML ExecutableTemplate = MakeExecutableTemplate(`
     {.section entry}
       <td colspan=4>
         <form id='ediv_{id|html}'>
-          <p><input name='edtilte' id='edtitle' type='text' size='80'/><br>
-          <textarea name='edtext' id='edtext' rows=20 cols=70>
-          </textarea></p>
+          <p><input name='edtilte' id='edtitle' type='text' style='width: 99%; padding-bottom: 5px'/><br>
+          <textarea style='width: 65%; margin-right: 1%' name='edtext' id='edtext' rows=20>
+          </textarea>
+          <textarea style='width: 33%;' float: right' name='edcols' id='edcols' rows=20>
+          </textarea>
+          </p>
 
 		  <input name='edid' id='edid' type='hidden'/>
 		  <input name='edprio' id='edprio' type='hidden'/>
@@ -107,7 +112,7 @@ var EntryListEntryEditorHTML ExecutableTemplate = MakeExecutableTemplate(`
 		  &nbsp; Sort by: <input type='text' id='edsort' name='edsort' size=10/>
           &nbsp; Timestamp: <span id='ts_{id|html}'>-------</span></p>
 
-          <p><input type='button' style='float: right' value='remove' onclick='javascript:remove_entry(""{id|html}", event)'/>
+          <p><input type='button' style='float: right' value='remove' onclick='javascript:remove_entry("{id|html}", event)'/>
           <input type='button' value='save' onclick='javascript:save_editor_by_id("{id|html}", event)'/>
           <input type='button' value='reload', onclick='javascript:fill_editor("{id|html}")'/></p>
         </form>
@@ -115,12 +120,9 @@ var EntryListEntryEditorHTML ExecutableTemplate = MakeExecutableTemplate(`
     {.end}
 `)
 
-var EntryListFooterHTML ExecutableTemplate = MakeExecutableTemplate(`
-  </table>
-</body>
-</html>
+var SubcolEntryHTML ExecutableTemplate = MakeExecutableTemplate(`
+<a href='list?theme={theme|html}&q={dst|html}'>{name|html}</a><br>
 `)
-
 
 var CalendarHeaderHTML ExecutableTemplate = MakeExecutableTemplate(`
 <html>

@@ -122,6 +122,7 @@ function fill_editor(name) {
             ed.elements['edid'].value = v.Id;
             ed.elements['edprio'].value = v.Priority;
             ed.elements['edfreq'].value = v.Freq;
+            ed.elements['edcols'].value = v.Cols;
             var ts = document.getElementById("ts_" + v.Id);
             ts.innerHTML = timestamp;
         }

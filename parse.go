@@ -148,7 +148,7 @@ func Strtok(input, chars string) []string {
 
 var SanitizeRE *regexp.Regexp = regexp.MustCompile("[^a-zA-Z0-9.,/\\^!?]")
 
-func SearchParseToken(input string, tl *Tasklist, set map[string]string) (op uint8, theselect string) {
+func SearchParseToken(input string, tl *Tasklist, set map[string]string, guessParse bool) (op uint8, theselect string) {
 	var r vector.StringVector
 	
 	op = input[0]
@@ -158,31 +158,48 @@ func SearchParseToken(input string, tl *Tasklist, set map[string]string) (op uin
 
 		if len(colsplit) == 1 {
 			col = SanitizeRE.ReplaceAllString(col, "")
-			r.Push(fmt.Sprintf("SELECT id FROM columns WHERE name = '%s'", col))
+			if guessParse {
+				r.Push(col)
+			} else {
+				r.Push(fmt.Sprintf("SELECT id FROM columns WHERE name = '%s'", col))
+			}
+			
 			if set != nil { set[col] = "" }
 		} else {
 			colsplit[0] = SanitizeRE.ReplaceAllString(colsplit[0], "")
-			r.Push(fmt.Sprintf("SELECT id FROM columns WHERE name = '%s' AND value = %s", colsplit[0], tl.Quote(colsplit[1])))
+			if !guessParse {
+				r.Push(fmt.Sprintf("SELECT id FROM columns WHERE name = '%s' AND value = %s", colsplit[0], tl.Quote(colsplit[1])))
+			}
 			if set != nil { set[colsplit[0]] = colsplit[1] }
 		}
 		
 		//fmt.Printf("   col: [%s]\n", col)
 	}
+	
+	if guessParse {
+		return op, strings.Join(([]string)(r), "\t")
+	}
+	
 	return op, strings.Join(([]string)(r), " INTERSECT ")
 }
 
-func SearchParseSub(tl *Tasklist, input string, ored, removed *vector.StringVector) {
+func SearchParseSub(tl *Tasklist, input string, ored, removed *vector.StringVector, guessParse bool) {
 	for _, token := range Strtok(input, "+-") {
-		op, theselect := SearchParseToken(token, tl, nil)
+		op, theselect := SearchParseToken(token, tl, nil, guessParse)
 
 		switch op {
-		case '+': ored.Push(fmt.Sprintf("id IN (%s)", theselect))
+		case '+':
+			if guessParse {
+				ored.Push(theselect)
+			} else {
+				ored.Push(fmt.Sprintf("id IN (%s)", theselect))
+			}
 		case '-': removed.Push(fmt.Sprintf("id IN (%s)", theselect))
 		}
 	}
 }
 
-func SearchParse(input string, wantsDone bool, tl *Tasklist) (theselect, query string){
+func SearchParse(input string, wantsDone, guessParse bool, tl *Tasklist) (theselect, query string){
 	lastEnd := 0
 	r := ""
 	
@@ -209,7 +226,15 @@ func SearchParse(input string, wantsDone bool, tl *Tasklist) (theselect, query s
 
 		//fmt.Printf("QuickTagParam: [%s]\n", quickTag)
 
-		SearchParseSub(tl, quickTag, &ored, &removed)
+		SearchParseSub(tl, quickTag, &ored, &removed, guessParse)
+
+		if guessParse && (ored.Len() > 0) {
+			return ored.At(0), ""
+		}
+	}
+
+	if guessParse {
+		return "", ""
 	}
 
 	oredStr := strings.Join(([]string)(ored), " OR ")
@@ -249,9 +274,11 @@ func SearchParse(input string, wantsDone bool, tl *Tasklist) (theselect, query s
  #d, #done - done
  #$, #N, #Notes - notes
  #$$, #StickyNotes - sticky notes
+
+ The query string will be utilized to guess categories to associate with the input string
  */
 
-func QuickParse(input string) (*Entry, *vector.StringVector) {
+func QuickParse(input string, query string, tl *Tasklist) (*Entry, *vector.StringVector) {
 	lastEnd := 0
 	r := ""
 	errors := new(vector.StringVector)
@@ -261,6 +288,8 @@ func QuickParse(input string) (*Entry, *vector.StringVector) {
 	var freq Frequency = 0
 	var triggerAt *time.Time = nil
 	cols := make(Columns)
+
+	catfound := false
 
 	for i := 0; i < len(input); i++ {
 		ch := input[i]
@@ -308,6 +337,7 @@ func QuickParse(input string) (*Entry, *vector.StringVector) {
 			if (triggerAt == nil) {
 				Logf(DEBUG, "Found quickTag:[%s] -- no special meaning found, using it as a category", quickTag)
 				cols[quickTag] = ""
+				catfound = true;
 			} else {
 				priority = TIMED
 				if (len(quickTagSplit) > 1) {
@@ -316,6 +346,24 @@ func QuickParse(input string) (*Entry, *vector.StringVector) {
 				Logf(DEBUG, "Found quickTag:[%s] -- time: %v %v", quickTag, triggerAt, freq)
 			}
 		}
+	}
+
+	if tl != nil {
+		extraCats, _ := SearchParse(query, false, true, tl)
+
+		if extraCats != "" {
+			Logf(DEBUG, "Extra categories: %s\n", extraCats)
+			
+			for _, extraCat := range strings.Split(extraCats, "\t", -1) {
+				cols[extraCat] = ""
+				catfound = true;
+			}
+		}
+	}
+		
+	if !catfound {
+		cols["uncat"] = ""
+		Logf(DEBUG, "Setting uncat\n")
 	}
 
 	r += input[lastEnd:len(input)]
@@ -394,8 +442,6 @@ func MarshalEntry(entry *Entry) *UnmarshalEntry {
 
 	freq := entry.Freq()
 
-	//TODO: Marshalling of columns (must deparse)
-	
 	return MakeUnmarshalEntry(
 		entry.Id(),
 		entry.Title(),
@@ -404,6 +450,7 @@ func MarshalEntry(entry *Entry) *UnmarshalEntry {
 		freq.String(),
 		triggerAtString,
 		entry.Sort(),
+		entry.ColString(),
 		"") // task list isn't watched on other side
 }
 
@@ -453,4 +500,25 @@ func ParseTsvFormat(in string) *Entry {
 		triggerAt,
 		sort,
 		cols)
+}
+
+func (e *Entry) CatString() string {
+	var r vector.StringVector
+
+	for k, v := range e.Columns() {
+		if v != "" { continue; }
+		r.Push(k)
+	}
+	
+	return "#" + strings.Join(([]string)(r), "#")
+}
+
+func (e *Entry) ColString() string {
+	var r vector.StringVector
+
+	for k, v := range e.Columns() {
+		r.Push(k + ": " + v)
+	}
+
+	return strings.Join(([]string)(r), "\n") + "\n"
 }

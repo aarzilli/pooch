@@ -106,7 +106,7 @@ func HelpCreate() {
 
 func CmdQuickAdd(args []string) {
 	CheckArgsOpenDb(args, 0, 1000, "add", func(tl *Tasklist) {
-		entry, parse_errors := QuickParse(strings.Join(args[0:], " "))
+		entry, parse_errors := QuickParse(strings.Join(args[0:], " "), "", nil)
 		
 		fmt.Fprintf(os.Stderr, "%s\n", strings.Join(*parse_errors, "\n"))
 		
@@ -125,7 +125,7 @@ func CmdQuickUpdate(args []string) {
 	CheckArgsOpenDb(args, 1, 1000, "update", func (tl *Tasklist) {
 		CheckId(tl, args[0], "update")
 		
-		entry, parse_errors := QuickParse(strings.Join(args[1:], " "))
+		entry, parse_errors := QuickParse(strings.Join(args[1:], " "), "", nil)
 		
 		fmt.Fprintf(os.Stderr, "%s\n", strings.Join(*parse_errors, "\n"))
 		
@@ -141,7 +141,7 @@ func HelpQuickUpdate() {
 
 func CmdSearch(args []string) {
 	CheckArgsOpenDb(args, 0, 1000, "search", func(tl *Tasklist) {
-		theselect, query := SearchParse(strings.Join(args[0:], " "), false, tl)
+		theselect, query := SearchParse(strings.Join(args[0:], " "), false, false, tl)
 
 		Logf(DEBUG, "Search statement [%s] with query [%s]\n", theselect, query)
 
@@ -160,14 +160,14 @@ func CmdColist(args []string) {
 		set := make(map[string]string)
 		if len(args) > 0 {
 			base = args[0]
-			_, theselect = SearchParseToken("+"+base, tl, set)
+			_, theselect = SearchParseToken("+"+base, tl, set, false)
 		}
 
 		subcols := tl.GetSubcols(theselect);
 		
 		for _, x := range subcols {
 			if _, ok := set[x]; ok { continue }
-			fmt.Printf("%s@%s\n", base, x)
+			fmt.Printf("%s#%s\n", base, x)
 		}
 	})
 }
@@ -368,13 +368,13 @@ func main() {
 	args := flag.Args()
 	fn := commands[args[0]]
 	CheckCondition(fn == nil, "Unknown command: %s\n", args[0])
-
+/*
 	defer func() {
 		if rerr := recover(); rerr != nil {
 			fmt.Fprintf(os.Stderr, "Error executing command %s: %s\n", args[0], rerr)
 			os.Exit(-1)
 		}
-	}()
+	}()*/
 	
 	fn(args[1:])
 }

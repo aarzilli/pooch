@@ -75,6 +75,7 @@ type UnmarshalEntry struct {
 	Freq string
 	TriggerAt string
 	Sort string
+	Cols string
 	Tasklist string
 }
 
@@ -99,8 +100,8 @@ type Entry struct {
 	columns Columns
 }
 
-func MakeUnmarshalEntry(id string, title string, text string, priority Priority, freq string, triggerAt string, sort string, tasklist string) *UnmarshalEntry {
-	return &UnmarshalEntry{id, title, text, priority, freq, triggerAt, sort, tasklist}
+func MakeUnmarshalEntry(id string, title string, text string, priority Priority, freq string, triggerAt string, sort string, cols string, tasklist string) *UnmarshalEntry {
+	return &UnmarshalEntry{id, title, text, priority, freq, triggerAt, sort, cols, tasklist}
 }
 
 func MakeEntry(id string, title string, text string, priority Priority, freq Frequency, triggerAt *time.Time, sort string, columns Columns) *Entry {

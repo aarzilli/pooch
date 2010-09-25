@@ -135,8 +135,9 @@ func RemoveServer(c *http.Conn, req *http.Request) {
 }
 
 func QaddServer(c *http.Conn, req *http.Request) {
-	WithOpenDefaultCheckId(req, func (tl *Tasklist, id string) {
-		entry, _ := QuickParse(CheckFormValue(req, "text"))
+	WithOpenDefault(func (tl *Tasklist) {
+		// TODO: use query string to determine which categories to assign here
+		entry, _ := QuickParse(CheckFormValue(req, "text"), req.FormValue("q"), tl)
 		entry.SetId(tl.MakeRandomId())
 		
 		tl.Add(entry)
@@ -162,6 +163,32 @@ func SaveServer(c *http.Conn, req *http.Request) {
 	})
 }
 
+func ShowSubcols(c *http.Conn, query, theme string, tl *Tasklist) {
+	SubcolEntryHTML(map[string]string{"theme": theme, "name": "index", "dst": ""}, c)
+	
+	std := tl.GetSubcols("")
+
+	for _, v := range std {
+		SubcolEntryHTML(map[string]string{"theme": theme, "name": "@"+v, "dst": "@"+v}, c)
+	}
+
+	Logf(DEBUG, "Query is: %s\n", query)
+
+	if len(query) > 0 && isQuickTagStart(query[0]) && strings.IndexAny(query, " ") == -1 {
+		Logf(DEBUG, "Adding stuff in\n");
+		set := make(map[string]string)
+		_, theselect := SearchParseToken("+"+query, tl, set, false)
+		subcols := tl.GetSubcols(theselect);
+
+		for _, v := range subcols {
+			if _, ok := set[v]; ok { continue }
+			dst := fmt.Sprintf("%s@%s\n", query, v)
+			SubcolEntryHTML(map[string]string{"theme": theme, "name": dst, "dst": dst}, c)
+		}
+
+	}
+}
+
 /*
  * Tasklist
  */
@@ -177,7 +204,7 @@ func ListServer(c *http.Conn, req *http.Request) {
 		
 		query := req.FormValue("q")
 		
-		v := tl.Retrieve(SearchParse(query, includeDone, tl))
+		v := tl.Retrieve(SearchParse(query, includeDone, false, tl))
 		
 		ListHeaderHTML(map[string]string{ "query": query, "theme": css }, c)
 		JavascriptInclude(c, "/shortcut.js")
@@ -189,7 +216,15 @@ func ListServer(c *http.Conn, req *http.Request) {
 		
 		EntryListHeaderHTML(map[string]string{ "query": query, "theme": css }, c)
 		
-		io.WriteString(c, "<p><table width='100%' id='maintable' style='border-collapse: collapse;'>")
+		io.WriteString(c, "<p>")
+
+		io.WriteString(c, "<table width='100%' style='border-collapse: collapse;'><tr>")
+
+		io.WriteString(c, "<td valign='top' style='width: 10%'><div style='padding-top: 30px'>")
+		ShowSubcols(c, query, css, tl)
+		io.WriteString(c, "</div></td>")
+		
+		io.WriteString(c, "<td valign='top'><table width='100%' id='maintable' style='border-collapse: collapse;'>")
 		
 		var curp Priority = INVALID
 		for _, e := range *v {
@@ -204,6 +239,7 @@ func ListServer(c *http.Conn, req *http.Request) {
 				"entry": entry,
 				"theme": css,
 				"etime": TimeString(entry.TriggerAt(), entry.Sort()),
+				"ecats": entry.CatString(),
 			}
 			
 			
@@ -217,8 +253,10 @@ func ListServer(c *http.Conn, req *http.Request) {
 			EntryListEntryEditorHTML(entryEntry, c)
 			io.WriteString(c, "    </tr>\n")
 		}
+
+		io.WriteString(c, "</table></td>")
 		
-		EntryListFooterHTML(nil, c)
+		io.WriteString(c, "</tr></table></body></html>")
 	})
 }
 
@@ -283,6 +321,7 @@ func HtmlGetServer(c *http.Conn, req *http.Request) {
 		entryEntry := map[string](interface{}){
 			"entry": entry,
 			"etime": TimeString(entry.TriggerAt(), entry.Sort()),
+			"ecats": entry.CatString(),
 		}
 
 		EntryListEntryHTML(entryEntry, c)
