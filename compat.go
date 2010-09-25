@@ -13,7 +13,7 @@ import (
 )
 
 func CmdPort(args []string) {
-	CheckArgs(args, 2, 2, "create")
+	CheckArgs(args, 2, 2, "port")
 	
 	filename, _ := Resolve(args[0])
 	
