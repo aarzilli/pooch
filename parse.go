@@ -17,7 +17,7 @@ import (
 	"tabwriter"
 )
 
-var TRIGGER_AT_FORMAT string = "2006-01-02 15:04:05"
+var TRIGGER_AT_FORMAT string = "2006-01-02 15:04"
 var TRIGGER_AT_SHORT_FORMAT string = "02/01 15:04"
 
 func ParsePriority(s string) (p Priority, err string) {
@@ -372,7 +372,7 @@ func TimeString(triggerAt *time.Time, sort string) string {
 	if triggerAt != nil {
 		now := time.LocalTime()
 		showYear := (triggerAt.Format("2006") != now.Format("2006"))
-		showTime := (triggerAt.Format("15:04:05") != "00:00:00")
+		showTime := (triggerAt.Format("15:04") != "00:00")
 
 		var formatString string
 		if showYear {
@@ -382,7 +382,7 @@ func TimeString(triggerAt *time.Time, sort string) string {
 		}
 
 		if showTime {
-			formatString += " 15:04:05"
+			formatString += " 15:04"
 		}
 		
 		return "@ " + triggerAt.Format(formatString)
