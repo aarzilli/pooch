@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io"
 	"strings"
+	"http"
 )
 
 func PriorityFormatter(w io.Writer, value interface{}, format string) {
@@ -17,9 +18,15 @@ func PriorityFormatter(w io.Writer, value interface{}, format string) {
 	io.WriteString(w, strings.ToUpper(v.String()))
 }
 
+func URLFormatter(w io.Writer, value interface{}, format string) {
+	v := value.(string)
+	io.WriteString(w, http.URLEscape(v))
+}
+
 var formatters template.FormatterMap = template.FormatterMap{
 	"html": template.HTMLFormatter,
 	"priority": PriorityFormatter,
+	"url": URLFormatter,
 }
 
 type ExecutableTemplate func(interface{}, io.Writer)
@@ -46,7 +53,7 @@ var ListHeaderHTML ExecutableTemplate = MakeExecutableTemplate(`
 `)
 
 var JavascriptIncludeHTML ExecutableTemplate = MakeExecutableTemplate(`
-  <script src='{fname|html}'>
+  <script src='{fname|url}'>
   </script>
 `)
 
@@ -60,7 +67,7 @@ var ListHeaderCloseHTML ExecutableTemplate = MakeExecutableTemplate(`
 `)
 
 var EntryListHeaderHTML ExecutableTemplate = MakeExecutableTemplate(`
-  <h2>{query|html}</h2>
+  <h2>{query|html} <span style='font-size: small'><a href='cal?q={query|url}'>as calendar</a></span></h2>
   <p><form onsubmit='return add_entry("{query|html}")'>
   <label for='text'>New entry:</label>&nbsp;<input size='50' type='newentry' id='newentry' name='text'/><input type='button' value='add' onclick='javascript:add_entry("{query|html}")'/>
   </form>
@@ -121,7 +128,7 @@ var EntryListEntryEditorHTML ExecutableTemplate = MakeExecutableTemplate(`
 `)
 
 var SubcolEntryHTML ExecutableTemplate = MakeExecutableTemplate(`
-<a href='list?theme={theme|html}&q={dst|html}'>{name|html}</a><br>
+<a href='list?theme={theme|url}&q={dst|url}'>{name|html}</a><br>
 `)
 
 var CalendarHeaderHTML ExecutableTemplate = MakeExecutableTemplate(`
@@ -142,12 +149,16 @@ var CalendarHeaderHTML ExecutableTemplate = MakeExecutableTemplate(`
 `)
 
 var CalendarHTML ExecutableTemplate = MakeExecutableTemplate(`
-  <h2>{query|html} <span style='font-size: small'><a href='list?q={query|html}'>list</a></span></h2>
+  <h2>{query|html} <span style='font-size: small'><a href='list?q={query|url}'>as list</a></span></h2>
 
   <p><form onsubmit='return add_entry("{query|html}")'>
   <label for='text'>New entry:</label>&nbsp;<input size='50' type='newentry' id='newentry' name='text'/><input type='button' value='add' onclick='javascript:add_entry("{query|html}")'/>
   </form>
 
+  <p><form method='get' action='/cal'>
+  <label for='query'>Query:</label>&nbsp;<input size='50' type='text' id='q' name='q' value='{query|html}'/><input type='submit' value='search'/>
+
+  <p>
   <div id='calendar'></div>
   <script>
   </script>
