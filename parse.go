@@ -258,7 +258,7 @@ func SearchParse(input string, wantsDone, guessParse bool, extraWhereClauses []s
 	whereClause := ""
 	if whereClauses.Len() != 0 { whereClause = " WHERE " + strings.Join(([]string)(whereClauses), " AND ") }
 	
-	return fmt.Sprintf("SELECT tasks.id, tasks.title_field, tasks.text_field, tasks.priority, tasks.repeat_field, tasks.trigger_at_field, tasks.sort, group_concat(columns.name||':'||columns.value, '\n') FROM tasks NATURAL JOIN columns %s GROUP BY tasks.id ORDER BY priority, sort ASC", whereClause), r
+	return fmt.Sprintf("SELECT tasks.id, tasks.title_field, tasks.text_field, tasks.priority, tasks.repeat_field, tasks.trigger_at_field, tasks.sort, group_concat(columns.name||':'||columns.value, '\n') FROM tasks NATURAL JOIN columns %s GROUP BY tasks.id ORDER BY priority, trigger_at_field ASC, sort DESC", whereClause), r
 }
 
 /*
