@@ -155,8 +155,10 @@ func SaveServer(c *http.Conn, req *http.Request) {
 	
 		entry := DemarshalEntry(umentry)
 
-		Log(DEBUG, "Saving entry:\n")
-		entry.Print()
+		if LogLevel <= DEBUG {
+			Log(DEBUG, "Saving entry:\n")
+			entry.Print()
+		}
 		
 		tl.Update(entry);
 		
@@ -205,7 +207,7 @@ func ListServer(c *http.Conn, req *http.Request) {
 		
 		query := req.FormValue("q")
 		
-		v := tl.Retrieve(SearchParse(query, includeDone, false, tl))
+		v := tl.Retrieve(SearchParse(query, includeDone, false, nil, tl))
 		
 		ListHeaderHTML(map[string]string{ "query": query, "theme": css }, c)
 		JavascriptInclude(c, "/shortcut.js")
@@ -268,16 +270,14 @@ func CalendarServer(c *http.Conn, req *http.Request) {
 }
 
 func GetCalendarEvents(tl *Tasklist, query string, r *vector.Vector, start, end string, endSecs int64) {
-	v := tl.GetEventList(start, end)
+	theselect, query := SearchParse(query, true, false, []string { "tasks.trigger_at_field IS NOT NULL", "tasks.trigger_at_field > " + tl.Quote(start), "tasks.trigger_at_field < " + tl.Quote(end) }, tl)
+	v := tl.Retrieve(theselect, query)
 
 	for _, e := range *v {
 		entry := e.(*Entry)
 
-		className := ""
-		/*if tlidx % 6 != 0 {
-			className = fmt.Sprintf("alt%d", tlidx%6)
-		} */
-		
+		className := fmt.Sprintf("alt%d", entry.CatHash() % 6)
+
 		r.Push(ToCalendarEvent(entry, className))
 		if (entry.Freq() > 0) && (entry.Priority() == TIMED) {
 			for newEntry := entry.NextEntry(""); newEntry.Before(endSecs); newEntry = newEntry.NextEntry("") {

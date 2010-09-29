@@ -8,6 +8,10 @@ package main
 import (
 	"fmt"
 	"time"
+	"container/vector"
+	"sort"
+	"strings"
+	"hash/crc32"
 )
 
 type Priority int;
@@ -127,6 +131,25 @@ func (entry *Entry) NextEntry(newId string) *Entry {
 
 func (e *Entry) Before(time int64) bool {
 	return e.triggerAt.Seconds() < time
+}
+
+func (e *Entry) CatHash() uint32 {
+	var catsVector vector.StringVector
+
+	for key, value := range e.Columns() {
+		if value == "" { catsVector.Push(key) }
+	}
+
+	cats := ([]string)(catsVector)
+
+	sort.SortStrings(cats)
+
+	catstring := strings.Join(cats, "#")
+
+	hasher := crc32.NewIEEE()
+	hasher.Write(([]uint8)(catstring))
+
+	return hasher.Sum32()
 }
 
 /*

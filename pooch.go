@@ -27,6 +27,7 @@ var commands map[string](func (args []string)) = map[string](func (args []string
 	"search": CmdSearch,
 	"colist": CmdColist,
 	"tsvup": CmdTsvUpdate,
+	"rename": CmdRename,
 
 	"port": CmdPort,
 }
@@ -42,6 +43,7 @@ var help_commands map[string](func ()) = map[string](func ()){
 	"search": HelpSearch,
 	"colist": HelpColist,
 	"tsvup": HelpTsvUpdate,
+	"rename": HelpRename,
 	"compat": CompatHelp,
 
 	"port": HelpPort,
@@ -140,7 +142,7 @@ func HelpQuickUpdate() {
 
 func CmdSearch(args []string) {
 	CheckArgsOpenDb(args, 0, 1000, "search", func(tl *Tasklist) {
-		theselect, query := SearchParse(strings.Join(args[0:], " "), false, false, tl)
+		theselect, query := SearchParse(strings.Join(args[0:], " "), false, false, nil, tl)
 
 		Logf(DEBUG, "Search statement [%s] with query [%s]\n", theselect, query)
 
@@ -277,6 +279,24 @@ func HelpTsvUpdate() {
 	fmt.Fprintf(os.Stderr, "The last field is interpreted as either a triggerAt field if priority is timed, or as the sort field otherwise\n\n")
 }
 
+func CmdRename(argv []string) {
+	CheckArgsOpenDb(argv, 1, 2, "rename", func (tl *Tasklist) {
+		src_id := argv[0]
+		dst_id := tl.MakeRandomId()
+		if len(argv) > 1 { dst_id = argv[1] }
+
+		entry := tl.Get(src_id)
+		tl.Remove(entry.Id())
+		entry.SetId(dst_id)
+		tl.Add(entry)
+	})
+}
+
+func HelpRename() {
+	fmt.Fprintf(os.Stderr, "usage : rename src_id [dst_id]\n")
+	fmt.Fprintf(os.Stderr, "\tRenames src_id into dst_id (or a random id if nothing is specified\n")
+}
+
 func CmdGet(args []string) {
 	CheckArgsOpenDb(args, 1, 1, "get", func(tl *Tasklist) {
 		id := args[0]
@@ -344,13 +364,13 @@ func main() {
 	args := flag.Args()
 	fn := commands[args[0]]
 	CheckCondition(fn == nil, "Unknown command: %s\n", args[0])
-/*
+
 	defer func() {
 		if rerr := recover(); rerr != nil {
 			fmt.Fprintf(os.Stderr, "Error executing command %s: %s\n", args[0], rerr)
 			os.Exit(-1)
 		}
-	}()*/
+	}()
 	
 	fn(args[1:])
 }

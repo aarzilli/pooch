@@ -192,7 +192,7 @@ func SearchParseSub(tl *Tasklist, input string, ored, removed *vector.StringVect
 	}
 }
 
-func SearchParse(input string, wantsDone, guessParse bool, tl *Tasklist) (theselect, query string){
+func SearchParse(input string, wantsDone, guessParse bool, extraWhereClauses []string, tl *Tasklist) (theselect, query string){
 	lastEnd := 0
 	r := ""
 	
@@ -234,6 +234,10 @@ func SearchParse(input string, wantsDone, guessParse bool, tl *Tasklist) (thesel
 	removedStr := strings.Join(([]string)(removed), " OR ")
 
 	var whereClauses vector.StringVector
+
+	for _, v := range extraWhereClauses {
+		whereClauses.Push(v)
+	}
 
 	if removed.Len() != 0 {
 		whereClauses.Push(fmt.Sprintf("(%s AND NOT (%s))", oredStr, removedStr))
@@ -342,7 +346,7 @@ func QuickParse(input string, query string, tl *Tasklist) (*Entry, *vector.Strin
 	}
 
 	if tl != nil {
-		extraCats, _ := SearchParse(query, false, true, tl)
+		extraCats, _ := SearchParse(query, false, true, nil, tl)
 
 		if extraCats != "" {
 			Logf(DEBUG, "Extra categories: %s\n", extraCats)

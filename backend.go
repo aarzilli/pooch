@@ -202,7 +202,6 @@ func (tasklist *Tasklist) Add(e *Entry) {
 		priority := e.Priority()
 		freq := e.Freq()
 		tasklist.MustExec("INSERT statement for Tasklist.Add", "INSERT INTO tasks(id, title_field, text_field, priority, repeat_field, trigger_at_field, sort) VALUES (?, ?, ?, ?, ?, ?, ?)", e.Id(), e.Title(), e.Text(), priority.ToInteger(), freq.ToInteger(), triggerAtString, e.Sort())
-		fmt.Printf("BLAP\n")
 		tasklist.MustExec("INSERT statement for Tasklist.Add (in ridx)", "INSERT INTO ridx(id, title_field, text_field) VALUES (?, ?, ?)", e.Id(), e.Title(), e.Text())
 		tasklist.addColumns(e);
 		
@@ -234,7 +233,6 @@ func (tasklist *Tasklist) Update(e *Entry) {
 
 	return
 }
-
 
 func StatementScan(stmt *sqlite.Stmt, hasCols bool) (*Entry, os.Error) {
 	var priority_num int
@@ -296,7 +294,6 @@ func (tl *Tasklist) Get(id string) *Entry {
 }
 
 func GetListEx(stmt *sqlite.Stmt, v *vector.Vector) {
-
 	for (stmt.Next()) {
 		entry, scanerr := StatementScan(stmt, true)
 
@@ -306,27 +303,6 @@ func GetListEx(stmt *sqlite.Stmt, v *vector.Vector) {
 
 		v.Push(entry);
 	}
-}
-
-func (tl *Tasklist) GetEventList(start, end string) (v *vector.Vector) {
-	v = new(vector.Vector)
-
-	stmtStr := "SELECT tasks.id, tasks.title_field, tasks.text_field, tasks.priority, tasks.repeat_field, tasks.trigger_at_field, tasks.sort, group_concat(columns.name||':'||columns.value, '\n') FROM tasks NATURAL JOIN column WHERE tasks.trigger_at_field IS NOT NULL AND tasks.trigger_at_field > ? AND tasks.trigger_at_field < ? GROUP BY tasks.id"
-
-	stmt, serr := tl.conn.Prepare(stmtStr)
-	if serr != nil {
-		panic(fmt.Sprintf("Error preparing SELECT statement for Tasklist.GetEventList: %s", serr))
-	}
-	defer stmt.Finalize()
-
-	serr = stmt.Exec(start, end)
-	if serr != nil {
-		panic(fmt.Sprintf("Error executing SELECT statement for Tasklist.GetEventList: %s", serr))
-	}
-
-	GetListEx(stmt, v)
-
-	return
 }
 
 func (tl *Tasklist) Retrieve(theselect, query string) (v *vector.Vector) {
