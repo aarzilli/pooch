@@ -239,11 +239,13 @@ func SearchParse(input string, wantsDone, guessParse bool, extraWhereClauses []s
 		whereClauses.Push(v)
 	}
 
-	if removed.Len() != 0 {
+	if removed.Len() != 0 && ored.Len() != 0{
 		whereClauses.Push(fmt.Sprintf("(%s AND NOT (%s))", oredStr, removedStr))
+	} else if removed.Len() != 0 {
+		whereClauses.Push(fmt.Sprintf("(NOT (%s))", removedStr))
 	} else if ored.Len() != 0 {
 		whereClauses.Push(fmt.Sprintf("(%s)", oredStr))
-	}
+	} 
 
 	if lastEnd < len(input) {
 		r += input[lastEnd:len(input)]

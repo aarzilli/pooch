@@ -36,12 +36,8 @@ table {
     padding: 4px;
 }
 
-.eid {
-    width: 15%;
-    font-size: small;
-}
 .etitle {
-    width: 50%;
+    width: 65%;
     font-weight: bold;
 }
 .epr {
