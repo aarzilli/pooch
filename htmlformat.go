@@ -74,19 +74,18 @@ var EntryListHeaderHTML ExecutableTemplate = MakeExecutableTemplate(`
 
   <p><form method='get' action='/list'>
   <input type='hidden' id='theme' name='theme' value='{theme}'/>
-  <label for='query'>Query:</label>&nbsp;<input size='50' type='text' id='q' name='q' value='{query|html}'/><input type='submit' value='search'/>
+  <label for='query'>Query:</label>&nbsp;<input size='50' type='text' id='q' name='q' value='{query|html}'/> <input type='submit' value='search'/> &nbsp; <input type='checkbox' name='done' value='1' {includeDone|html}> include done
   </form>
 `)
 
 var EntryListPriorityChangeHTML ExecutableTemplate = MakeExecutableTemplate(`
     <tr class='prchange'>
-      <td colspan=4>{priority|priority}</td>
+      <td colspan=3>{priority|priority}</td>
     </tr>
 `)
 
 var EntryListEntryHTML ExecutableTemplate = MakeExecutableTemplate(`
     {.section entry}
-      <td class='eid'>{id|html}</td>
       <td class='etitle' onclick='javascript:toggle_editor("{id|html}", event)'>{title|html}</td>
 
       <td class='epr'>
@@ -117,6 +116,7 @@ var EntryListEntryEditorHTML ExecutableTemplate = MakeExecutableTemplate(`
           <script>calendar.set("edat_{id|html}")</script>
 		  &nbsp Repeat: <input type='text' id='edfreq' name='edfreq' size=10/>
 		  &nbsp; Sort by: <input type='text' id='edsort' name='edsort' size=10/>
+          &nbsp; ID: {id|html}
           &nbsp; Timestamp: <span id='ts_{id|html}'>-------</span></p>
 
           <p><input type='button' style='float: right' value='remove' onclick='javascript:remove_entry("{id|html}", event)'/>

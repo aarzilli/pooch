@@ -185,10 +185,9 @@ func ShowSubcols(c *http.Conn, query, theme string, tl *Tasklist) {
 
 		for _, v := range subcols {
 			if _, ok := set[v]; ok { continue }
-			dst := fmt.Sprintf("%s@%s\n", query, v)
+			dst := fmt.Sprintf("%s@%s", query, v)
 			SubcolEntryHTML(map[string]string{"theme": theme, "name": dst, "dst": dst}, c)
 		}
-
 	}
 }
 
@@ -216,8 +215,10 @@ func ListServer(c *http.Conn, req *http.Request) {
 		JavascriptInclude(c, "/calendar.js")
 		
 		ListHeaderCloseHTML(map[string]string{ "theme": css }, c)
-		
-		EntryListHeaderHTML(map[string]string{ "query": query, "theme": css }, c)
+
+		includeDoneStr := ""
+		if includeDone { includeDoneStr = "checked" }
+		EntryListHeaderHTML(map[string]string{ "query": query, "theme": css, "includeDone": includeDoneStr }, c)
 		
 		io.WriteString(c, "<p>")
 
