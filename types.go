@@ -117,8 +117,11 @@ func (e *Entry) Text() string { return e.text; }
 func (e *Entry) Id() string { return e.id; }
 func (e *Entry) SetId(id string) { e.id = id; }
 func (e *Entry) Priority() Priority { return e.priority; }
+func (e *Entry) SetPriority(p Priority) { e.priority = p; }
 func (e *Entry) Freq() Frequency { return e.freq; }
 func (e *Entry) TriggerAt() *time.Time { return e.triggerAt; }
+func (e *Entry) SetTriggerAt(tat *time.Time) { e.triggerAt = tat; }
+func (e *Entry) SetSort(sort string) { e.sort = sort; }
 func (e *Entry) Sort() string { return e.sort; }
 func (e *Entry) Columns() Columns { return e.columns; }
 

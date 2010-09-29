@@ -514,8 +514,10 @@ func ToCalendarEvent(entry *Entry, className string) *CalendarEvent {
 	return &r
 }
 
-func ParseTsvFormat(in string) *Entry {
+func ParseTsvFormat(in string, tl *Tasklist) *Entry {
 	fields := strings.Split(in, "\t", 4)
+
+	entry, _ := QuickParse(fields[1], "", tl)
 
 	priority, err := ParsePriority(fields[2])
 	if err != "" {
@@ -534,19 +536,12 @@ func ParseTsvFormat(in string) *Entry {
 		sort = fields[3]
 	}
 
-	cols := make(Columns)
+	entry.SetId(fields[0])
+	entry.SetPriority(priority)
+	entry.SetTriggerAt(triggerAt)
+	entry.SetSort(sort)
 
-	// TODO: parsing columns from tsv
-
-	return MakeEntry(
-		fields[0], // id
-		fields[1], // title
-		"", // text
-		priority,
-		0,
-		triggerAt,
-		sort,
-		cols)
+	return entry
 }
 
 func (e *Entry) CatString() string {

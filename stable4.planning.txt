@@ -117,3 +117,7 @@ ODDS AND ENDS
 
 Saved queries will replace the current query. The default saved query is "index" and it will wipe the current query. Query suggestion will drill down on the current query and will still be calculated as they are now (subcolumns of the active query).
 For Subcols to be called the parsed expression will be required to be a SimpleQuery (same as GuessCols / AsAdd)
+
+There needs to be a way of specifying the sort order too.
+
+Also a way of outputting search results from the command line in a format that is easily parsed would be nice.

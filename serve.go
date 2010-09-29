@@ -155,7 +155,7 @@ func SaveServer(c *http.Conn, req *http.Request) {
 	
 		entry := DemarshalEntry(umentry)
 
-		if LogLevel <= DEBUG {
+		if CurrentLogLevel <= DEBUG {
 			Log(DEBUG, "Saving entry:\n")
 			entry.Print()
 		}
