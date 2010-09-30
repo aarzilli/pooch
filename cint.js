@@ -7,7 +7,7 @@ $(document).ready(function() {
     $('#calendar').fullCalendar({
       firstDay: 1, // start with monday
 	  editable: false,
-	  events: "/calevents?q="+query,
+      events: "/calevents?q="+encodeURIComponent(query),
 	  header: {
 	left: 'prev,next today',
 	    center: 'title',
