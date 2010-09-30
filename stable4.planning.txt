@@ -121,3 +121,8 @@ For Subcols to be called the parsed expression will be required to be a SimpleQu
 There needs to be a way of specifying the sort order too.
 
 Also a way of outputting search results from the command line in a format that is easily parsed would be nice.
+
+
+INTERFACE
+
+The widget to change the 'When' column should be usable without opening the editor, all the columns visualized in the list should be editable without opening the editor.
