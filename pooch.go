@@ -29,6 +29,8 @@ var commands map[string](func (args []string)) = map[string](func (args []string
 	"tsvup": CmdTsvUpdate,
 	"rename": CmdRename,
 
+	"multiserve": CmdMultiServe,
+
 	"port": CmdPort,
 }
 
@@ -50,7 +52,7 @@ var help_commands map[string](func ()) = map[string](func ()){
 }
 
 func Complain(usage bool, format string, a ...interface{}) {
-	fmt.Fprintf(os.Stderr, format, a)
+	fmt.Fprintf(os.Stderr, format, a...)
 	if usage {
 		flag.Usage()
 	}
@@ -59,7 +61,7 @@ func Complain(usage bool, format string, a ...interface{}) {
 
 func CheckCondition(cond bool, format string, a ...interface{}) {
 	if cond {
-		fmt.Fprintf(os.Stderr, format, a)
+		fmt.Fprintf(os.Stderr, format, a...)
 		os.Exit(-1)
 	}
 }
@@ -252,6 +254,16 @@ func CmdServe(args []string) {
 func HelpServe() {
 	fmt.Fprintf(os.Stderr, "usage: serve <port>\n\n")
 	fmt.Fprintf(os.Stderr, "\tStarts http server for pooch on <port>\n\n")
+}
+
+func CmdMultiServe(args []string) {
+	//TODO: check things right
+	MultiServe(args[0])
+}
+
+func HelpMultiServe() {
+	fmt.Fprintf(os.Stderr, "usage: multiserve <port> <directory>\n\n")
+	fmt.Fprintf(os.Stderr, "\tStarts a multi-user http server, information will be stored in <directory>\n\n")
 }
 
 func CmdTsvUpdate(argv []string) {

@@ -166,3 +166,35 @@ var CalendarHTML ExecutableTemplate = MakeExecutableTemplate(`
 </html>
 `)
 
+var RegisterHTML ExecutableTemplate = MakeExecutableTemplate(`
+<html>
+  <head>
+    <title>Register with pooch2</title>
+  </head>
+  <body>
+    <div>{problem}</div>
+    <form method="post" action="/register">
+      Username:&nbsp;<input type='text' name='user'/><br/>
+      Password:&nbsp;<input type='password' name='password'/><br/>
+      <input type='submit' value='register'/>
+    </form>
+  </body>
+</html>
+`)
+
+var LoginHTML ExecutableTemplate = MakeExecutableTemplate(`
+<html>
+  <head>
+    <title>Login with pooch2</title>
+  </head>
+  <body>
+    <div>{problem}</div>
+    <form method="post" action="/login">
+      Username:&nbsp;<input type='text' name='user'/><br/>
+      Password:&nbsp;<input type='password' name='password'/><br/>
+      <input type='submit' value='register'/>
+    </form>
+  </body>
+</html>
+`)
+

@@ -24,7 +24,7 @@ type Tasklist struct {
 }
 
 func (tasklist *Tasklist) MustExec(name string, stmt string, v...interface{}) {
-	if err := tasklist.conn.Exec(stmt, v); err != nil {
+	if err := tasklist.conn.Exec(stmt, v...); err != nil {
 		panic(fmt.Sprintf("Error executing %s: %s", name, err))
 	}
 }
@@ -140,18 +140,23 @@ func (tasklist *Tasklist) Exists(id string) bool {
 	return hasnext
 }
 
-func (tasklist *Tasklist) MakeRandomId() string {
-	var buf []byte = make([]byte, 6)
-	_, err := io.ReadFull(rand.Reader, buf)
-	if err != nil {
-		panic(fmt.Sprintf("Error generating random id: %s", err))
+func MakeRandomString(size int) string {
+	var buf []byte = make([]byte, size)
+	
+	if 	_, err := io.ReadFull(rand.Reader, buf); err != nil {
+		panic(fmt.Sprintf("Error generating random string: %s", err))
 	}
 
 	var encbuf []byte = make([]byte, base64.StdEncoding.EncodedLen(len(buf)))
 	base64.StdEncoding.Encode(encbuf, buf)
 
-	id := strings.Replace(string(encbuf), "+", "_", -1)
+	return strings.Replace(string(encbuf), "+", "_", -1)
+	
+}
 
+func (tasklist *Tasklist) MakeRandomId() string {
+	id := MakeRandomString(6)
+	
 	exists := tasklist.Exists(id)
 	
 	if exists {
