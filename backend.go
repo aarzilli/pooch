@@ -24,7 +24,7 @@ type Tasklist struct {
 }
 
 func (tasklist *Tasklist) MustExec(name string, stmt string, v...interface{}) {
-	if err := tasklist.conn.Exec(stmt, v); err != nil {
+	if err := tasklist.conn.Exec(stmt, v...); err != nil {
 		panic(fmt.Sprintf("Error executing %s: %s", name, err))
 	}
 }

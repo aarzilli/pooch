@@ -26,13 +26,13 @@ var LogDefaultf func(fmt string, v...interface{}) = log.Stdoutf
 
 func Log(ll LogLevel, a ...interface{}) {
 	if ll >= CurrentLogLevel {
-		LogDefault(a)
+		LogDefault(a...)
 	}
 }
 
 func Logf(ll LogLevel, fmt string, a ...interface{}) {
 	if ll >= CurrentLogLevel {
-		LogDefaultf(fmt, a)
+		LogDefaultf(fmt, a...)
 	}
 }
 

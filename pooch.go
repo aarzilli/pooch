@@ -50,7 +50,7 @@ var help_commands map[string](func ()) = map[string](func ()){
 }
 
 func Complain(usage bool, format string, a ...interface{}) {
-	fmt.Fprintf(os.Stderr, format, a)
+	fmt.Fprintf(os.Stderr, format, a...)
 	if usage {
 		flag.Usage()
 	}
@@ -59,7 +59,7 @@ func Complain(usage bool, format string, a ...interface{}) {
 
 func CheckCondition(cond bool, format string, a ...interface{}) {
 	if cond {
-		fmt.Fprintf(os.Stderr, format, a)
+		fmt.Fprintf(os.Stderr, format, a...)
 		os.Exit(-1)
 	}
 }

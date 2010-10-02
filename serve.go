@@ -25,8 +25,8 @@ func DecodeBase64(in string) string {
 	return string(decbuf)
 }
 
-func WrapperServer(sub func(c *http.Conn, req *http.Request)) func(c *http.Conn, req *http.Request) {
-	return func(c *http.Conn, req *http.Request) {
+func WrapperServer(sub func(c http.ResponseWriter, req *http.Request)) func(c http.ResponseWriter, req *http.Request) {
+	return func(c http.ResponseWriter, req *http.Request) {
 		defer func() {
 			if rerr := recover(); rerr != nil {
 				Log(ERROR, "Error while serving:", rerr)
@@ -34,9 +34,9 @@ func WrapperServer(sub func(c *http.Conn, req *http.Request)) func(c *http.Conn,
 			}
 		}()
 
-		if !strings.HasPrefix(c.RemoteAddr, "127.0.0.1:") { Log(ERROR, "Rejected request from:", c.RemoteAddr); return }
+		if !strings.HasPrefix(c.RemoteAddr(), "127.0.0.1:") { Log(ERROR, "Rejected request from:", c.RemoteAddr()); return }
 
-		Logf(INFO, "REQ\t%s\t%s\n", c.RemoteAddr, req)
+		Logf(INFO, "REQ\t%s\t%s\n", c.RemoteAddr(), req)
 
 		sub(c, req)
 	}
@@ -45,14 +45,14 @@ func WrapperServer(sub func(c *http.Conn, req *http.Request)) func(c *http.Conn,
 /*
  * Minimal test server
  */
-func HelloServer(c *http.Conn, req *http.Request) {
+func HelloServer(c http.ResponseWriter, req *http.Request) {
 	io.WriteString(c, "hello, world!\n");
 }
 
 /*
  * Serves static pages (or 404s)
  */
-func StaticInMemoryServer(c *http.Conn, req *http.Request) {
+func StaticInMemoryServer(c http.ResponseWriter, req *http.Request) {
 	var ct string
 	switch {
 	case strings.HasSuffix(req.URL.Path, ".js"):
@@ -108,7 +108,7 @@ func WithOpenDefaultCheckId(req *http.Request, rest func(tl *Tasklist, id string
 	})
 }
 
-func ChangePriorityServer(c *http.Conn, req *http.Request) {
+func ChangePriorityServer(c http.ResponseWriter, req *http.Request) {
 	WithOpenDefaultCheckId(req, func (tl *Tasklist, id string) {
 		special := CheckBool(CheckFormValue(req, "special"), "special")
 	
@@ -118,7 +118,7 @@ func ChangePriorityServer(c *http.Conn, req *http.Request) {
 	})
 }
 
-func GetServer(c *http.Conn, req *http.Request) {
+func GetServer(c http.ResponseWriter, req *http.Request) {
 	WithOpenDefaultCheckId(req, func (tl *Tasklist, id string) {
 		entry := tl.Get(id)
 
@@ -127,14 +127,14 @@ func GetServer(c *http.Conn, req *http.Request) {
 	})
 }
 
-func RemoveServer(c *http.Conn, req *http.Request) {
+func RemoveServer(c http.ResponseWriter, req *http.Request) {
 	WithOpenDefaultCheckId(req, func (tl *Tasklist, id string) {
 		tl.Remove(id)
 		io.WriteString(c, "removed")
 	})
 }
 
-func QaddServer(c *http.Conn, req *http.Request) {
+func QaddServer(c http.ResponseWriter, req *http.Request) {
 	WithOpenDefault(func (tl *Tasklist) {
 		// TODO: use query string to determine which categories to assign here
 		entry, _ := QuickParse(CheckFormValue(req, "text"), req.FormValue("q"), tl)
@@ -145,7 +145,7 @@ func QaddServer(c *http.Conn, req *http.Request) {
 	})
 }
 
-func SaveServer(c *http.Conn, req *http.Request) {
+func SaveServer(c http.ResponseWriter, req *http.Request) {
 	WithOpenDefault(func (tl *Tasklist) {
 		umentry := &UnmarshalEntry{}
 		
@@ -166,7 +166,7 @@ func SaveServer(c *http.Conn, req *http.Request) {
 	})
 }
 
-func ShowSubcols(c *http.Conn, query, theme string, tl *Tasklist) {
+func ShowSubcols(c http.ResponseWriter, query, theme string, tl *Tasklist) {
 	SubcolEntryHTML(map[string]string{"theme": theme, "name": "index", "dst": ""}, c)
 	
 	std := tl.GetSubcols("")
@@ -194,7 +194,7 @@ func ShowSubcols(c *http.Conn, query, theme string, tl *Tasklist) {
 /*
  * Tasklist
  */
-func ListServer(c *http.Conn, req *http.Request) {
+func ListServer(c http.ResponseWriter, req *http.Request) {
 	WithOpenDefault(func(tl *Tasklist) {
 		includeDone := req.FormValue("done") != ""
 		var css string
@@ -264,7 +264,7 @@ func ListServer(c *http.Conn, req *http.Request) {
 	})
 }
 
-func CalendarServer(c *http.Conn, req *http.Request) {
+func CalendarServer(c http.ResponseWriter, req *http.Request) {
 	query := req.FormValue("q")
 	CalendarHeaderHTML(map[string]string{ "query": query }, c)
 	CalendarHTML(map[string]string{ "query": query }, c)
@@ -288,7 +288,7 @@ func GetCalendarEvents(tl *Tasklist, query string, r *vector.Vector, start, end 
 	}
 }
 
-func CalendarEventServer(c *http.Conn, req *http.Request) {
+func CalendarEventServer(c http.ResponseWriter, req *http.Request) {
 	var startSecs, endSecs int64
 	var err os.Error
 	if startSecs, err = strconv.Atoi64(req.FormValue("start")); err != nil {
@@ -316,7 +316,7 @@ func CalendarEventServer(c *http.Conn, req *http.Request) {
 	}
 }
 
-func HtmlGetServer(c *http.Conn, req *http.Request) {
+func HtmlGetServer(c http.ResponseWriter, req *http.Request) {
 	WithOpenDefaultCheckId(req, func(tl *Tasklist, id string) {
 		entry := tl.Get(id)
 		
