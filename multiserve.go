@@ -4,7 +4,26 @@ import (
 	"http"
 	"fmt"
 	"strings"
+	"gosqlite.googlecode.com/hg/sqlite"
+	"path"
 )
+
+type MultiuserDb struct {
+	conn *sqlite.Conn
+	directory string
+}
+
+func OpenMultiuserDb(directory string) *MultiuserDb{
+	multiuserDb, err := sqlite.Open(path.Join(directory, "users.db"))
+	if err != nil { panic(err) }
+	return &MultiuserDb{multiuserDb, directory}
+}
+
+func (mdb *MultiuserDb) Close() {
+	mdb.conn.Close()
+}
+
+var multiuserDb *MultiuserDb
 
 func AddCookies(c http.ResponseWriter, cookies map[string]string) {
 	for k, v := range cookies {
@@ -36,32 +55,50 @@ func GetIdCookie(c *http.Request) string {
 }
 
 func LoginServer(c http.ResponseWriter, req *http.Request) {
+		defer func() {
+		if r := recover(); r != nil {
+			LoginHTML(map[string]string{ "problem": fmt.Sprintf("Login failed with internal error: %s\n", r)}, c)
+			panic(r)
+		}
+	}()
+	
 	if req.FormValue("user") == "" {
 		LoginHTML(map[string]string{ "problem": "" }, c)
 	} else {
-		//TODO:
-		// - verificare username / password
-		// - creare un cookie e associarlo nella tavola dei login e mostrare la pagina di successo
-		// - se l'autenticazione fallisce mostrare la pagina di login
+		if multiuserDb.Verify(req.FormValue("user"), req.FormValue("password")) {
+			LoginHTML(map[string]string{ "problem": "No match for " + req.FormValue("user") + " and given password" }, c)
+		} else {
+			//TODO: settare cookie, confermare riuscita
+		}
 	}
+
 }
 
-
 func RegisterServer(c http.ResponseWriter, req *http.Request) {
+	defer func() {
+		if r := recover(); r != nil {
+			RegisterHTML(map[string]string{ "problem": fmt.Sprintf("Registration failed with internal error: %s\n", r)}, c)
+			panic(r)
+		}
+	}()
+	
 	if req.FormValue("user") == "" {
 		RegisterHTML(map[string]string{ "problem": "" }, c)
 	} else {
-		//TODO:
-		// - verificare username / password
-		// - se username non esiste registrarlo e andare alla pagina di login
-		// - altrimenti mostrare la pagina di registrazione
+		if multiuserDb.Exists(req.FormValue("user")) {
+			RegisterHTML(map[string]string{ "problem": "Username " + req.FormValue("user") + " already exists" }, c)
+		} else {
+			multiuserDb.Register(req.FormValue("user"), req.FormValue("password"))
+			//TODO: pagina di registrazione riuscita
+		}
 	}
 }
 
-func MultiServe(port string) {
+func MultiServe(port string, directory string) {
+	multiuserDb = OpenMultiuserDb(directory)
+	
 	http.HandleFunc("/login", WrapperServer(LoginServer))
 	http.HandleFunc("/register", WrapperServer(RegisterServer))
-
 
 	if err := http.ListenAndServe(":" + port, nil); err != nil {
 		Log(ERROR, "Couldn't serve: ", err)

@@ -258,7 +258,7 @@ func HelpServe() {
 
 func CmdMultiServe(args []string) {
 	//TODO: check things right
-	MultiServe(args[0])
+	MultiServe(args[0], args[1])
 }
 
 func HelpMultiServe() {
