@@ -16,7 +16,39 @@ type MultiuserDb struct {
 func OpenMultiuserDb(directory string) *MultiuserDb{
 	multiuserDb, err := sqlite.Open(path.Join(directory, "users.db"))
 	if err != nil { panic(err) }
+	//TODO: if the db didn't exist create the necessary tables
 	return &MultiuserDb{multiuserDb, directory}
+}
+
+func (mdb *MultiuserDb) Exists(username string) bool {
+	stmt, err := mdb.conn.Prepare("SELECT username FROM users WHERE username = ?")
+	if err != nil { panic(fmt.Sprintf("Error preparing statement for Exists: %s", err.String())) }
+	defer stmt.Finalize()
+	
+	err = stmt.Exec(username)
+	if err != nil { panic(fmt.Sprintf("Error executing statement for Exists: %s", err.String())) }
+	
+	return stmt.Next()
+}
+
+func (mdb *MultiuserDb) Verify(username, password string) bool {
+	stmt, err := mdb.conn.Prepare("SELECT username, salt, passhash FROM users WHERE username = ?")
+	if err != nil { panic(fmt.Sprintf("Error preparing statement for Verify: %s", err.String())) }
+	defer stmt.Finalize()
+	
+	err = stmt.Exec(username)
+	if err != nil { panic(fmt.Sprintf("Error executing statement for Verify: %s", err.String())) }
+	
+	if !stmt.Next() { return false }
+	
+	//TODO: check password
+}
+
+func (mdb *MultiuserDb) Register(username, password string) {
+	//TODO:
+	// - creare salt
+	// - creare hash di password + salt
+	// - insert statement
 }
 
 func (mdb *MultiuserDb) Close() {
@@ -89,7 +121,7 @@ func RegisterServer(c http.ResponseWriter, req *http.Request) {
 			RegisterHTML(map[string]string{ "problem": "Username " + req.FormValue("user") + " already exists" }, c)
 		} else {
 			multiuserDb.Register(req.FormValue("user"), req.FormValue("password"))
-			//TODO: pagina di registrazione riuscita
+			RegisterOKHTML(nil, c)
 		}
 	}
 }

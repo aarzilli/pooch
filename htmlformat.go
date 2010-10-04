@@ -198,3 +198,14 @@ var LoginHTML ExecutableTemplate = MakeExecutableTemplate(`
 </html>
 `)
 
+
+var RegisterOKHTML ExecutableTemplate = MakeExecutableTemplate(`
+<html>
+  <head>
+    <title>Login with pooch2</title>
+  </head>
+  <body>
+    Registration successful. <a href="/login">Login</a>.
+  </body>
+</html>
+`)

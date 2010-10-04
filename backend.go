@@ -23,10 +23,14 @@ type Tasklist struct {
 	conn *sqlite.Conn
 }
 
-func (tasklist *Tasklist) MustExec(name string, stmt string, v...interface{}) {
-	if err := tasklist.conn.Exec(stmt, v...); err != nil {
+func MustExec(conn *sqlite.Conn, name string, stmt string, v...interface{}) {
+	if err := conn.Exec(stmt, v...); err != nil {
 		panic(fmt.Sprintf("Error executing %s: %s", name, err))
 	}
+}
+
+func (tasklist *Tasklist) MustExec(name string, stmt string, v...interface{}) {
+	MustExec(tasklist.conn, name, stmt, v...)
 }
 
 func (tasklist *Tasklist) WithTransaction(name string, f func()) {
