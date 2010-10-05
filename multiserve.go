@@ -6,6 +6,7 @@ import (
 	"strings"
 	"gosqlite.googlecode.com/hg/sqlite"
 	"path"
+	"regexp"
 	"crypto/sha512"
 )
 
@@ -44,6 +45,12 @@ func PasswordHashing(salt, password string) []byte {
 	return hashedPassword
 }
 
+var InvalidUsernameRE *regexp.Regexp = regexp.MustCompile("[^a-zA-Z0-9]")
+
+func ValidUserName(username string) bool {
+	return InvalidUsernameRE.FindIndex(([]byte)(username)) == nil
+}
+
 func (mdb *MultiuserDb) Verify(username, password string) bool {
 	Logf(DEBUG, "Verifying %s / %s\n", username, password)
 
@@ -80,8 +87,27 @@ func (mdb *MultiuserDb) Register(username, password string) {
 	MustExec(mdb.conn, "INSERT for Register", "INSERT INTO users(username, salt, passhash) VALUES(?, ?, ?)", username, salt, hashedPassword)
 }
 
+func (mdb *MultiuserDb) UsernameFromCookie(req *http.Request) string {
+	stmt, err := mdb.conn.Prepare("SELECT username FROM cookies WHERE cookie = ?")
+	if err != nil { panic(fmt.Sprintf("Error preparing statement for Verify: %s", err)) }
+	defer stmt.Finalize()
+	
+	err = stmt.Exec(GetIdCookie(req))
+	if err != nil { panic(fmt.Sprintf("Error executing statement for Verify: %s", err)) }
+	
+	if !stmt.Next() { return "" }
+
+	var username string
+	scanerr := stmt.Scan(&username)
+	if scanerr != nil { return "" }
+	
+	return username
+}
+
 func (mdb *MultiuserDb) OpenOrCreateUserDb(username string) *Tasklist {
-	//TODO: open or create user db
+	if username == "" { return nil }
+	file := path.Join(mdb.directory, username + ".pooch")
+	return OpenOrCreate(file)
 }
 
 func (mdb *MultiuserDb) Close() {
@@ -152,8 +178,11 @@ func RegisterServer(c http.ResponseWriter, req *http.Request) {
 	if req.FormValue("user") == "" {
 		RegisterHTML(map[string]string{ "problem": "" }, c)
 	} else {
+		//TODO: controllare che user non abbia strani caratteri
 		if multiuserDb.Exists(req.FormValue("user")) {
 			RegisterHTML(map[string]string{ "problem": "Username " + req.FormValue("user") + " already exists" }, c)
+		} else if !ValidUserName(req.FormValue("user")) {
+			RegisterHTML(map[string]string{ "problem": "Username " + req.FormValue("user") + " contains invalid characters" }, c)
 		} else {
 			multiuserDb.Register(req.FormValue("user"), req.FormValue("password"))
 			RegisterOKHTML(nil, c)
@@ -161,11 +190,17 @@ func RegisterServer(c http.ResponseWriter, req *http.Request) {
 	}
 }
 
+func WhoAmIServer(c http.ResponseWriter, req *http.Request) {
+	username := multiuserDb.UsernameFromCookie(req)
+	WhoAmIHTML(map[string]string{ "username": username }, c)
+}
+
 func MultiServe(port string, directory string) {
 	multiuserDb = OpenMultiuserDb(directory)
 	
 	http.HandleFunc("/login", WrapperServer(LoginServer))
 	http.HandleFunc("/register", WrapperServer(RegisterServer))
+	http.HandleFunc("/whoami", WrapperServer(WhoAmIServer))
 
 	if err := http.ListenAndServe(":" + port, nil); err != nil {
 		Log(ERROR, "Couldn't serve: ", err)

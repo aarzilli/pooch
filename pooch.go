@@ -99,7 +99,8 @@ func CmdCreate(args []string) {
 
 	CheckCondition(found, "Database already exists at: %s\n", filename)
 
-	Create(filename)
+	tasklist := OpenOrCreate(filename)
+	tasklist.Close()
 }
 
 func HelpCreate() {

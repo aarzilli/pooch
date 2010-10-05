@@ -48,27 +48,29 @@ func (tasklist *Tasklist) WithTransaction(name string, f func()) {
 	f()
 }
 
-func Create(filename string) {
+func OpenOrCreate(filename string) *Tasklist {
 	conn, err := sqlite.Open(filename)
 	if err != nil {
 		panic(fmt.Sprintf("Unable to open the database: %s", err))
 	}
 
-	defer conn.Close()
-
-	if err = conn.Exec("CREATE TABLE tasks(id TEXT PRIMARY KEY, title_field TEXT, text_field TEXT, priority INTEGER, repeat_field INTEGER, trigger_at_field DATE, sort TEXT);"); err != nil {
+	if err = conn.Exec("CREATE TABLE IF NOT EXISTS tasks(id TEXT PRIMARY KEY, title_field TEXT, text_field TEXT, priority INTEGER, repeat_field INTEGER, trigger_at_field DATE, sort TEXT);"); err != nil {
 		panic(fmt.Sprintf("Unable to execute CREATE TABLE statement in backend.Create function: %s", err))
 	}
 
-	if err := conn.Exec("CREATE VIRTUAL TABLE ridx USING fts3(id TEXT, title_field TEXT, text_field TEXT);"); err != nil {
+	if err := conn.Exec("CREATE VIRTUAL TABLE IF NOT EXISTS ridx USING fts3(id TEXT, title_field TEXT, text_field TEXT);"); err != nil {
 		panic(fmt.Sprintf("Unable to execute CREATE VIRTUAL TABLE statement in backend.Create function: %s", err))
 	}
 
-	if err := conn.Exec("CREATE TABLE columns(id TEXT, name TEXT, value TEXT, FOREIGN KEY (id) REFERENCES tasks (id) ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED)"); err != nil {
+	if err := conn.Exec("CREATE TABLE IF NOT EXISTS columns(id TEXT, name TEXT, value TEXT, FOREIGN KEY (id) REFERENCES tasks (id) ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED)"); err != nil {
 		panic(fmt.Sprintf("Unable to execute CREATE TABLE (for columns) statement in backend.Create function: %s", err))
 	}
 
-	return
+	tasklist := &Tasklist{filename, conn}
+	tasklist.RunTimedTriggers()
+	tasklist.MustExec("PRAGMA on tasklist.Open", "PRAGMA foreign_keys = ON;")
+
+	return tasklist
 }
 
 func Port(filename, tag string) {

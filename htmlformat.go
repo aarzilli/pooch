@@ -220,3 +220,14 @@ var LoginOKHTML ExecutableTemplate = MakeExecutableTemplate(`
   </body>
 </html>
 `)
+
+var WhoAmIHTML ExecutableTemplate = MakeExecutableTemplate(`
+<html>
+  <head>
+    <title>Who Am I</title>
+  </head>
+  <body>
+    You are: {username|html}
+  </body>
+</html>
+`)
