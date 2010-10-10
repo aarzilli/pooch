@@ -110,6 +110,30 @@ func (mdb *MultiuserDb) OpenOrCreateUserDb(username string) *Tasklist {
 	return OpenOrCreate(file)
 }
 
+func (mdb *MultiuserDb) WithOpenUser(req *http.Request, fn func(tl *Tasklist)) {
+	tl := mdb.OpenOrCreateUserDb(mdb.UsernameFromCookie(req))
+	defer tl.Close()
+	fn(tl)
+}
+
+func MultiWrapperTasklistServer(fn TasklistServer) http.HandlerFunc {
+	return func(c http.ResponseWriter, req *http.Request) {
+		multiuserDb.WithOpenUser(req, func (tl *Tasklist) {
+			fn(c, req, tl)
+		})
+	}
+}
+
+func MultiWrapperTasklistWithIdServer(fn TasklistWithIdServer) http.HandlerFunc {
+	return func(c http.ResponseWriter, req *http.Request) {
+		multiuserDb.WithOpenUser(req, func (tl *Tasklist) {
+			id := req.FormValue("id")
+			if !tl.Exists(id) { panic(fmt.Sprintf("Non-existent id specified")) }
+			fn(c, req, tl, id)
+		})
+	}
+}
+
 func (mdb *MultiuserDb) Close() {
 	mdb.conn.Close()
 }
@@ -201,6 +225,8 @@ func MultiServe(port string, directory string) {
 	http.HandleFunc("/login", WrapperServer(LoginServer))
 	http.HandleFunc("/register", WrapperServer(RegisterServer))
 	http.HandleFunc("/whoami", WrapperServer(WhoAmIServer))
+
+	SetupHandleFunc(MultiWrapperTasklistServer, MultiWrapperTasklistWithIdServer)
 
 	if err := http.ListenAndServe(":" + port, nil); err != nil {
 		Log(ERROR, "Couldn't serve: ", err)

@@ -25,24 +25,21 @@ func DecodeBase64(in string) string {
 	return string(decbuf)
 }
 
+type TasklistWithIdServer func(c http.ResponseWriter, req *http.Request, tl *Tasklist, id string)
+type TasklistServer func(c http.ResponseWriter, req *http.Request, tl *Tasklist)
 
-func WithOpenDefaultCheckId(req *http.Request, rest func(tl *Tasklist, id string)) {
-	WithOpenDefault(func (tl *Tasklist) {
-		id := req.FormValue("id")
-		if !tl.Exists(id) { panic(fmt.Sprintf("Non-existent id specified")) }
-		rest(tl, id)
-	})
-}
 
-func WrapperTasklistWithIdServer(fn func(c http.ResponseWriter, req *http.Request, tl *Tasklist, id string)) func(c http.ResponseWriter, req *http.Request) {
+func SingleWrapperTasklistWithIdServer(fn TasklistWithIdServer) http.HandlerFunc {
 	return func (c http.ResponseWriter, req *http.Request) {
-		WithOpenDefaultCheckId(req, func(tl *Tasklist, id string) {
+		WithOpenDefault(func(tl *Tasklist) {
+			id := req.FormValue("id")
+			if !tl.Exists(id) { panic(fmt.Sprintf("Non-existent id specified")) }
 			fn(c, req, tl, id)
 		})
 	}
 }
 
-func WrapperTasklistServer(fn func(c http.ResponseWriter, req *http.Request, tl *Tasklist)) func(c http.ResponseWriter, req *http.Request) {
+func SingleWrapperTasklistServer(fn TasklistServer) http.HandlerFunc {
 	return func (c http.ResponseWriter, req *http.Request) {
 		WithOpenDefault(func (tl *Tasklist) {
 			fn(c, req, tl)
@@ -50,7 +47,7 @@ func WrapperTasklistServer(fn func(c http.ResponseWriter, req *http.Request, tl 
 	}
 }
 
-func WrapperServer(sub func(c http.ResponseWriter, req *http.Request)) func(c http.ResponseWriter, req *http.Request) {
+func WrapperServer(sub http.HandlerFunc) http.HandlerFunc {
 	return func(c http.ResponseWriter, req *http.Request) {
 		defer func() {
 			if rerr := recover(); rerr != nil {
@@ -333,24 +330,26 @@ func HtmlGetServer(c http.ResponseWriter, req *http.Request, tl *Tasklist, id st
 	EntryListEntryEditorHTML(entryEntry, c)
 }
 
-
-func Serve(port string) {
+func SetupHandleFunc(wrapperTasklistServer func(TasklistServer)http.HandlerFunc, wrapperTasklistWithIdServer func(TasklistWithIdServer)http.HandlerFunc) {
 	http.HandleFunc("/", WrapperServer(StaticInMemoryServer))
 	http.HandleFunc("/static-hello.html", WrapperServer(HelloServer))
 
 	// List urls
-	http.HandleFunc("/change-priority", WrapperServer(WrapperTasklistWithIdServer(ChangePriorityServer)))
-	http.HandleFunc("/get", WrapperServer(WrapperTasklistWithIdServer(GetServer)))
-	http.HandleFunc("/list", WrapperServer(WrapperTasklistServer(ListServer)))
-	http.HandleFunc("/save", WrapperServer(WrapperTasklistServer(SaveServer)))
-	http.HandleFunc("/qadd", WrapperServer(WrapperTasklistServer(QaddServer)))
-	http.HandleFunc("/remove", WrapperServer(WrapperTasklistWithIdServer(RemoveServer)))
-	http.HandleFunc("/htmlget", WrapperServer(WrapperTasklistWithIdServer(HtmlGetServer)))
+	http.HandleFunc("/change-priority", WrapperServer(wrapperTasklistWithIdServer(ChangePriorityServer)))
+	http.HandleFunc("/get", WrapperServer(wrapperTasklistWithIdServer(GetServer)))
+	http.HandleFunc("/list", WrapperServer(wrapperTasklistServer(ListServer)))
+	http.HandleFunc("/save", WrapperServer(wrapperTasklistServer(SaveServer)))
+	http.HandleFunc("/qadd", WrapperServer(wrapperTasklistServer(QaddServer)))
+	http.HandleFunc("/remove", WrapperServer(wrapperTasklistWithIdServer(RemoveServer)))
+	http.HandleFunc("/htmlget", WrapperServer(wrapperTasklistWithIdServer(HtmlGetServer)))
 
 	// Calendar urls
 	http.HandleFunc("/cal", WrapperServer(CalendarServer))
-	http.HandleFunc("/calevents", WrapperServer(WrapperTasklistServer(CalendarEventServer)))
-	
+	http.HandleFunc("/calevents", WrapperServer(wrapperTasklistServer(CalendarEventServer)))
+}
+
+func Serve(port string) {
+	SetupHandleFunc(SingleWrapperTasklistServer, SingleWrapperTasklistWithIdServer)
 	err := http.ListenAndServe(":" + port, nil)
 	if err != nil {
  		Log(ERROR, "Couldn't serve:", err)
