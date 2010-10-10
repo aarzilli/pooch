@@ -363,7 +363,7 @@ func (tl *Tasklist) RunTimedTriggers() {
 	stmt, serr := tl.conn.Prepare("SELECT tasks.id, tasks.title_field, tasks.text_field, tasks.priority, tasks.repeat_field, tasks.trigger_at_field, tasks.sort, group_concat(columns.name||':'||columns.value, '\n') FROM tasks NATURAL JOIN columns WHERE tasks.trigger_at_field < ? AND tasks.priority = ? GROUP BY id");
 	defer stmt.Finalize()
 	if serr != nil {
-		panic(fmt.Sprintf("Error preparing SELECT statement for Tasklist.RunTimedTriggers: %s", serr.String()))
+		panic(fmt.Sprintf("Error preparing SELECT statement for Tasklist.RunTimedTriggers: %s", serr))
 	}
 
 	serr = stmt.Exec(time.LocalTime().Format("2006-01-02 15:04:05"), TIMED)
