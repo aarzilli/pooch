@@ -25,6 +25,31 @@ func DecodeBase64(in string) string {
 	return string(decbuf)
 }
 
+
+func WithOpenDefaultCheckId(req *http.Request, rest func(tl *Tasklist, id string)) {
+	WithOpenDefault(func (tl *Tasklist) {
+		id := req.FormValue("id")
+		if !tl.Exists(id) { panic(fmt.Sprintf("Non-existent id specified")) }
+		rest(tl, id)
+	})
+}
+
+func WrapperTasklistWithIdServer(fn func(c http.ResponseWriter, req *http.Request, tl *Tasklist, id string)) func(c http.ResponseWriter, req *http.Request) {
+	return func (c http.ResponseWriter, req *http.Request) {
+		WithOpenDefaultCheckId(req, func(tl *Tasklist, id string) {
+			fn(c, req, tl, id)
+		})
+	}
+}
+
+func WrapperTasklistServer(fn func(c http.ResponseWriter, req *http.Request, tl *Tasklist)) func(c http.ResponseWriter, req *http.Request) {
+	return func (c http.ResponseWriter, req *http.Request) {
+		WithOpenDefault(func (tl *Tasklist) {
+			fn(c, req, tl)
+		})
+	}
+}
+
 func WrapperServer(sub func(c http.ResponseWriter, req *http.Request)) func(c http.ResponseWriter, req *http.Request) {
 	return func(c http.ResponseWriter, req *http.Request) {
 		defer func() {
@@ -100,70 +125,52 @@ func CheckBool(in string, name string) bool {
 	return false
 }
 
-func WithOpenDefaultCheckId(req *http.Request, rest func(tl *Tasklist, id string)) {
-	WithOpenDefault(func (tl *Tasklist) {
-		id := req.FormValue("id")
-		if !tl.Exists(id) { panic(fmt.Sprintf("Non-existent id specified")) }
-		rest(tl, id)
-	})
-}
 
-func ChangePriorityServer(c http.ResponseWriter, req *http.Request) {
-	WithOpenDefaultCheckId(req, func (tl *Tasklist, id string) {
-		special := CheckBool(CheckFormValue(req, "special"), "special")
+func ChangePriorityServer(c http.ResponseWriter, req *http.Request, tl *Tasklist, id string) {
+	special := CheckBool(CheckFormValue(req, "special"), "special")
 	
-		priority := tl.UpgradePriority(id, special)
-
-		io.WriteString(c, fmt.Sprintf("priority-change-to: %d %s", priority, strings.ToUpper(priority.String())))
-	})
-}
-
-func GetServer(c http.ResponseWriter, req *http.Request) {
-	WithOpenDefaultCheckId(req, func (tl *Tasklist, id string) {
-		entry := tl.Get(id)
-
-		io.WriteString(c, time.LocalTime().Format("2006-01-02 15:04:05") + "\n")
-		json.NewEncoder(c).Encode(MarshalEntry(entry))
-	})
-}
-
-func RemoveServer(c http.ResponseWriter, req *http.Request) {
-	WithOpenDefaultCheckId(req, func (tl *Tasklist, id string) {
-		tl.Remove(id)
-		io.WriteString(c, "removed")
-	})
-}
-
-func QaddServer(c http.ResponseWriter, req *http.Request) {
-	WithOpenDefault(func (tl *Tasklist) {
-		// TODO: use query string to determine which categories to assign here
-		entry, _ := QuickParse(CheckFormValue(req, "text"), req.FormValue("q"), tl)
-		entry.SetId(tl.MakeRandomId())
-		
-		tl.Add(entry)
-		io.WriteString(c, "added: " + entry.Id())
-	})
-}
-
-func SaveServer(c http.ResponseWriter, req *http.Request) {
-	WithOpenDefault(func (tl *Tasklist) {
-		umentry := &UnmarshalEntry{}
-		
-		if err := json.NewDecoder(req.Body).Decode(umentry); err != nil { panic(err) }
-
-		if !tl.Exists(umentry.Id) { panic("Specified id does not exists") }
+	priority := tl.UpgradePriority(id, special)
 	
-		entry := DemarshalEntry(umentry)
+	io.WriteString(c, fmt.Sprintf("priority-change-to: %d %s", priority, strings.ToUpper(priority.String())))
+}
 
-		if CurrentLogLevel <= DEBUG {
-			Log(DEBUG, "Saving entry:\n")
-			entry.Print()
-		}
-		
-		tl.Update(entry);
-		
-		io.WriteString(c, "saved-at-timestamp: " + time.LocalTime().Format("2006-01-02 15:04:05"))
-	})
+func GetServer(c http.ResponseWriter, req *http.Request, tl *Tasklist, id string) {
+	entry := tl.Get(id)
+	
+	io.WriteString(c, time.LocalTime().Format("2006-01-02 15:04:05") + "\n")
+	json.NewEncoder(c).Encode(MarshalEntry(entry))
+}
+
+func RemoveServer(c http.ResponseWriter, req *http.Request, tl *Tasklist, id string) {
+	tl.Remove(id)
+	io.WriteString(c, "removed")
+}
+
+func QaddServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
+	entry, _ := QuickParse(CheckFormValue(req, "text"), req.FormValue("q"), tl)
+	entry.SetId(tl.MakeRandomId())
+	
+	tl.Add(entry)
+	io.WriteString(c, "added: " + entry.Id())
+}
+
+func SaveServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
+	umentry := &UnmarshalEntry{}
+	
+	if err := json.NewDecoder(req.Body).Decode(umentry); err != nil { panic(err) }
+	
+	if !tl.Exists(umentry.Id) { panic("Specified id does not exists") }
+	
+	entry := DemarshalEntry(umentry)
+	
+	if CurrentLogLevel <= DEBUG {
+		Log(DEBUG, "Saving entry:\n")
+		entry.Print()
+	}
+	
+	tl.Update(entry);
+	
+	io.WriteString(c, "saved-at-timestamp: " + time.LocalTime().Format("2006-01-02 15:04:05"))
 }
 
 func ShowSubcols(c http.ResponseWriter, query, theme string, tl *Tasklist) {
@@ -194,74 +201,72 @@ func ShowSubcols(c http.ResponseWriter, query, theme string, tl *Tasklist) {
 /*
  * Tasklist
  */
-func ListServer(c http.ResponseWriter, req *http.Request) {
-	WithOpenDefault(func(tl *Tasklist) {
-		includeDone := req.FormValue("done") != ""
-		var css string
-		if req.FormValue("theme") != "" {
-			css = req.FormValue("theme")
-		} else {
-			css = "list.css"
+func ListServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
+	includeDone := req.FormValue("done") != ""
+	var css string
+	if req.FormValue("theme") != "" {
+		css = req.FormValue("theme")
+	} else {
+		css = "list.css"
+	}
+	
+	query := req.FormValue("q")
+	
+	v := tl.Retrieve(SearchParse(query, includeDone, false, nil, tl))
+	
+	ListHeaderHTML(map[string]string{ "query": query, "theme": css }, c)
+	JavascriptInclude(c, "/shortcut.js")
+	JavascriptInclude(c, "/json.js")
+	JavascriptInclude(c, "/int.js")
+	JavascriptInclude(c, "/calendar.js")
+	
+	ListHeaderCloseHTML(map[string]string{ "theme": css }, c)
+	
+	includeDoneStr := ""
+	if includeDone { includeDoneStr = "checked" }
+	EntryListHeaderHTML(map[string]string{ "query": query, "theme": css, "includeDone": includeDoneStr }, c)
+		
+	io.WriteString(c, "<p>")
+	
+	io.WriteString(c, "<table width='100%' style='border-collapse: collapse;'><tr>")
+	
+	io.WriteString(c, "<td valign='top' style='width: 10%'><div style='padding-top: 30px'>")
+	ShowSubcols(c, query, css, tl)
+	io.WriteString(c, "</div></td>")
+	
+	io.WriteString(c, "<td valign='top'><table width='100%' id='maintable' style='border-collapse: collapse;'>")
+	
+	var curp Priority = INVALID
+	for _, e := range *v {
+		entry := e.(*Entry)
+		
+		if curp != entry.Priority() {
+			EntryListPriorityChangeHTML(entry, c)
+			curp = entry.Priority()
 		}
 		
-		query := req.FormValue("q")
-		
-		v := tl.Retrieve(SearchParse(query, includeDone, false, nil, tl))
-		
-		ListHeaderHTML(map[string]string{ "query": query, "theme": css }, c)
-		JavascriptInclude(c, "/shortcut.js")
-		JavascriptInclude(c, "/json.js")
-		JavascriptInclude(c, "/int.js")
-		JavascriptInclude(c, "/calendar.js")
-		
-		ListHeaderCloseHTML(map[string]string{ "theme": css }, c)
-
-		includeDoneStr := ""
-		if includeDone { includeDoneStr = "checked" }
-		EntryListHeaderHTML(map[string]string{ "query": query, "theme": css, "includeDone": includeDoneStr }, c)
-		
-		io.WriteString(c, "<p>")
-
-		io.WriteString(c, "<table width='100%' style='border-collapse: collapse;'><tr>")
-
-		io.WriteString(c, "<td valign='top' style='width: 10%'><div style='padding-top: 30px'>")
-		ShowSubcols(c, query, css, tl)
-		io.WriteString(c, "</div></td>")
-		
-		io.WriteString(c, "<td valign='top'><table width='100%' id='maintable' style='border-collapse: collapse;'>")
-		
-		var curp Priority = INVALID
-		for _, e := range *v {
-			entry := e.(*Entry)
-			
-			if curp != entry.Priority() {
-				EntryListPriorityChangeHTML(entry, c)
-				curp = entry.Priority()
-			}
-			
-			entryEntry := map[string](interface{}){
-				"entry": entry,
-				"theme": css,
-				"etime": TimeString(entry.TriggerAt(), entry.Sort()),
-				"ecats": entry.CatString(),
-			}
-			
-			
-			io.WriteString(c, "    <tr class='entry'>\n")
-			EntryListEntryHTML(entryEntry, c)
-			io.WriteString(c, "    </tr>\n")
-			
-			io.WriteString(c, "    <tr id='editor_")
-			template.HTMLEscape(c, []byte(entry.Id()))
-			io.WriteString(c, "' class='editor' style='display: none'>\n")
-			EntryListEntryEditorHTML(entryEntry, c)
-			io.WriteString(c, "    </tr>\n")
+		entryEntry := map[string](interface{}){
+			"entry": entry,
+			"theme": css,
+			"etime": TimeString(entry.TriggerAt(), entry.Sort()),
+			"ecats": entry.CatString(),
 		}
-
-		io.WriteString(c, "</table></td>")
 		
-		io.WriteString(c, "</tr></table></body></html>")
-	})
+		
+		io.WriteString(c, "    <tr class='entry'>\n")
+		EntryListEntryHTML(entryEntry, c)
+		io.WriteString(c, "    </tr>\n")
+		
+		io.WriteString(c, "    <tr id='editor_")
+		template.HTMLEscape(c, []byte(entry.Id()))
+		io.WriteString(c, "' class='editor' style='display: none'>\n")
+		EntryListEntryEditorHTML(entryEntry, c)
+		io.WriteString(c, "    </tr>\n")
+	}
+
+	io.WriteString(c, "</table></td>")
+	
+	io.WriteString(c, "</tr></table></body></html>")
 }
 
 func CalendarServer(c http.ResponseWriter, req *http.Request) {
@@ -288,7 +293,7 @@ func GetCalendarEvents(tl *Tasklist, query string, r *vector.Vector, start, end 
 	}
 }
 
-func CalendarEventServer(c http.ResponseWriter, req *http.Request) {
+func CalendarEventServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	var startSecs, endSecs int64
 	var err os.Error
 	if startSecs, err = strconv.Atoi64(req.FormValue("start")); err != nil {
@@ -305,9 +310,7 @@ func CalendarEventServer(c http.ResponseWriter, req *http.Request) {
 
 	query := req.FormValue("q")
 
-	WithOpenDefault(func (tl *Tasklist) {
-		GetCalendarEvents(tl, query, r, start, end, endSecs)
-	})
+	GetCalendarEvents(tl, query, r, start, end, endSecs)
 
 	Log(DEBUG, "For req:", req, "return:", r)
 
@@ -316,38 +319,37 @@ func CalendarEventServer(c http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func HtmlGetServer(c http.ResponseWriter, req *http.Request) {
-	WithOpenDefaultCheckId(req, func(tl *Tasklist, id string) {
-		entry := tl.Get(id)
-		
-		entryEntry := map[string](interface{}){
-			"entry": entry,
-			"etime": TimeString(entry.TriggerAt(), entry.Sort()),
-			"ecats": entry.CatString(),
-		}
-
-		EntryListEntryHTML(entryEntry, c)
-		io.WriteString(c, "\u2029")
-		EntryListEntryEditorHTML(entryEntry, c)
-	})
+func HtmlGetServer(c http.ResponseWriter, req *http.Request, tl *Tasklist, id string) {
+	entry := tl.Get(id)
+	
+	entryEntry := map[string](interface{}){
+		"entry": entry,
+		"etime": TimeString(entry.TriggerAt(), entry.Sort()),
+		"ecats": entry.CatString(),
+	}
+	
+	EntryListEntryHTML(entryEntry, c)
+	io.WriteString(c, "\u2029")
+	EntryListEntryEditorHTML(entryEntry, c)
 }
+
 
 func Serve(port string) {
 	http.HandleFunc("/", WrapperServer(StaticInMemoryServer))
 	http.HandleFunc("/static-hello.html", WrapperServer(HelloServer))
 
 	// List urls
-	http.HandleFunc("/change-priority", WrapperServer(ChangePriorityServer))
-	http.HandleFunc("/get", WrapperServer(GetServer))
-	http.HandleFunc("/list", WrapperServer(ListServer))
-	http.HandleFunc("/save", WrapperServer(SaveServer))
-	http.HandleFunc("/qadd", WrapperServer(QaddServer))
-	http.HandleFunc("/remove", WrapperServer(RemoveServer))
-	http.HandleFunc("/htmlget", WrapperServer(HtmlGetServer))
+	http.HandleFunc("/change-priority", WrapperServer(WrapperTasklistWithIdServer(ChangePriorityServer)))
+	http.HandleFunc("/get", WrapperServer(WrapperTasklistWithIdServer(GetServer)))
+	http.HandleFunc("/list", WrapperServer(WrapperTasklistServer(ListServer)))
+	http.HandleFunc("/save", WrapperServer(WrapperTasklistServer(SaveServer)))
+	http.HandleFunc("/qadd", WrapperServer(WrapperTasklistServer(QaddServer)))
+	http.HandleFunc("/remove", WrapperServer(WrapperTasklistWithIdServer(RemoveServer)))
+	http.HandleFunc("/htmlget", WrapperServer(WrapperTasklistWithIdServer(HtmlGetServer)))
 
 	// Calendar urls
 	http.HandleFunc("/cal", WrapperServer(CalendarServer))
-	http.HandleFunc("/calevents", WrapperServer(CalendarEventServer))
+	http.HandleFunc("/calevents", WrapperServer(WrapperTasklistServer(CalendarEventServer)))
 	
 	err := http.ListenAndServe(":" + port, nil)
 	if err != nil {
