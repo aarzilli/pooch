@@ -8,6 +8,9 @@ package main
 
 import (
 	"log"
+	"io"
+	"fmt"
+	"runtime"
 )
 
 type LogLevel int
@@ -36,3 +39,11 @@ func Logf(ll LogLevel, fmt string, a ...interface{}) {
 	}
 }
 
+func WriteStackTrace(rerr interface{}, out io.Writer) {
+	fmt.Fprintf(out, "Stack trace for: %s\n", rerr)
+	for i := 1; ; i++ {
+		_, file, line, ok := runtime.Caller(i)
+		if !ok { break }
+		fmt.Fprintf(out, "    %s:%d\n", file, line)
+	}
+}

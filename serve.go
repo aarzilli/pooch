@@ -52,6 +52,7 @@ func WrapperServer(sub http.HandlerFunc) http.HandlerFunc {
 		defer func() {
 			if rerr := recover(); rerr != nil {
 				Log(ERROR, "Error while serving:", rerr)
+				WriteStackTrace(rerr, os.Stderr)
 				io.WriteString(c, fmt.Sprintf("Internal server error: %s", rerr))
 			}
 		}()
