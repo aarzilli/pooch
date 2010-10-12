@@ -231,3 +231,14 @@ var WhoAmIHTML ExecutableTemplate = MakeExecutableTemplate(`
   </body>
 </html>
 `)
+
+var MustLogInHTML ExecutableTemplate = MakeExecutableTemplate(`
+<html>
+  <head>
+    <title>Login needed</title>
+  </head>
+  <body>
+    You must log in first: <a href="/login">login</a> or <a href="/register">register</a>.
+  </body>
+</html>
+`)

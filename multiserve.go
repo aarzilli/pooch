@@ -110,27 +110,36 @@ func (mdb *MultiuserDb) OpenOrCreateUserDb(username string) *Tasklist {
 	return OpenOrCreate(file)
 }
 
-func (mdb *MultiuserDb) WithOpenUser(req *http.Request, fn func(tl *Tasklist)) {
-	tl := mdb.OpenOrCreateUserDb(mdb.UsernameFromCookie(req))
-	defer tl.Close()
-	fn(tl)
+func (mdb *MultiuserDb) WithOpenUser(req *http.Request, fn func(tl *Tasklist)) bool{
+	username := mdb.UsernameFromCookie(req)
+	if username != "" {
+		tl := mdb.OpenOrCreateUserDb(username)
+		defer tl.Close()
+		fn(tl)
+		return true
+	} 
+	return false
 }
 
 func MultiWrapperTasklistServer(fn TasklistServer) http.HandlerFunc {
 	return func(c http.ResponseWriter, req *http.Request) {
-		multiuserDb.WithOpenUser(req, func (tl *Tasklist) {
+		if !multiuserDb.WithOpenUser(req, func (tl *Tasklist) {
 			fn(c, req, tl)
-		})
+		}) {
+			MustLogInHTML(nil, c)
+		}
 	}
 }
 
 func MultiWrapperTasklistWithIdServer(fn TasklistWithIdServer) http.HandlerFunc {
 	return func(c http.ResponseWriter, req *http.Request) {
-		multiuserDb.WithOpenUser(req, func (tl *Tasklist) {
+		if !multiuserDb.WithOpenUser(req, func (tl *Tasklist) {
 			id := req.FormValue("id")
 			if !tl.Exists(id) { panic(fmt.Sprintf("Non-existent id specified")) }
 			fn(c, req, tl, id)
-		})
+		}) {
+			MustLogInHTML(nil, c)
+		}
 	}
 }
 

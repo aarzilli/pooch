@@ -29,6 +29,14 @@ func MustExec(conn *sqlite.Conn, name string, stmt string, v...interface{}) {
 	}
 }
 
+func HasTable(conn *sqlite.Conn, name string) bool {
+	stmt, err := conn.Prepare("SELECT name FROM sqlite_master WHERE name = ?")
+	if err != nil { panic(fmt.Sprintf("Error while looking for table named %s: %s", name, err)) }
+	defer stmt.Finalize()
+	if err := stmt.Exec(name); err != nil { panic(fmt.Sprintf("Error while looking for table named %s: %s", name, err)) }
+	return stmt.Next()
+}
+
 func (tasklist *Tasklist) MustExec(name string, stmt string, v...interface{}) {
 	MustExec(tasklist.conn, name, stmt, v...)
 }
@@ -58,8 +66,10 @@ func OpenOrCreate(filename string) *Tasklist {
 		panic(fmt.Sprintf("Unable to execute CREATE TABLE statement in backend.Create function: %s", err))
 	}
 
-	if err := conn.Exec("CREATE VIRTUAL TABLE IF NOT EXISTS ridx USING fts3(id TEXT, title_field TEXT, text_field TEXT);"); err != nil {
-		panic(fmt.Sprintf("Unable to execute CREATE VIRTUAL TABLE statement in backend.Create function: %s", err))
+	if !HasTable(conn, "ridx") { // Workaround for non-accepted CREATE VIRTUAL TABLE IF NOT EXISTS
+		if err := conn.Exec("CREATE VIRTUAL TABLE ridx USING fts3(id TEXT, title_field TEXT, text_field TEXT);"); err != nil {
+			panic(fmt.Sprintf("Unable to execute CREATE VIRTUAL TABLE statement in backend.Create function: %s", err))
+		}
 	}
 
 	if err := conn.Exec("CREATE TABLE IF NOT EXISTS columns(id TEXT, name TEXT, value TEXT, FOREIGN KEY (id) REFERENCES tasks (id) ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED)"); err != nil {
