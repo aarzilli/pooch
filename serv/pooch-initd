@@ -1,0 +1,38 @@
+#!/bin/bash
+
+. /lib/lsb/init-functions
+
+start() {
+	log_daemon_msg "pooch" "starting"
+	start-stop-daemon -p /var/run/pooch -u ddzuk -c ddzuk --start --quiet --oknodo --background --make-pidfile --exec /home/ddzuk/pooch/pooch -- multiserve 8080 /home/ddzuk/ms/ > /home/ddzuk/pooch.log 2>&1
+	log_end_msg 0
+	echo
+}
+
+stop() {
+    log_daemon_msg "pooch" "stopping"
+    killproc -p /var/run/pooch /home/ddzuk/pooch/pooch
+    log_end_msg 0
+    echo
+}
+
+case "$1" in
+  start)
+        start
+        ;;
+  stop)
+        stop
+        ;;
+  status)
+        status_of_proc -p /var/run/pooch /home/ddzuk/pooch/pooch pooch
+        ;;
+  restart|reload|condrestart)
+        stop
+        start
+        ;;
+  *)
+        echo $"Usage: $0 {start|stop|restart|reload|status}"
+        exit 1
+esac
+
+exit 0
