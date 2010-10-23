@@ -4,7 +4,6 @@ import (
 	"os"
 	"sync"
 	"gosqlite.googlecode.com/hg/sqlite"
-	"fmt"
 )
 
 var CacheSqliteConnections bool = true
@@ -44,8 +43,5 @@ func SqliteCachedClose(conn *sqlite.Conn) {
 	}
 	
 	Log(DEBUG, "Closing connection")
-	err := conn.Close()
-	if err != nil {
-		panic(fmt.Sprintf("Couldn't close connection: %s", err.String()))
-	}
+	must(conn.Close())
 }

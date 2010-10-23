@@ -17,7 +17,7 @@ type MultiuserDb struct {
 
 func OpenMultiuserDb(directory string) *MultiuserDb{
 	multiuserDb, err := SqliteCachedOpen(path.Join(directory, "users.db"))
-	if err != nil { panic(err) }
+	must(err)
 	MustExec(multiuserDb, "CREATE TABLE for multiuser db", "CREATE TABLE IF NOT EXISTS users (username TEXT, salt TEXT, passhash BLOB)")
 	MustExec(multiuserDb, "CREATE TABLE for multiuser db (cookies)", "CREATE TABLE IF NOT EXISTS cookies (username TEXT, cookie TEXT)")
 	return &MultiuserDb{multiuserDb, directory}
@@ -29,11 +29,10 @@ func (mdb *MultiuserDb) SaveIdCookie(username, idCookie string) {
 
 func (mdb *MultiuserDb) Exists(username string) bool {
 	stmt, err := mdb.conn.Prepare("SELECT username FROM users WHERE username = ?")
-	if err != nil { panic(fmt.Sprintf("Error preparing statement for Exists: %s", err.String())) }
+	must(err)
 	defer stmt.Finalize()
 	
-	err = stmt.Exec(username)
-	if err != nil { panic(fmt.Sprintf("Error executing statement for Exists: %s", err.String())) }
+	must(stmt.Exec(username))
 	
 	return stmt.Next()
 }
@@ -55,18 +54,16 @@ func (mdb *MultiuserDb) Verify(username, password string) bool {
 	Logf(DEBUG, "Verifying %s / %s\n", username, password)
 
 	stmt, err := mdb.conn.Prepare("SELECT salt, passhash FROM users WHERE username = ?")
-	if err != nil { panic(fmt.Sprintf("Error preparing statement for Verify: %s", err)) }
+	must(err)
 	defer stmt.Finalize()
 	
-	err = stmt.Exec(username)
-	if err != nil { panic(fmt.Sprintf("Error executing statement for Verify: %s", err)) }
+	must(stmt.Exec(username))
 	
 	if !stmt.Next() { return false }
 
 	var salt string
 	var passhash []byte
-	scanerr := stmt.Scan(&salt, &passhash)
-	if scanerr != nil { panic(fmt.Sprintf("Error reading from the users database: %s", scanerr)) }
+	must(stmt.Scan(&salt, &passhash))
 
 	hashedPassword := PasswordHashing(salt, password)
 	
@@ -89,17 +86,15 @@ func (mdb *MultiuserDb) Register(username, password string) {
 
 func (mdb *MultiuserDb) UsernameFromCookie(req *http.Request) string {
 	stmt, err := mdb.conn.Prepare("SELECT username FROM cookies WHERE cookie = ?")
-	if err != nil { panic(fmt.Sprintf("Error preparing statement for Verify: %s", err)) }
+	must(err)
 	defer stmt.Finalize()
 	
-	err = stmt.Exec(GetIdCookie(req))
-	if err != nil { panic(fmt.Sprintf("Error executing statement for Verify: %s", err)) }
+	must(stmt.Exec(GetIdCookie(req)))
 	
 	if !stmt.Next() { return "" }
 
 	var username string
-	scanerr := stmt.Scan(&username)
-	if scanerr != nil { return "" }
+	must(stmt.Scan(&username))
 	
 	return username
 }

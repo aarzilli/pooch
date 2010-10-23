@@ -24,16 +24,14 @@ type Tasklist struct {
 }
 
 func MustExec(conn *sqlite.Conn, name string, stmt string, v...interface{}) {
-	if err := conn.Exec(stmt, v...); err != nil {
-		panic(fmt.Sprintf("Error executing %s: %s", name, err))
-	}
+	must(conn.Exec(stmt, v...))
 }
 
 func HasTable(conn *sqlite.Conn, name string) bool {
 	stmt, err := conn.Prepare("SELECT name FROM sqlite_master WHERE name = ?")
-	if err != nil { panic(fmt.Sprintf("Error while looking for table named %s: %s", name, err)) }
+	must(err)
 	defer stmt.Finalize()
-	if err := stmt.Exec(name); err != nil { panic(fmt.Sprintf("Error while looking for table named %s: %s", name, err)) }
+	must(stmt.Exec(name))
 	return stmt.Next()
 }
 
@@ -58,9 +56,7 @@ func (tasklist *Tasklist) WithTransaction(name string, f func()) {
 
 func OpenOrCreate(filename string) *Tasklist {
 	conn, err := SqliteCachedOpen(filename)
-	if err != nil {
-		panic(fmt.Sprintf("Unable to open the database: %s", err))
-	}
+	must(err)
 
 	MustExec(conn, "CREATE TABLE tasks", "CREATE TABLE IF NOT EXISTS tasks(id TEXT PRIMARY KEY, title_field TEXT, text_field TEXT, priority INTEGER, repeat_field INTEGER, trigger_at_field DATE, sort TEXT);")
 
@@ -81,38 +77,20 @@ func OpenOrCreate(filename string) *Tasklist {
 
 func Port(filename, tag string) {
 	conn, err := SqliteCachedOpen(filename)
-	if err != nil { panic(fmt.Sprintf("Unable to open the database: %s", err)) }
+	must(err)
 	defer conn.Close()
 
-	if err := conn.Exec("ALTER TABLE tasks RENAME TO tasks_bku"); err != nil {
-		panic(fmt.Sprintf("Unable to execute ALTER TABLE statement in backend.Create function: %s", err))
-	}
-
-	if err := conn.Exec("CREATE TABLE tasks(id TEXT PRIMARY KEY, title_field TEXT, text_field TEXT, priority INTEGER, repeat_field INTEGER, trigger_at_field DATE, sort TEXT);"); err != nil {
-		panic(fmt.Sprintf("Unable to execute CREATE TABLE statement in backend.Create function: %s", err))
-	}
-
-	if err := conn.Exec("INSERT INTO tasks SELECT * FROM tasks_bku"); err != nil {
-		panic(fmt.Sprintf("Unable to execute INSERT INTO (tasks copy) statement in backend.Create function: %s", err))
-	}
-
-	if err := conn.Exec("DROP TABLE tasks_bku"); err != nil {
-		panic(fmt.Sprintf("Unable to execute DROP TABLE (tasks copy) statement in backend.Create function: %s", err))
-	}
-
-	if err := conn.Exec("CREATE TABLE columns(id TEXT, name TEXT, value TEXT, FOREIGN KEY (id) REFERENCES tasks (id) ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED);"); err != nil {
-		panic(fmt.Sprintf("Unable to execute CREATE TABLE statment in backend.Port: %s", err))
-	}
-
-	err = conn.Exec("INSERT INTO columns(id, name, value) SELECT id, ?, '' FROM tasks", tag)
-	if err != nil { panic(fmt.Sprintf("Unable to execute INSERT INTO statement in backend.Port: %s", err)) }
+	MustExec(conn, "tasks renaming", "ALTER TABLE tasks RENAME TO tasks_bku");
+	MustExec(conn, "CREATE TABLE tasks", "CREATE TABLE tasks(id TEXT PRIMARY KEY, title_field TEXT, text_field TEXT, priority INTEGER, repeat_field INTEGER, trigger_at_field DATE, sort TEXT);")
+	MustExec(conn, "tasks copy", "INSERT INTO tasks SELECT * FROM tasks_bku")
+	MustExec(conn, "old tasks deletion", "DROP TABLE tasks_bku")
+	MustExec(conn, "CREATE TABLE columns", "CREATE TABLE columns(id TEXT, name TEXT, value TEXT, FOREIGN KEY (id) REFERENCES tasks (id) ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED);")
+	MustExec(conn, "populating columns", "INSERT INTO columns(id, name, value) SELECT id, ?, '' FROM tasks", tag)
 }
 
 func Open(name string) (tasklist *Tasklist) {
 	conn, sqerr := SqliteCachedOpen(name)
-	if sqerr != nil {
-		panic(fmt.Sprintf("Cannot open tasklist: %s", sqerr.String()))
-	}
+	must(sqerr)
 
 	tasklist = &Tasklist{name, conn}
 	tasklist.RunTimedTriggers()
@@ -132,14 +110,9 @@ func (tasklist *Tasklist) Close() {
 
 func (tasklist *Tasklist) Exists(id string) bool {
 	stmt, err := tasklist.conn.Prepare("SELECT id FROM tasks WHERE id = ?")
-	if err != nil {
-		panic(fmt.Sprintf("Error preparing statement for Exists: %s", err.String()))
-	}
+	must(err)
 	defer stmt.Finalize()
-	err = stmt.Exec(id)
-	if err != nil {
-		panic(fmt.Sprintf("Error executing statement for Exists: %s", err.String()))
-	}
+	must(stmt.Exec(id))
 
 	hasnext := stmt.Next()
 	Log(DEBUG, "Existence of ", id, " ", hasnext)
@@ -150,9 +123,8 @@ func (tasklist *Tasklist) Exists(id string) bool {
 func MakeRandomString(size int) string {
 	var buf []byte = make([]byte, size)
 	
-	if 	_, err := io.ReadFull(rand.Reader, buf); err != nil {
-		panic(fmt.Sprintf("Error generating random string: %s", err))
-	}
+	_, err := io.ReadFull(rand.Reader, buf)
+	must(err)
 
 	var encbuf []byte = make([]byte, base64.StdEncoding.EncodedLen(len(buf)))
 	base64.StdEncoding.Encode(encbuf, buf)
@@ -281,23 +253,16 @@ func StatementScan(stmt *sqlite.Stmt, hasCols bool) (*Entry, os.Error) {
 
 func (tl *Tasklist) Get(id string) *Entry {
 	stmt, serr := tl.conn.Prepare("SELECT tasks.id, tasks.title_field, tasks.text_field, tasks.priority, tasks.repeat_field, tasks.trigger_at_field, tasks.sort, group_concat(columns.name||':'||columns.value, '\n') FROM tasks NATURAL JOIN columns WHERE tasks.id = ? GROUP BY tasks.id")
-	if serr != nil {
-		panic(fmt.Sprintf("Error preparing SELECT statement for Tasklist.Get: %s", serr.String()))
-	}
+	must(serr)
 	defer stmt.Finalize()
-	serr = stmt.Exec(id)
-	if serr != nil {
-		panic(fmt.Sprintf("Error executing SELECT statement for Tasklist.Get: %s", serr.String()))
-	}
+	must(stmt.Exec(id))
 
 	if (!stmt.Next()) {
 		panic(fmt.Sprintf("Couldn't find request entry at Tasklist.Get"))
 	}
 
 	entry, err := StatementScan(stmt, true)
-	if err != nil {
-		panic(fmt.Sprintf("Error scanning result of SELECT for Tasklist.Get: %s", err.String()))
-	}
+	must(err)
 
 	entry.SetId(id)
 
@@ -307,11 +272,7 @@ func (tl *Tasklist) Get(id string) *Entry {
 func GetListEx(stmt *sqlite.Stmt, v *vector.Vector) {
 	for (stmt.Next()) {
 		entry, scanerr := StatementScan(stmt, true)
-
-		if scanerr != nil {
-			panic(fmt.Sprintf("Error scanning results for Tasklist.GetList: %s", scanerr.String()))
-		}
-
+		must(scanerr)
 		v.Push(entry);
 	}
 }
@@ -374,17 +335,11 @@ func (tl *Tasklist) RunTimedTriggers() {
 	must(serr)
 	defer stmt.Finalize()
 
-	serr = stmt.Exec(time.LocalTime().Format("2006-01-02 15:04:05"), TIMED)
-	if serr != nil {
-		panic(fmt.Sprintf("Error executing SELECT statement for Tasklist.RunTimedTriggers: %s", serr.String()))
-	}
+	must(stmt.Exec(time.LocalTime().Format("2006-01-02 15:04:05"), TIMED))
 
 	for stmt.Next() {
 		entry, scanerr := StatementScan(stmt, true)
-		
-		if scanerr != nil {
-			panic(fmt.Sprintf("Error scanning results of SELECT statement for Tasklist.RunTimedTriggers: %s", scanerr.String()))
-		}
+		must(scanerr)
 
 		if entry.TriggerAt() == nil {
 			continue
