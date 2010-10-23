@@ -16,6 +16,8 @@ import (
 	"strconv"
 )
 
+//import _ "http/pprof"
+
 var commands map[string](func (args []string)) = map[string](func (args []string)){
 	"help": CmdHelp,
 	"create": CmdCreate,
