@@ -4,7 +4,7 @@
 
 start() {
 	log_daemon_msg "pooch" "starting"
-	start-stop-daemon -p /var/run/pooch -u ddzuk -c ddzuk --start --quiet --oknodo --background --make-pidfile --exec /home/ddzuk/pooch/pooch -- multiserve 8080 /home/ddzuk/ms/ > /home/ddzuk/pooch.log 2>&1
+	start-stop-daemon -p /var/run/pooch -u ddzuk -c ddzuk --start --quiet --oknodo --background --make-pidfile --exec /home/ddzuk/pooch/pooch -- multiserve 8080 /home/ddzuk/ms/ /home/ddzuk/multipooch.log > /home/ddzuk/pooch.log 2>&1
 	log_end_msg 0
 	echo
 }

@@ -11,6 +11,7 @@ import (
 	"io"
 	"fmt"
 	"runtime"
+	"os"
 )
 
 type LogLevel int
@@ -22,20 +23,28 @@ const (
 	WARN
 	ERROR
 )
-		
+
+func makeLogger(w io.Writer) *log.Logger {
+	return log.New(w, "", log.Ldate + log.Ltime)
+}
+
+var logger *log.Logger = makeLogger(os.Stderr)
+
+func SetLogger(w io.Writer) {
+	logger = makeLogger(w)
+}
+
 var CurrentLogLevel LogLevel = INFO
-var LogDefault func(v...interface{}) = log.Stdout
-var LogDefaultf func(fmt string, v...interface{}) = log.Stdoutf
 
 func Log(ll LogLevel, a ...interface{}) {
 	if ll >= CurrentLogLevel {
-		LogDefault(a...)
+		logger.Print(a...)
 	}
 }
 
 func Logf(ll LogLevel, fmt string, a ...interface{}) {
 	if ll >= CurrentLogLevel {
-		LogDefaultf(fmt, a...)
+		logger.Printf(fmt, a...)
 	}
 }
 

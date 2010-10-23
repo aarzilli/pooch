@@ -71,13 +71,13 @@ func CheckCondition(cond bool, format string, a ...interface{}) {
 func CheckArgs(args []string, min int, max int, cmd string) {
 	if min > -1 {
 		if len(args) < min {
-			Complain(true, "Not enough arguments for " + cmd + "\n")
+			Complain(false, "Not enough arguments for " + cmd + "\n")
 		}
 	}
 
 	if max > -1 {
 		if len(args) > max {
-			Complain(true, "Too many arguments for " + cmd + "\n")
+			Complain(false, "Too many arguments for " + cmd + "\n")
 		}
 	}
 }
@@ -260,13 +260,26 @@ func HelpServe() {
 }
 
 func CmdMultiServe(args []string) {
-	//TODO: check things right
+	CheckArgs(args, 3, 3, "multiserve")
+	_, converr := strconv.Atoi(args[0])
+	CheckCondition(converr != nil, "Invalid port number %s: %s\n", args[0], converr)
+	logfile, err := os.Open(args[2], os.O_WRONLY|os.O_CREAT|os.O_APPEND, 0666)
+	CheckCondition(err != nil, "Couldn't open logfile %s: %s\n", logfile, err)
+	defer logfile.Close()
+	
+	/*
+	logfileBuffered := bufio.NewWriter(logfile)
+	defer logfileBuffered.Flush()
+
+	SetLogger(logfileBuffered)*/
+	SetLogger(logfile)
+	
 	MultiServe(args[0], args[1])
 }
 
 func HelpMultiServe() {
-	fmt.Fprintf(os.Stderr, "usage: multiserve <port> <directory>\n\n")
-	fmt.Fprintf(os.Stderr, "\tStarts a multi-user http server, information will be stored in <directory>\n\n")
+	fmt.Fprintf(os.Stderr, "usage: multiserve <port> <directory> <logfile>\n\n")
+	fmt.Fprintf(os.Stderr, "\tStarts a multi-user http server, information will be stored in <directory>. Writes logs to <logfile>\n\n")
 }
 
 func CmdTsvUpdate(argv []string) {
