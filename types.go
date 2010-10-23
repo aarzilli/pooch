@@ -155,6 +155,13 @@ func (e *Entry) CatHash() uint32 {
 	return hasher.Sum32()
 }
 
+func StripQuotes(in string) string {
+	if in == "" { return in }
+	if in[0] != '"' && in[0] != '\'' { return in }
+	if in[len(in)-1] != '"' && in[len(in)-1] != '\'' { return in }
+	return in[1:len(in)-1]
+}
+
 /*
 		 +--------+		   +---------+
 		 |        |------->|         |

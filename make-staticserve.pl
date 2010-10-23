@@ -10,14 +10,29 @@ use MIME::Base64;
 print "package main\n\n";
 print "var FILES map[string]string = map[string]string{\n";
 
-for my $curarg (@ARGV) {
+my %sums = ();
 
+for my $curarg (@ARGV) {
     open my $in, '<', $curarg or die "Couldn't read $curarg: $!";
     my $text = do { local $/; <$in> };
     close $in;
 
     print "\t\"$curarg\": \"".encode_base64($text, "")."\",\n";
+
+    my $x = do { chomp(my $ret = `md5sum $curarg`); my @v = split / /, $ret; $v[0]};
+    #my $x = `md5sum $curarg`;
+
+    $sums{$curarg} = $x;
 }
 
 print "}\n";
 print "\n";
+
+print "var SUMS map[string]string = map[string]string{\n";
+for my $curarg (keys %sums) {
+    print "\t\"$curarg\": \"$sums{$curarg}\",\n";
+}
+
+print "}\n";
+print "\n";
+

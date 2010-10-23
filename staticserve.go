@@ -17,3 +17,20 @@ var FILES map[string]string = map[string]string{
 	"cal.css": "LyoKIFRoaXMgcHJvZ3JhbSBpcyBkaXN0cmlidXRlZCB1bmRlciB0aGUgdGVybXMgb2YgR1BMdjMKIENvcHlyaWdodCAyMDEwLCBBbGVzc2FuZHJvIEFyemlsbGkKICovCgouYWx0MSwgLmZjLWFnZW5kYSAuYWx0MSwgLmZjLWV2ZW50LXRpbWUsIC5hbHQxIGEgewogICAgYmFja2dyb3VuZC1jb2xvcjogbWFyb29uOwogICAgYm9yZGVyLWNvbG9yOiBtYXJvb247Cn0KCi5hbHQyLCAuZmMtYWdlbmRhIC5hbHQyLCAuZmMtZXZlbnQtdGltZSwgLmFsdDIgYSB7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiBuYXZ5OwogICAgYm9yZGVyLWNvbG9yOiBuYXZ5Owp9CgouYWx0MywgLmZjLWFnZW5kYSAuYWx0MywgLmZjLWV2ZW50LXRpbWUsIC5hbHQzIGEgewogICAgYmFja2dyb3VuZC1jb2xvcjogZ3JlZW47CiAgICBib3JkZXItY29sb3I6IGdyZWVuOwp9CgouYWx0NCwgLmZjLWFnZW5kYSAuYWx0NCwgLmZjLWV2ZW50LXRpbWUsIC5hbHQ0IGEgewogICAgYmFja2dyb3VuZC1jb2xvcjogZnVjaHNpYTsKICAgIGJvcmRlci1jb2xvcjogZnVjaHNpYTsKfQoKLmFsdDUsIC5mYy1hZ2VuZGEgLmFsdDUsIC5mYy1ldmVudC10aW1lLCAuYWx0NSBhIHsKICAgIGJhY2tncm91bmQtY29sb3I6IHB1cnBsZTsKICAgIGJvcmRlci1jb2xvcjogcHVycGxlOwp9Cg==",
 }
 
+var SUMS map[string]string = map[string]string{
+	"calendar.css": "2d71f637876918339d72c00b9d3e938c",
+	"static-test.html": "15f04bc1fa053c83d1a3f5bc1f69049a",
+	"json.js": "6e0f67dbbfc82ae0d7fe8500f501e426",
+	"fullcalendar.css": "e4c8b06e5f1f2b32adc0ee1ac968c600",
+	"jquery-ui-custom.js": "ada07a62eeefba6b350270f353f10018",
+	"cint.js": "694a614cc21136f51100b6bf32ee6240",
+	"jquery.js": "10092eee563dec2dca82b77d2cf5a1ae",
+	"dlist.css": "a384e9592813965505b10b7edb5551a3",
+	"shortcut.js": "cec4955d42fd38eb31e83936f765ff38",
+	"fullcalendar.js": "0fe09db94208496e96a8c2e299690762",
+	"list.css": "90746f20b0187e5f01e5c79b12951c50",
+	"int.js": "766425d9026882732f4068dce13db953",
+	"cal.css": "568662ad3daefc6e86e8e735890d3b54",
+	"calendar.js": "dbceb8b1123c38cd14d76743f20b9d96",
+}
+
