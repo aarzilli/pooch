@@ -132,16 +132,7 @@ func WithOpen(name string, rest func(tl *Tasklist)) {
 }
 
 func (tasklist *Tasklist) Close() {
-	if CacheSqliteConnections {
-		Log(DEBUG, "Not closing connection, we are caching them")
-		return
-	}
-	
-	Log(DEBUG, "Closing connection")
-	err := tasklist.conn.Close()
-	if err != nil {
-		panic(fmt.Sprintf("Couldn't close connection: %s", err.String()))
-	}
+	SqliteCachedClose(tasklist.conn)
 }
 
 func (tasklist *Tasklist) Exists(id string) bool {

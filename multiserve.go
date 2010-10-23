@@ -144,7 +144,7 @@ func MultiWrapperTasklistWithIdServer(fn TasklistWithIdServer) http.HandlerFunc 
 }
 
 func (mdb *MultiuserDb) Close() {
-	mdb.conn.Close()
+	SqliteCachedClose(mdb.conn)
 }
 
 var multiuserDb *MultiuserDb
