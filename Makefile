@@ -4,7 +4,7 @@ TARG=pooch
 #TARG=parsemain
 
 GOFILES=\
-	dbg.go types.go parse.go\
+	dbg.go types.go parse.go sqlite_caching.go\
 	dbname.go backend.go staticserve.go htmlformat.go serve.go compat.go\
 	multiserve.go\
 	pooch.go
