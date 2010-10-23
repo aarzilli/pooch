@@ -87,8 +87,11 @@ func StaticInMemoryServer(c http.ResponseWriter, req *http.Request) {
 	}
 
 	c.SetHeader("Content-Type", ct + "; charset=utf-8")
+
 	
-	if content := FILES[req.URL.Path[1:]]; content == "" {
+	if req.URL.Path == "/" {
+		http.Redirect(c, req, "/list", 301)
+	} else if content := FILES[req.URL.Path[1:]]; content == "" {
 		io .WriteString(c, "404, Not found")
 	} else {
 		z := DecodeBase64(content)

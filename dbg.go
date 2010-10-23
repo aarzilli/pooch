@@ -23,7 +23,7 @@ const (
 	ERROR
 )
 		
-var CurrentLogLevel LogLevel = DEBUG
+var CurrentLogLevel LogLevel = INFO
 var LogDefault func(v...interface{}) = log.Stdout
 var LogDefaultf func(fmt string, v...interface{}) = log.Stdoutf
 
