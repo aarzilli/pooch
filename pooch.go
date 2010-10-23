@@ -27,6 +27,7 @@ var commands map[string](func (args []string)) = map[string](func (args []string
 	"add": CmdQuickAdd,
 	"update": CmdQuickUpdate,
 	"search": CmdSearch,
+	"savesearch": CmdSaveSearch,
 	"colist": CmdColist,
 	"tsvup": CmdTsvUpdate,
 	"rename": CmdRename,
@@ -45,6 +46,7 @@ var help_commands map[string](func ()) = map[string](func ()){
 	"add": HelpQuickAdd,
 	"update": HelpQuickUpdate,
 	"search": HelpSearch,
+	"savesearch": HelpSaveSearch,
 	"colist": HelpColist,
 	"tsvup": HelpTsvUpdate,
 	"rename": HelpRename,
@@ -157,7 +159,18 @@ func CmdSearch(args []string) {
 
 func HelpSearch() {
 	fmt.Fprintf(os.Stderr, "Usage: search <search string>\n\n")
-	fmt.Fprintf(os.Stderr, "\tReturns a list of matching entries")
+	fmt.Fprintf(os.Stderr, "\tReturns a list of matching entries\n")
+}
+
+func CmdSaveSearch(args []string) {
+	CheckArgsOpenDb(args, 1, 1000, "savesearch", func(tl *Tasklist) {
+		tl.SaveSearch(args[0], strings.Join(args[1:], " "))
+	})
+}
+
+func HelpSaveSearch() {
+	fmt.Fprintf(os.Stderr, "Usage: savesearch <name> <search string>\n\n")
+	fmt.Fprintf(os.Stderr, "\tSaves the search string as <name>\n")
 }
 
 func CmdColist(args []string) {
@@ -368,6 +381,7 @@ func main() {
 		w.WriteString("\tcreate\tCreates new tasklist\n")
 		w.WriteString("\n")
 		w.WriteString("\tsearch\tSearch (lists everything when called without a query)\n")
+		w.WriteString("\tsavesearch\tSaves a search string\n")
 		w.WriteString("\tcolist\tReturns lists of categories\n")
 		w.WriteString("\n")
 		w.WriteString("\tget\tDisplays an entry of the tasklist\n")

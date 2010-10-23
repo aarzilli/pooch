@@ -183,10 +183,12 @@ func SaveServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 
 func ShowSubcols(c http.ResponseWriter, query, theme string, tl *Tasklist) {
 	SubcolEntryHTML(map[string]string{"theme": theme, "name": "index", "dst": ""}, c)
-	
-	std := tl.GetSubcols("")
 
-	for _, v := range std {
+	/*for _, v := range tl.GetSavedSearches() {
+		SubcolEntryHTML(map[string]string{"theme": theme, "name": "@%"+v, "dst": "@%"+v}, c)
+	}*/
+	
+	for _, v := range tl.GetSubcols("") {
 		SubcolEntryHTML(map[string]string{"theme": theme, "name": "@"+v, "dst": "@"+v}, c)
 	}
 

@@ -62,19 +62,15 @@ func OpenOrCreate(filename string) *Tasklist {
 		panic(fmt.Sprintf("Unable to open the database: %s", err))
 	}
 
-	if err = conn.Exec("CREATE TABLE IF NOT EXISTS tasks(id TEXT PRIMARY KEY, title_field TEXT, text_field TEXT, priority INTEGER, repeat_field INTEGER, trigger_at_field DATE, sort TEXT);"); err != nil {
-		panic(fmt.Sprintf("Unable to execute CREATE TABLE statement in backend.Create function: %s", err))
-	}
+	MustExec(conn, "CREATE TABLE tasks", "CREATE TABLE IF NOT EXISTS tasks(id TEXT PRIMARY KEY, title_field TEXT, text_field TEXT, priority INTEGER, repeat_field INTEGER, trigger_at_field DATE, sort TEXT);")
 
 	if !HasTable(conn, "ridx") { // Workaround for non-accepted CREATE VIRTUAL TABLE IF NOT EXISTS
-		if err := conn.Exec("CREATE VIRTUAL TABLE ridx USING fts3(id TEXT, title_field TEXT, text_field TEXT);"); err != nil {
-			panic(fmt.Sprintf("Unable to execute CREATE VIRTUAL TABLE statement in backend.Create function: %s", err))
-		}
+		MustExec(conn, "CREATE VIRTUAL TABLE ridx", "CREATE VIRTUAL TABLE ridx USING fts3(id TEXT, title_field TEXT, text_field TEXT);")
 	}
 
-	if err := conn.Exec("CREATE TABLE IF NOT EXISTS columns(id TEXT, name TEXT, value TEXT, FOREIGN KEY (id) REFERENCES tasks (id) ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED)"); err != nil {
-		panic(fmt.Sprintf("Unable to execute CREATE TABLE (for columns) statement in backend.Create function: %s", err))
-	}
+	MustExec(conn, "CREATE TABLE (for columns)", "CREATE TABLE IF NOT EXISTS columns(id TEXT, name TEXT, value TEXT, FOREIGN KEY (id) REFERENCES tasks (id) ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED)")
+
+	MustExec(conn, "CREATE TABLE (for saved searches)", "CREATE TABLE IF NOT EXISTS saved_searches(name TEXT, value TEXT);")
 
 	tasklist := &Tasklist{filename, conn}
 	tasklist.RunTimedTriggers()
@@ -121,7 +117,6 @@ func Open(name string) (tasklist *Tasklist) {
 	tasklist = &Tasklist{name, conn}
 	tasklist.RunTimedTriggers()
 	tasklist.MustExec("PRAGMA on tasklist.Open", "PRAGMA foreign_keys = ON;")
-	
 	return
 }
 
@@ -181,7 +176,6 @@ func (tasklist *Tasklist) MakeRandomId() string {
 func (tasklist *Tasklist) Remove(id string) {
 	tasklist.MustExec("DELETE for tasklist.Remove", "DELETE FROM tasks WHERE id = ?", id)
 	tasklist.MustExec("DELETE for tasklist.Remove (ridx)", "DELETE FROM ridx WHERE id = ?", id)
-	return
 }
 
 func FormatTriggerAtForAdd(e *Entry) string {
@@ -230,8 +224,10 @@ func (tasklist *Tasklist) Add(e *Entry) {
 	}
 		
 	Log(DEBUG, "Add finished!")
-		
-	return
+}
+
+func (tl *Tasklist) SaveSearch(name string, query string) {
+	tl.MustExec("SaveSearch statement", "INSERT INTO saved_searches(name, value) VALUES(?, ?)", name, query)
 }
 
 func (tasklist *Tasklist) Update(e *Entry) {
@@ -247,8 +243,6 @@ func (tasklist *Tasklist) Update(e *Entry) {
 	})
 
 	Log(DEBUG, "Update finished!")
-
-	return
 }
 
 func StatementScan(stmt *sqlite.Stmt, hasCols bool) (*Entry, os.Error) {
@@ -326,7 +320,7 @@ func (tl *Tasklist) Retrieve(theselect, query string) (v *vector.Vector) {
 	v = new(vector.Vector);
 
 	stmt, serr := tl.conn.Prepare(theselect)
-	if serr != nil { panic(fmt.Sprintf("Error preparing SELECT statement [%s] for tasklist.Retrieve: %s", theselect, serr)) }
+	must(serr)
 	defer stmt.Finalize()
 
 	if query != "" {
@@ -334,9 +328,19 @@ func (tl *Tasklist) Retrieve(theselect, query string) (v *vector.Vector) {
 	} else {
 		serr = stmt.Exec()
 	}
-	if serr != nil { panic(fmt.Sprintf("Error executing SELECT statement [%s] for tasklist.Retrieve: %s", theselect, serr)) }
+	must(serr)
 
 	GetListEx(stmt, v)
+	return
+}
+
+func (tl *Tasklist) GetSavedSearches() (v *vector.Vector) {
+	v = new(vector.Vector)
+
+	stmt, serr := tl.conn.Prepare("SELECT name, value FROM saved_searches;")
+	must(serr)
+	defer stmt.Finalize()
+
 	return
 }
 
@@ -349,15 +353,15 @@ func (tl *Tasklist) GetSubcols(theselect string) []string {
 	Logf(DEBUG, "Select for Subcols: [%s]\n", stmtStr)
 
 	stmt, serr := tl.conn.Prepare(stmtStr)
-	if serr != nil { panic(fmt.Sprintf("Error preparing SELECT statement for Tasklist.GetSubcols: %s", serr)) }
+	must(serr)
 	defer stmt.Finalize()
 	serr = stmt.Exec()
-	if serr != nil { panic(fmt.Sprintf("Error executing SELECT statement for Tasklist.GetSubcols: %s", serr)) }
+	must(serr)
 
 	for stmt.Next() {
 		var name string
 		serr = stmt.Scan(&name)
-		if serr != nil { panic(fmt.Sprintf("Error scanning for Tsklist.GetSubcols: %s", serr)) }
+		must(serr)
 		v.Push(name)
 	}
 
@@ -367,9 +371,7 @@ func (tl *Tasklist) GetSubcols(theselect string) []string {
 func (tl *Tasklist) RunTimedTriggers() {
 	//tl.MustExec("PRAGMA on tasklist.Open", "PRAGMA foreign_keys = OFF;")
 	stmt, serr := tl.conn.Prepare("SELECT tasks.id, tasks.title_field, tasks.text_field, tasks.priority, tasks.repeat_field, tasks.trigger_at_field, tasks.sort, group_concat(columns.name||':'||columns.value, '\n') FROM tasks NATURAL JOIN columns WHERE tasks.trigger_at_field < ? AND tasks.priority = ? GROUP BY id");
-	if serr != nil {
-		panic(fmt.Sprintf("Error preparing SELECT statement for Tasklist.RunTimedTriggers: %s", serr))
-	}
+	must(serr)
 	defer stmt.Finalize()
 
 	serr = stmt.Exec(time.LocalTime().Format("2006-01-02 15:04:05"), TIMED)

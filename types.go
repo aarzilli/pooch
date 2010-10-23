@@ -12,6 +12,7 @@ import (
 	"sort"
 	"strings"
 	"hash/crc32"
+	"os"
 )
 
 type Priority int;
@@ -102,6 +103,10 @@ type Entry struct {
 	triggerAt *time.Time
 	sort string
 	columns Columns
+}
+
+func must(err os.Error) {
+	if err != nil { panic(err) }
 }
 
 func MakeUnmarshalEntry(id string, title string, text string, priority Priority, freq string, triggerAt string, sort string, cols string, tasklist string) *UnmarshalEntry {

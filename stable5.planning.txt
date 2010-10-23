@@ -2,7 +2,7 @@ FEATURE PLAN FOR STABLE05
 
 SAVING QUERIES
 
-The GUI should allow queries to be saved, with any name.
+The GUI should allow queries to be saved, with any name. A search of the form #%<name> refers to a saved search.
 
 A NEW QUERY LANGUAGE
 
