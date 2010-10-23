@@ -92,7 +92,7 @@ func StaticInMemoryServer(c http.ResponseWriter, req *http.Request) {
 		io .WriteString(c, "404, Not found")
 	} else {
 		if ifNoneMatch := StripQuotes(req.Header["If-None-Match"]); ifNoneMatch == signature {
-			Logf(INFO, "Page not modified, replying")
+			Logf(DEBUG, "Page not modified, replying")
 			c.WriteHeader(http.StatusNotModified)
 			return
 		}
