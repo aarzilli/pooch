@@ -57,7 +57,7 @@ func (tasklist *Tasklist) WithTransaction(name string, f func()) {
 }
 
 func OpenOrCreate(filename string) *Tasklist {
-	conn, err := sqlite.Open(filename)
+	conn, err := SqliteCachedOpen(filename)
 	if err != nil {
 		panic(fmt.Sprintf("Unable to open the database: %s", err))
 	}
@@ -84,7 +84,7 @@ func OpenOrCreate(filename string) *Tasklist {
 }
 
 func Port(filename, tag string) {
-	conn, err := sqlite.Open(filename)
+	conn, err := SqliteCachedOpen(filename)
 	if err != nil { panic(fmt.Sprintf("Unable to open the database: %s", err)) }
 	defer conn.Close()
 
@@ -113,7 +113,7 @@ func Port(filename, tag string) {
 }
 
 func Open(name string) (tasklist *Tasklist) {
-	conn, sqerr := sqlite.Open(name)
+	conn, sqerr := SqliteCachedOpen(name)
 	if sqerr != nil {
 		panic(fmt.Sprintf("Cannot open tasklist: %s", sqerr.String()))
 	}
@@ -132,6 +132,11 @@ func WithOpen(name string, rest func(tl *Tasklist)) {
 }
 
 func (tasklist *Tasklist) Close() {
+	if CacheSqliteConnections {
+		Log(DEBUG, "Not closing connection, we are caching them")
+		return
+	}
+	
 	Log(DEBUG, "Closing connection")
 	err := tasklist.conn.Close()
 	if err != nil {
@@ -369,12 +374,12 @@ func (tl *Tasklist) GetSubcols(theselect string) []string {
 }
 
 func (tl *Tasklist) RunTimedTriggers() {
-	tl.MustExec("PRAGMA on tasklist.Open", "PRAGMA foreign_keys = OFF;")
+	//tl.MustExec("PRAGMA on tasklist.Open", "PRAGMA foreign_keys = OFF;")
 	stmt, serr := tl.conn.Prepare("SELECT tasks.id, tasks.title_field, tasks.text_field, tasks.priority, tasks.repeat_field, tasks.trigger_at_field, tasks.sort, group_concat(columns.name||':'||columns.value, '\n') FROM tasks NATURAL JOIN columns WHERE tasks.trigger_at_field < ? AND tasks.priority = ? GROUP BY id");
-	defer stmt.Finalize()
 	if serr != nil {
 		panic(fmt.Sprintf("Error preparing SELECT statement for Tasklist.RunTimedTriggers: %s", serr))
 	}
+	defer stmt.Finalize()
 
 	serr = stmt.Exec(time.LocalTime().Format("2006-01-02 15:04:05"), TIMED)
 	if serr != nil {

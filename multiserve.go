@@ -16,7 +16,7 @@ type MultiuserDb struct {
 }
 
 func OpenMultiuserDb(directory string) *MultiuserDb{
-	multiuserDb, err := sqlite.Open(path.Join(directory, "users.db"))
+	multiuserDb, err := SqliteCachedOpen(path.Join(directory, "users.db"))
 	if err != nil { panic(err) }
 	MustExec(multiuserDb, "CREATE TABLE for multiuser db", "CREATE TABLE IF NOT EXISTS users (username TEXT, salt TEXT, passhash BLOB)")
 	MustExec(multiuserDb, "CREATE TABLE for multiuser db (cookies)", "CREATE TABLE IF NOT EXISTS cookies (username TEXT, cookie TEXT)")
