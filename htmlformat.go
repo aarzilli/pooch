@@ -74,7 +74,7 @@ var EntryListHeaderHTML ExecutableTemplate = MakeExecutableTemplate(`
 
   <p><form method='get' action='/list'>
   <input type='hidden' id='theme' name='theme' value='{theme}'/>
-  <label for='query'>Query:</label>&nbsp;<input size='50' type='text' id='q' name='q' value='{query|html}'/> <input type='submit' value='search'/> &nbsp; <input type='checkbox' name='done' value='1' {includeDone|html}> include done
+  <label for='query'>Query:</label>&nbsp;<input size='50' type='text' id='q' name='q' value='{query|html}'/> <input type='submit' value='search'/> &nbsp; <input type='checkbox' name='done' value='1' {includeDone|html}> include done <input type='button' style='float: right' value='save query' onClick='javascript:savesearch()'/>
   </form>
 `)
 

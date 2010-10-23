@@ -184,9 +184,11 @@ func SaveServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 func ShowSubcols(c http.ResponseWriter, query, theme string, tl *Tasklist) {
 	SubcolEntryHTML(map[string]string{"theme": theme, "name": "index", "dst": ""}, c)
 
-	/*for _, v := range tl.GetSavedSearches() {
+	for _, v := range tl.GetSavedSearches() {
 		SubcolEntryHTML(map[string]string{"theme": theme, "name": "@%"+v, "dst": "@%"+v}, c)
-	}*/
+	}
+
+	io.WriteString(c, "<hr/>\n")
 	
 	for _, v := range tl.GetSubcols("") {
 		SubcolEntryHTML(map[string]string{"theme": theme, "name": "@"+v, "dst": "@"+v}, c)
@@ -343,6 +345,13 @@ func HtmlGetServer(c http.ResponseWriter, req *http.Request, tl *Tasklist, id st
 	EntryListEntryEditorHTML(entryEntry, c)
 }
 
+func SaveSearchServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
+	name := req.FormValue("name")
+	query := req.FormValue("query")
+	tl.SaveSearch(name, query)
+	io.WriteString(c, "query-saved: " + name)
+}
+
 func SetupHandleFunc(wrapperTasklistServer func(TasklistServer)http.HandlerFunc, wrapperTasklistWithIdServer func(TasklistWithIdServer)http.HandlerFunc) {
 	http.HandleFunc("/", WrapperServer(StaticInMemoryServer))
 	http.HandleFunc("/static-hello.html", WrapperServer(HelloServer))
@@ -355,6 +364,7 @@ func SetupHandleFunc(wrapperTasklistServer func(TasklistServer)http.HandlerFunc,
 	http.HandleFunc("/qadd", WrapperServer(wrapperTasklistServer(QaddServer)))
 	http.HandleFunc("/remove", WrapperServer(wrapperTasklistWithIdServer(RemoveServer)))
 	http.HandleFunc("/htmlget", WrapperServer(wrapperTasklistWithIdServer(HtmlGetServer)))
+	http.HandleFunc("/save-search", WrapperServer(wrapperTasklistServer(SaveSearchServer)))
 
 	// Calendar urls
 	http.HandleFunc("/cal", WrapperServer(CalendarServer))

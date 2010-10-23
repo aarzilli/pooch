@@ -211,3 +211,16 @@ function change_priority(name, event) {
     }
     req.send(null)
 }
+
+function savesearch() {
+    var name = prompt("save search to:");
+    var req = new XMLHttpRequest();
+    req.open("GET", "save-search?name=" + encodeURIComponent(name) + "&query=" + encodeURIComponent(document.getElementById('q').value), true);
+    req.onreadystatechange = function() {
+        if (req.readyState != 4) return;
+        if (!req.responseText.match(/^query-saved: /)) {
+            alert(req.responseText);
+        }
+    };
+    req.send(null)
+}

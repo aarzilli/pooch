@@ -199,7 +199,10 @@ func (tasklist *Tasklist) Add(e *Entry) {
 }
 
 func (tl *Tasklist) SaveSearch(name string, query string) {
-	tl.MustExec("SaveSearch statement", "INSERT INTO saved_searches(name, value) VALUES(?, ?)", name, query)
+	tl.WithTransaction("backend.SaveSearch", func() {
+		tl.MustExec("SaveSearch remove", "DELETE FROM saved_searches WHERE name = ?", name);
+		tl.MustExec("SaveSearch insert", "INSERT INTO saved_searches(name, value) VALUES(?, ?)", name, query)
+	})
 }
 
 func (tasklist *Tasklist) Update(e *Entry) {
@@ -295,14 +298,21 @@ func (tl *Tasklist) Retrieve(theselect, query string) (v *vector.Vector) {
 	return
 }
 
-func (tl *Tasklist) GetSavedSearches() (v *vector.Vector) {
-	v = new(vector.Vector)
+func (tl *Tasklist) GetSavedSearches() []string {
+	var v vector.StringVector
 
-	stmt, serr := tl.conn.Prepare("SELECT name, value FROM saved_searches;")
+	stmt, serr := tl.conn.Prepare("SELECT name FROM saved_searches;")
 	must(serr)
 	defer stmt.Finalize()
+	must(stmt.Exec())
 
-	return
+	for stmt.Next() {
+		var name string
+		must(stmt.Scan(&name))
+		v.Push(name)
+	}
+
+	return ([]string)(v)
 }
 
 func (tl *Tasklist) GetSubcols(theselect string) []string {
@@ -316,13 +326,11 @@ func (tl *Tasklist) GetSubcols(theselect string) []string {
 	stmt, serr := tl.conn.Prepare(stmtStr)
 	must(serr)
 	defer stmt.Finalize()
-	serr = stmt.Exec()
-	must(serr)
+	must(stmt.Exec())
 
 	for stmt.Next() {
 		var name string
-		serr = stmt.Scan(&name)
-		must(serr)
+		must(stmt.Scan(&name))
 		v.Push(name)
 	}
 
