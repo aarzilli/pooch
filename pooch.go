@@ -55,32 +55,10 @@ var help_commands map[string](func ()) = map[string](func ()){
 	"port": HelpPort,
 }
 
-func Complain(usage bool, format string, a ...interface{}) {
-	fmt.Fprintf(os.Stderr, format, a...)
-	if usage {
-		flag.Usage()
-	}
-	os.Exit(-1)
-}
-
 func CheckCondition(cond bool, format string, a ...interface{}) {
 	if cond {
 		fmt.Fprintf(os.Stderr, format, a...)
 		os.Exit(-1)
-	}
-}
-
-func CheckArgs(args []string, min int, max int, cmd string) {
-	if min > -1 {
-		if len(args) < min {
-			Complain(false, "Not enough arguments for " + cmd + "\n")
-		}
-	}
-
-	if max > -1 {
-		if len(args) > max {
-			Complain(false, "Too many arguments for " + cmd + "\n")
-		}
 	}
 }
 

@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"runtime"
 	"os"
+	"flag"
 )
 
 type LogLevel int
@@ -56,3 +57,27 @@ func WriteStackTrace(rerr interface{}, out io.Writer) {
 		fmt.Fprintf(out, "    %s:%d\n", file, line)
 	}
 }
+
+
+func CheckArgs(args []string, min int, max int, cmd string) {
+	if min > -1 {
+		if len(args) < min {
+			Complain(false, "Not enough arguments for " + cmd + "\n")
+		}
+	}
+
+	if max > -1 {
+		if len(args) > max {
+			Complain(false, "Too many arguments for " + cmd + "\n")
+		}
+	}
+}
+
+func Complain(usage bool, format string, a ...interface{}) {
+	fmt.Fprintf(os.Stderr, format, a...)
+	if usage {
+		flag.Usage()
+	}
+	os.Exit(-1)
+}
+
