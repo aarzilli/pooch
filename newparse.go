@@ -17,23 +17,23 @@ type Tokenizer struct {
 }
 
 var standardTokTable []TokenizerFunc = []TokenizerFunc{
-	RepeatedMatcherTo(unicode.IsSpace, " "),
-	StrMatcher("+"),
-	StrMatcher("-"),
-	StrMatcher("#"),
-	StrMatcherTo("@", "#"),
-	StrMatcher("%"),
-	StrMatcher("?"),
-	StrMatcher("=~"),
-	StrMatcher(">="),
-	StrMatcher("<="),
-	StrMatcher("!~"),
-	StrMatcher("!="),
-	StrMatcher("!"),
-	StrMatcher("<"),
-	StrMatcher(">"),
-	RepeatedMatcher(isTagChar),
-	RepeatedMatcher(anyChar),
+	RepeatedTokenizerTo(unicode.IsSpace, " "),
+	StrTokenizer("+"),
+	StrTokenizer("-"),
+	StrTokenizer("#"),
+	StrTokenizerTo("@", "#"),
+	StrTokenizer("%"),
+	StrTokenizer("?"),
+	StrTokenizer("=~"),
+	StrTokenizer(">="),
+	StrTokenizer("<="),
+	StrTokenizer("!~"),
+	StrTokenizer("!="),
+	StrTokenizer("!"),
+	StrTokenizer("<"),
+	StrTokenizer(">"),
+	RepeatedTokenizer(isTagChar),
+	RepeatedTokenizer(anyChar),
 }	
 
 func NewTokenizer(input string) *Tokenizer {
@@ -51,7 +51,7 @@ func isTagChar(ch int) bool {
 	return false;
 }
 
-func StrMatcherTo(match string, translation string) TokenizerFunc {
+func StrTokenizerTo(match string, translation string) TokenizerFunc {
 	umatch := []int(match)
 	return func(t *Tokenizer) (string, int) {
 		var j int
@@ -63,11 +63,11 @@ func StrMatcherTo(match string, translation string) TokenizerFunc {
 	}
 }
 
-func StrMatcher(match string) TokenizerFunc {
-	return StrMatcherTo(match, match)
+func StrTokenizer(match string) TokenizerFunc {
+	return StrTokenizerTo(match, match)
 }
 
-func RepeatedMatcher(fn func(int)bool) TokenizerFunc {
+func RepeatedTokenizer(fn func(int)bool) TokenizerFunc {
 	return func(t *Tokenizer) (string, int) {
 		var j int
 		for j = 0; (t.i+j < len(t.input)) && fn(t.input[t.i+j]); j++ { }
@@ -75,7 +75,7 @@ func RepeatedMatcher(fn func(int)bool) TokenizerFunc {
 	}
 }
 
-func RepeatedMatcherTo(fn func(int)bool, translation string) TokenizerFunc {	
+func RepeatedTokenizerTo(fn func(int)bool, translation string) TokenizerFunc {	
 	return func(t *Tokenizer) (string, int) {
 		var j int
 		for j = 0; (t.i+j < len(t.input)) && fn(t.input[t.i+j]); j++ { }
