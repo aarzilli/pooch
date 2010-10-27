@@ -112,3 +112,68 @@ func (t *Tokenizer) RealNext() string {
 	return ""
 }
 
+type Parser struct {
+	tkzer *Tokenizer
+	showCols *vector.StringVector
+}
+
+func NewParser(tkzer *Tokenizer) *Parser {
+	return &Parser{tkzer, new(vector.StringVector)}
+}
+
+type SimpleExpr struct {
+	name string
+	valueIsNumber bool
+	value string
+	numValue float // only present when the value is a number
+	op string  // if empty string this is a simple tag expression
+}
+
+func (p *Parser) ParseSpeculative(fn func()bool) bool {
+	pos := p.tkzer.next
+	r := false
+	defer func() {
+		if !r { p.tkzer.next = pos }
+	}()
+	
+	r = fn()
+	return r
+}
+
+func (p *Parser) ParseToken(token string) bool {
+	return p.ParseSpeculative(func()bool {
+		return p.tkzer.Next() == token
+	})
+}
+
+func (p *Parser) ParseSimpleExpression(r **SimpleExpr) bool {
+	return p.ParseSpeculative(func()bool {
+		if p.tkzer.Next() != "#" { return false }
+		tagName := p.tkzer.Next()
+		if !isTagChar(([]int(tagName))[0]) { return false }
+
+		expr := &SimpleExpr{tagName, false, "", 0, ""}
+
+		isShowCols := false
+		if p.ParseToken("!") {
+			isShowCols = true
+		}
+
+		hadSpace := p.ParseToken(" ") // semi-optional space token
+
+		if !ParseOperationSubexpression(&expr) {
+			// either there was a subexpression or this must end with 
+			if !hadSpace { return false }
+		}
+		//TODO:
+		// per essere valido deve essere stato possibile leggere lo spazio o la continuazione deve essere una coppia op + valore, provare a leggere op + valore e poi vedere
+
+		if isShowCols {
+			p.showCols.Push(tagName)
+		}
+
+		*r = expr;
+
+		return true
+	})
+}
