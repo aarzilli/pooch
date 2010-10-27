@@ -116,7 +116,7 @@ func CmdQuickUpdate(args []string) {
 		fmt.Fprintf(os.Stderr, "%s\n", strings.Join(*parse_errors, "\n"))
 		
 		entry.SetId(args[0])
-		tl.Update(entry)
+		tl.Update(entry, false)
 	})
 }
 
@@ -281,7 +281,7 @@ func CmdTsvUpdate(argv []string) {
 			entry := ParseTsvFormat(strings.Trim(line, "\t\n "), tl);
 			if tl.Exists(entry.Id()) {
 				fmt.Printf("UPDATING\t%s\t%s\n", entry.Id(), entry.TriggerAt().Format("2006-01-02"))
-				tl.Update(entry)
+				tl.Update(entry, false)
 			} else {
 				fmt.Printf("ADDING\t%s\t%s\n", entry.Id(), entry.TriggerAt().Format("2006-01-02"))
 				tl.Add(entry)
