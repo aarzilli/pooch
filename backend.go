@@ -234,16 +234,18 @@ func (tasklist *Tasklist) Add(e *Entry) {
 	return
 }
 
-func (tasklist *Tasklist) Update(e *Entry) {
+func (tasklist *Tasklist) Update(e *Entry, simpleUpdate bool) {
 	triggerAtString := FormatTriggerAtForAdd(e)
 	priority := e.Priority()
 	freq := e.Freq()
 
 	tasklist.WithTransaction("backend.Update", func() {
 		tasklist.MustExec("UPDATE for tasklist.Update", "UPDATE tasks SET title_field = ?, text_field = ?, priority = ?, repeat_field = ?, trigger_at_field = ?, sort = ? WHERE id = ?", e.Title(), e.Text(), priority.ToInteger(), freq.ToInteger(), triggerAtString, e.Sort(), e.Id())
-		tasklist.MustExec("UPDATE for tasklist.Update (in ridx)", "UPDATE ridx SET title_field = ?, text_field = ? WHERE id = ?", e.Title(), e.Text(), e.Id())
-		tasklist.MustExec("DELETE of columns for tasklist.Update", "DELETE FROM columns WHERE id = ?", e.Id())
-		tasklist.addColumns(e);
+		if !simpleUpdate {
+			tasklist.MustExec("UPDATE for tasklist.Update (in ridx)", "UPDATE ridx SET title_field = ?, text_field = ? WHERE id = ?", e.Title(), e.Text(), e.Id())
+			tasklist.MustExec("DELETE of columns for tasklist.Update", "DELETE FROM columns WHERE id = ?", e.Id())
+			tasklist.addColumns(e);
+		}
 	})
 
 	Log(DEBUG, "Update finished!")
@@ -405,6 +407,6 @@ func (tl *Tasklist) RunTimedTriggers() {
 func (tl *Tasklist) UpgradePriority(id string, special bool) Priority {
 	entry := tl.Get(id)
 	entry.UpgradePriority(special)
-	tl.Update(entry)
+	tl.Update(entry, true)
 	return entry.Priority()
 }

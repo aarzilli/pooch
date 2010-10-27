@@ -176,7 +176,7 @@ func SaveServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 		entry.Print()
 	}
 	
-	tl.Update(entry);
+	tl.Update(entry, false);
 	
 	io.WriteString(c, "saved-at-timestamp: " + time.LocalTime().Format("2006-01-02 15:04:05"))
 }
