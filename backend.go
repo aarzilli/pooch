@@ -42,9 +42,10 @@ func (tasklist *Tasklist) MustExec(name string, stmt string, v...interface{}) {
 }
 
 func (tasklist *Tasklist) WithTransaction(name string, f func()) {
-	tasklist.MustExec(fmt.Sprintf("BEGIN TRANSACTION for %s", name), "BEGIN TRANSACTION")
+	tasklist.MustExec(fmt.Sprintf("BEGIN TRANSACTION for %s", name), "BEGIN EXCLUSIVE TRANSACTION")
 	defer func() {
 		if rerr := recover(); rerr != nil {
+			Logf(ERROR, "Rolling back a failed transaction, because of %v\n", rerr)
 			tasklist.conn.Exec("ROLLBACK TRANSACTION")
 			panic(rerr)
 		} else {
