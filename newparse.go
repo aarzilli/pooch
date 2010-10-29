@@ -146,6 +146,34 @@ func (p *Parser) ParseToken(token string) bool {
 	})
 }
 
+var OPERATORS map[string]bool = map[string]bool{
+	"<": true,
+	">": true,
+	"=": true,
+	"<=": true,
+	">=": true,
+	"!=": true,
+	"!~": true,
+	"=~": true,
+}
+
+func (p *Parser) ParseOperationSubexpression(r **SimpleExpr) bool {
+	return p.ParseSpeculative(func()bool {
+		op := p.tkzer.Next()
+		Logf(TRACE, "Parsed operator: [%s]\n", op)
+		if _, ok := OPERATORS[op]; ok {
+			Logf(TRACE, "I am looking for value\n")
+			p.ParseToken(" ")
+			value := p.tkzer.Next()
+			if value == "" { return false }
+			(*r).op = op
+			(*r).value = value
+			return true
+		} 
+		return false
+	})
+}
+
 func (p *Parser) ParseSimpleExpression(r **SimpleExpr) bool {
 	return p.ParseSpeculative(func()bool {
 		if p.tkzer.Next() != "#" { return false }
@@ -160,13 +188,13 @@ func (p *Parser) ParseSimpleExpression(r **SimpleExpr) bool {
 		}
 
 		hadSpace := p.ParseToken(" ") // semi-optional space token
+		wasLastToken := p.ParseToken("") 
 
-		if !ParseOperationSubexpression(&expr) {
+		if !p.ParseOperationSubexpression(&expr) {
+			Logf(TRACE, "Parse of operation subexpression failed\n")
 			// either there was a subexpression or this must end with 
-			if !hadSpace { return false }
+			if !hadSpace && !wasLastToken { return false }
 		}
-		//TODO:
-		// per essere valido deve essere stato possibile leggere lo spazio o la continuazione deve essere una coppia op + valore, provare a leggere op + valore e poi vedere
 
 		if isShowCols {
 			p.showCols.Push(tagName)

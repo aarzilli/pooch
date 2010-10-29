@@ -80,9 +80,33 @@ func TestTokRewind() {
 	mms(t.Next(), "")
 }
 
+func tse(in string, name string, op string, value string) {
+	t := NewTokenizer(in)
+	p := NewParser(t)
+	expr := &SimpleExpr{}
+	
+	if !p.ParseSimpleExpression(&expr) {
+		panic("Couldn't parse expression: [" + in + "]")
+	}
+
+	mms(expr.name, name)
+	mms(expr.op, op)
+	mms(expr.value, value)
+}
+
+func TestParseSimpleExpr() {
+	tse("#blip", "blip", "", "")
+	tse("#blip!", "blip", "", "")
+	tse("#blip! > 0", "blip", ">", "0")
+	tse("#blip > 0", "blip", ">", "0")
+	tse("#blip>0", "blip", ">", "0")
+	tse("#blip!>0", "blip", ">", "0")
+}
+
 func main() {
 	TestTokSpaces()
 	TestTokMisc()
 	TestTokOps()
 	TestTokRewind()
+	TestParseSimpleExpr()
 }
