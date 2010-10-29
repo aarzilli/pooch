@@ -396,7 +396,7 @@ func main() {
 	defer func() {
 		if rerr := recover(); rerr != nil {
 			fmt.Fprintf(os.Stderr, "Error executing command %s: %s\n", args[0], rerr)
-			WriteStackTrace(rerr, os.Stderr)
+			WriteStackTrace(rerr, loggerWriter)
 			os.Exit(-1)
 		}
 	}()
