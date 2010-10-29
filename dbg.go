@@ -30,8 +30,10 @@ func makeLogger(w io.Writer) *log.Logger {
 }
 
 var logger *log.Logger = makeLogger(os.Stderr)
+var loggerWriter io.Writer
 
 func SetLogger(w io.Writer) {
+	loggerWriter = w
 	logger = makeLogger(w)
 }
 
