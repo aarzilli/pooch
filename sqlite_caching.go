@@ -7,7 +7,7 @@ import (
 	"fmt"
 )
 
-var CacheSqliteConnections bool = true
+var CacheSqliteConnections bool = false
 var CachedSqliteConnections map[string]*sqlite.Conn = make(map[string]*sqlite.Conn)
 var connectionCount int = 0
 var connectionCountLimit int = 3
