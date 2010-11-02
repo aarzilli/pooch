@@ -35,6 +35,7 @@ func TestTokSpaces() {
 func TestTokMisc() {
 	mmt("#prova^^^bau", []string{ "#", "prova", "^^^bau" })
 	mmt("#prova +#prova", []string{ "#", "prova", " ", "+", "#", "prova" })
+	mmt("#blip#blop", []string{ "#", "blip", "#", "blop" })
 	mmt("#prova#prova+#prova@prova", []string{ "#", "prova", "#", "prova", "+", "#", "prova", "#", "prova" })
 }
 
@@ -85,7 +86,7 @@ func tse(in string, name string, op string, value string) {
 	p := NewParser(t)
 	expr := &SimpleExpr{}
 	
-	if !p.ParseSimpleExpression(&expr) {
+	if !p.ParseSimpleExpression(expr) {
 		panic("Couldn't parse expression: [" + in + "]")
 	}
 
@@ -103,10 +104,36 @@ func TestParseSimpleExpr() {
 	tse("#blip!>0", "blip", ">", "0")
 }
 
+func tae(in string, expected []string) {
+	t := NewTokenizer(in)
+	p := NewParser(t)
+
+	r := &AndExpr{}
+
+	p.ParseAndExpr(r)
+
+	if len(r.subExpr) != len(expected) {
+		panic(fmt.Sprintf("Different number of returned values found [%v] expected [%v]", r.subExpr, expected))
+	}
+
+	for i, v := range expected {
+		mms(r.subExpr[i].name, v)
+	}
+}
+
+func TestParseAnd() {
+	tae("#blip", []string{ "blip" })
+	tae("#blip #blop", []string{ "blip", "blop" })
+	tae("#blip#blop", []string{ "blip", "blop" })
+	tae("#blip > 20 #blop", []string{ "blip", "blop" })
+	tae("#blip>20#blop", []string{ "blip", "blop" })
+}
+
 func main() {
 	TestTokSpaces()
 	TestTokMisc()
 	TestTokOps()
 	TestTokRewind()
 	TestParseSimpleExpr()
+	TestParseAnd()
 }

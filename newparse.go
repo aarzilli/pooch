@@ -123,10 +123,21 @@ func NewParser(tkzer *Tokenizer) *Parser {
 
 type SimpleExpr struct {
 	name string
-	valueIsNumber bool
-	value string
-	numValue float // only present when the value is a number
 	op string  // if empty string this is a simple tag expression
+	value string
+}
+
+func (se *SimpleExpr) String() string {
+	return "#<" + se.name + ">" + "<" + se.op + se.value + ">";
+}
+
+type AndExpr struct {
+	subExpr []*SimpleExpr
+}
+
+type BoolExpr struct {
+	ored []AndExpr
+	removed []SimpleExpr
 }
 
 func (p *Parser) ParseSpeculative(fn func()bool) bool {
@@ -146,6 +157,13 @@ func (p *Parser) ParseToken(token string) bool {
 	})
 }
 
+func (p *Parser) LookaheadToken(token string) bool {
+	pos := p.tkzer.next
+	r := p.tkzer.Next() == token
+	p.tkzer.next = pos
+	return r
+}
+
 var OPERATORS map[string]bool = map[string]bool{
 	"<": true,
 	">": true,
@@ -157,7 +175,7 @@ var OPERATORS map[string]bool = map[string]bool{
 	"=~": true,
 }
 
-func (p *Parser) ParseOperationSubexpression(r **SimpleExpr) bool {
+func (p *Parser) ParseOperationSubexpression(r *SimpleExpr) bool {
 	return p.ParseSpeculative(func()bool {
 		op := p.tkzer.Next()
 		Logf(TRACE, "Parsed operator: [%s]\n", op)
@@ -174,13 +192,11 @@ func (p *Parser) ParseOperationSubexpression(r **SimpleExpr) bool {
 	})
 }
 
-func (p *Parser) ParseSimpleExpression(r **SimpleExpr) bool {
+func (p *Parser) ParseSimpleExpression(r *SimpleExpr) bool {
 	return p.ParseSpeculative(func()bool {
 		if p.tkzer.Next() != "#" { return false }
 		tagName := p.tkzer.Next()
 		if !isTagChar(([]int(tagName))[0]) { return false }
-
-		expr := &SimpleExpr{tagName, false, "", 0, ""}
 
 		isShowCols := false
 		if p.ParseToken("!") {
@@ -188,20 +204,64 @@ func (p *Parser) ParseSimpleExpression(r **SimpleExpr) bool {
 		}
 
 		hadSpace := p.ParseToken(" ") // semi-optional space token
-		wasLastToken := p.ParseToken("") 
+		wasLastToken := p.ParseToken("")
+		startOfASimpleExpression := p.LookaheadToken("#")
 
-		if !p.ParseOperationSubexpression(&expr) {
+		if !p.ParseOperationSubexpression(r) {
 			Logf(TRACE, "Parse of operation subexpression failed\n")
 			// either there was a subexpression or this must end with 
-			if !hadSpace && !wasLastToken { return false }
+			if !hadSpace && !wasLastToken && !startOfASimpleExpression { return false }
 		}
 
+		r.name = tagName
 		if isShowCols {
 			p.showCols.Push(tagName)
 		}
 
-		*r = expr;
-
 		return true
 	})
+}
+
+func (p *Parser) ParseAndExpr(r *AndExpr) bool {
+	return p.ParseSpeculative(func() bool {
+		var subExpr vector.Vector
+
+		for {
+			expr := &SimpleExpr{}
+			if !p.ParseSimpleExpression(expr) { break }
+			p.ParseToken(" ") // optional separation space (it is not parsed by ParseSimpleExpression when there is a value involved
+			subExpr.Push(expr)
+		}
+
+		if subExpr.Len() == 0 { return false }
+
+		r.subExpr = make([]*SimpleExpr, subExpr.Len())
+		for i, v := range subExpr { r.subExpr[i] = v.(*SimpleExpr) }
+		
+		return true
+	})
+}
+
+func (p *Parser) Parse() *BoolExpr {
+	r := &BoolExpr{}
+
+	var ored vector.Vector
+	var removed vector.Vector
+
+	for {
+		gotPlus := p.ParseToken("+")
+		
+		gotDash := false
+		if !gotPlus {
+			gotDash = p.ParseToken("-")
+		}
+
+		
+	}
+
+	//TODO:
+	// - se il prossimo token e` + o - segnarselo
+	// - chiamare ParseAndExpr
+	// - usare il risultato insieme a + o - 
+	// - se non riesce aggiungere il token alla stringa
 }
