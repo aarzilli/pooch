@@ -146,7 +146,7 @@ var multiuserDb *MultiuserDb
 
 func AddCookies(c http.ResponseWriter, cookies map[string]string) {
 	for k, v := range cookies {
-		c.SetHeader("Set-Cookie", fmt.Sprintf("%s=%s; Max-Age=65535; path=/", k, v))
+		c.SetHeader("Set-Cookie", fmt.Sprintf("%s=%s; Max-Age=2592000; path=/", k, v))
 	}
 }
 
