@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"container/vector"
+	"strings"
 )
 
 func mms(a string, b string) {
@@ -129,6 +130,56 @@ func TestParseAnd() {
 	tae("#blip>20#blop", []string{ "blip", "blop" })
 }
 
+func tae2(in string, oredExpected [][]string, removedExpected []string, query string) {
+	t := NewTokenizer(in)
+	p := NewParser(t)
+
+	r := p.Parse()
+
+	if len(r.ored) != len(oredExpected) {
+		panic(fmt.Sprintf("Different number of ored terms [%v] expected [%v]", r.ored, oredExpected))
+	}
+
+	for i, v := range oredExpected {
+		if len(v) != len(r.ored[i].subExpr) {
+			panic(fmt.Sprintf("Different number of ored subterms [%v] expected [%v]", r.ored[i].subExpr, v))
+		}
+		
+		for j, w := range v {
+			mms(r.ored[i].subExpr[j].name, w)
+		}
+	}
+
+	if len(r.removed) != len(removedExpected) {
+		panic(fmt.Sprintf("Different number of removed [%v] expected [%v]", r.removed, removedExpected))
+	}
+
+	for i, v := range removedExpected {
+		mms(r.removed[i].name, v)
+	}
+
+	mms(strings.Trim(r.query, " "), strings.Trim(query, " "))
+}
+
+func TestParseFull() {
+	tae2("blip #blip#blop",
+		[][]string{ []string{ "blip", "blop" } },
+		[]string{},
+		"blip")
+	tae2("blip #blip#blop blap",
+		[][]string{ []string{ "blip", "blop" } },
+		[]string{},
+		"blip blap")
+	tae2("blip #blip#blop blap -#balp",
+		[][]string{ []string{ "blip", "blop" } },
+		[]string{ "balp" },
+		"blip blap")
+	tae2("#blip#blap +#blop#blup",
+		[][]string{ []string{ "blip", "blap" }, []string{ "blop", "blup" } },
+		[]string{},
+		"")
+}
+
 func main() {
 	TestTokSpaces()
 	TestTokMisc()
@@ -136,4 +187,5 @@ func main() {
 	TestTokRewind()
 	TestParseSimpleExpr()
 	TestParseAnd()
+	TestParseFull()
 }

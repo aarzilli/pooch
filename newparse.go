@@ -3,6 +3,7 @@ package main
 import (
 	"unicode"
 	"container/vector"
+	"strings"
 //	"fmt"
 )
 
@@ -136,8 +137,9 @@ type AndExpr struct {
 }
 
 type BoolExpr struct {
-	ored []AndExpr
-	removed []SimpleExpr
+	ored []*AndExpr
+	removed []*SimpleExpr
+	query string
 }
 
 func (p *Parser) ParseSpeculative(fn func()bool) bool {
@@ -242,26 +244,54 @@ func (p *Parser) ParseAndExpr(r *AndExpr) bool {
 	})
 }
 
+func (p *Parser) ParseBoolExclusion(r *SimpleExpr) bool {
+	return p.ParseSpeculative(func() bool {
+		if !p.ParseToken("-") { return false }
+		if !p.ParseSimpleExpression(r) { return false }
+		//TODO: an expression of the form "-#bla#bli#blo" should be correctly supported
+		return true
+	})
+}
+
+func (p *Parser) ParseBoolOr(r *AndExpr) bool {
+	return p.ParseSpeculative(func() bool {
+		p.ParseToken("+")
+		if !p.ParseAndExpr(r) { return false }
+		return true
+	})
+}
+
 func (p *Parser) Parse() *BoolExpr {
 	r := &BoolExpr{}
 
 	var ored vector.Vector
 	var removed vector.Vector
+	var query vector.StringVector
 
 	for {
-		gotPlus := p.ParseToken("+")
-		
-		gotDash := false
-		if !gotPlus {
-			gotDash = p.ParseToken("-")
+		simpleSubExpr := &SimpleExpr{}
+		if p.ParseBoolExclusion(simpleSubExpr) {
+			removed.Push(simpleSubExpr)
+			continue
 		}
 
-		
+		andSubExpr := &AndExpr{}
+		if p.ParseBoolOr(andSubExpr) {
+			ored.Push(andSubExpr)
+			continue
+		}
+
+		if p.ParseToken("") { break }
+		if !p.ParseToken(" ") { query.Push(p.tkzer.Next()) } // either reads a space as the next token or saves it
 	}
 
-	//TODO:
-	// - se il prossimo token e` + o - segnarselo
-	// - chiamare ParseAndExpr
-	// - usare il risultato insieme a + o - 
-	// - se non riesce aggiungere il token alla stringa
+	r.ored = make([]*AndExpr, ored.Len())
+	for i, v := range ored { r.ored[i] = v.(*AndExpr) }
+	
+	r.removed = make([]*SimpleExpr, removed.Len())
+	for i, v := range removed { r.removed[i] = v.(*SimpleExpr) }
+
+	r.query = strings.Join([]string(query), " ")
+
+	return r
 }
