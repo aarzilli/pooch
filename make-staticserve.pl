@@ -2,6 +2,8 @@
 use warnings;
 use strict;
 
+use File::Basename;
+
 # This program is distributed under the terms of GPLv3
 # Copyright 2010, Alessandro Arzilli
 
@@ -17,12 +19,14 @@ for my $curarg (@ARGV) {
     my $text = do { local $/; <$in> };
     close $in;
 
-    print "\t\"$curarg\": \"".encode_base64($text, "")."\",\n";
+    my $name = basename($curarg);
+
+    print "\t\"$name\": \"".encode_base64($text, "")."\",\n";
 
     my $x = do { chomp(my $ret = `md5sum $curarg`); my @v = split / /, $ret; $v[0]};
     #my $x = `md5sum $curarg`;
 
-    $sums{$curarg} = $x;
+    $sums{$name} = $x;
 }
 
 print "}\n";
