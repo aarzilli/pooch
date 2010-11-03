@@ -62,6 +62,8 @@ func WrapperServer(sub http.HandlerFunc) http.HandlerFunc {
 		Logf(INFO, "REQ\t%s\t%s\n", c.RemoteAddr(), req)
 
 		sub(c, req)
+
+		Logf(INFO, "QER\t%s\t%s\n", c.RemoteAddr(), req)
 	}
 }
 
