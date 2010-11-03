@@ -12,8 +12,8 @@ import (
 	"io"
 	"crypto/rand"
 	"encoding/base64"
-	"container/vector"
 	"strings"
+	"sync"
 
 	"gosqlite.googlecode.com/hg/sqlite"
 )
@@ -21,7 +21,14 @@ import (
 type Tasklist struct {
 	filename string
 	conn *sqlite.Conn
+	mutex *sync.Mutex
+	refs int
+	timestamp int64
 }
+
+var enabledCaching bool = true
+var tasklistCache map[string]*Tasklist = make(map[string]*Tasklist)
+var tasklistCacheMutex sync.Mutex
 
 func MustExec(conn *sqlite.Conn, name string, stmt string, v...interface{}) {
 	must(conn.Exec(stmt, v...))
@@ -40,73 +47,90 @@ func (tasklist *Tasklist) MustExec(name string, stmt string, v...interface{}) {
 }
 
 func (tasklist *Tasklist) WithTransaction(name string, f func()) {
-	tasklist.MustExec(fmt.Sprintf("BEGIN TRANSACTION for %s", name), "BEGIN EXCLUSIVE TRANSACTION")
-	defer func() {
-		if rerr := recover(); rerr != nil {
-			Logf(ERROR, "Rolling back a failed transaction, because of %v\n", rerr)
-			tasklist.conn.Exec("ROLLBACK TRANSACTION")
-			panic(rerr)
-		} else {
-			Logf(DEBUG, "Transaction committed\n")
-			tasklist.MustExec(fmt.Sprintf("COMMIT TRANSACTION for %s", name), "COMMIT TRANSACTION")
-		}
-	}()
+	if enabledCaching {
+		tasklist.mutex.Lock()
+		defer tasklist.mutex.Unlock()
+	} else {
+		tasklist.MustExec(fmt.Sprintf("BEGIN TRANSACTION for %s", name), "BEGIN EXCLUSIVE TRANSACTION")
+		defer func() {
+			if rerr := recover(); rerr != nil {
+				Logf(ERROR, "Rolling back a failed transaction, because of %v\n", rerr)
+				tasklist.conn.Exec("ROLLBACK TRANSACTION")
+				panic(rerr)
+			} else {
+				Logf(DEBUG, "Transaction committed\n")
+				tasklist.MustExec(fmt.Sprintf("COMMIT TRANSACTION for %s", name), "COMMIT TRANSACTION")
+			}
+		}()
+	}
 
 	f()
 }
 
-func OpenOrCreate(filename string) *Tasklist {
-	conn, err := SqliteCachedOpen(filename)
+func internalTasklistOpenOrCreate(filename string) *Tasklist {
+	conn, err := sqlite.Open(filename)
 	must(err)
 
-	MustExec(conn, "CREATE TABLE tasks", "CREATE TABLE IF NOT EXISTS tasks(id TEXT PRIMARY KEY, title_field TEXT, text_field TEXT, priority INTEGER, repeat_field INTEGER, trigger_at_field DATE, sort TEXT);")
+	if !HasTable(conn, "tasks") { // optimization, if tasks exists do not try to create anything
+		MustExec(conn, "CREATE TABLE tasks", "CREATE TABLE IF NOT EXISTS tasks(id TEXT PRIMARY KEY, title_field TEXT, text_field TEXT, priority INTEGER, repeat_field INTEGER, trigger_at_field DATE, sort TEXT);")
 
-	if !HasTable(conn, "ridx") { // Workaround for non-accepted CREATE VIRTUAL TABLE IF NOT EXISTS
-		MustExec(conn, "CREATE VIRTUAL TABLE ridx", "CREATE VIRTUAL TABLE ridx USING fts3(id TEXT, title_field TEXT, text_field TEXT);")
+		if !HasTable(conn, "ridx") { // Workaround for non-accepted CREATE VIRTUAL TABLE IF NOT EXISTS
+			MustExec(conn, "CREATE VIRTUAL TABLE ridx", "CREATE VIRTUAL TABLE ridx USING fts3(id TEXT, title_field TEXT, text_field TEXT);")
+		}
+		
+		MustExec(conn, "CREATE TABLE (for columns)", "CREATE TABLE IF NOT EXISTS columns(id TEXT, name TEXT, value TEXT, FOREIGN KEY (id) REFERENCES tasks (id) ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED)")
+		
+		MustExec(conn, "CREATE TABLE (for saved searches)", "CREATE TABLE IF NOT EXISTS saved_searches(name TEXT, value TEXT);")
 	}
 
-	MustExec(conn, "CREATE TABLE (for columns)", "CREATE TABLE IF NOT EXISTS columns(id TEXT, name TEXT, value TEXT, FOREIGN KEY (id) REFERENCES tasks (id) ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED)")
-
-	MustExec(conn, "CREATE TABLE (for saved searches)", "CREATE TABLE IF NOT EXISTS saved_searches(name TEXT, value TEXT);")
-
-	tasklist := &Tasklist{filename, conn}
+	tasklist := &Tasklist{filename, conn, &sync.Mutex{}, 1, time.Seconds()}
 	tasklist.RunTimedTriggers()
 	tasklist.MustExec("PRAGMA on tasklist.Open", "PRAGMA foreign_keys = ON;")
 
 	return tasklist
 }
 
-func Port(filename, tag string) {
-	conn, err := SqliteCachedOpen(filename)
-	must(err)
-	defer conn.Close()
+func OpenOrCreate(filename string) *Tasklist {
+	if !enabledCaching {
+		return internalTasklistOpenOrCreate(filename)
+	}
 
-	MustExec(conn, "tasks renaming", "ALTER TABLE tasks RENAME TO tasks_bku");
-	MustExec(conn, "CREATE TABLE tasks", "CREATE TABLE tasks(id TEXT PRIMARY KEY, title_field TEXT, text_field TEXT, priority INTEGER, repeat_field INTEGER, trigger_at_field DATE, sort TEXT);")
-	MustExec(conn, "tasks copy", "INSERT INTO tasks SELECT * FROM tasks_bku")
-	MustExec(conn, "old tasks deletion", "DROP TABLE tasks_bku")
-	MustExec(conn, "CREATE TABLE columns", "CREATE TABLE columns(id TEXT, name TEXT, value TEXT, FOREIGN KEY (id) REFERENCES tasks (id) ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED);")
-	MustExec(conn, "populating columns", "INSERT INTO columns(id, name, value) SELECT id, ?, '' FROM tasks", tag)
-}
+	tasklistCacheMutex.Lock()
+	defer tasklistCacheMutex.Unlock()
 
-func Open(name string) (tasklist *Tasklist) {
-	conn, sqerr := SqliteCachedOpen(name)
-	must(sqerr)
+	if r, ok := tasklistCache[filename]; ok && r != nil {
+		r.refs++
+		return r
+	}
 
-	tasklist = &Tasklist{name, conn}
-	tasklist.RunTimedTriggers()
-	tasklist.MustExec("PRAGMA on tasklist.Open", "PRAGMA foreign_keys = ON;")
-	return
-}
+	Logf(INFO, "Opening new connection to: %s\n", filename)
 
-func WithOpen(name string, rest func(tl *Tasklist)) {
-	tl := Open(name)
-	defer tl.Close()
-	rest(tl)
+	r := internalTasklistOpenOrCreate(filename)
+	tasklistCache[filename] = r
+	return r
 }
 
 func (tasklist *Tasklist) Close() {
-	SqliteCachedClose(tasklist.conn)
+	if !enabledCaching {
+		tasklist.conn.Close()
+		return
+	}
+
+	tasklistCacheMutex.Lock()
+	defer tasklistCacheMutex.Unlock()
+	
+	tasklist.refs--
+	
+	if time.Seconds() - tasklist.timestamp < 6 * 60 * 60 { return }
+	if tasklist.refs != 0 {
+		Logf(ERROR, "Couldn't close stale connection to %s, active connections %d\n", tasklist.filename, tasklist.refs)
+		return
+	}
+
+	Logf(INFO, "Closing connection to %s\n", tasklist.filename)
+	
+	tasklist.conn.Close()
+	tasklistCache[tasklist.filename] = nil
 }
 
 func (tasklist *Tasklist) Exists(id string) bool {
@@ -275,17 +299,17 @@ func (tl *Tasklist) Get(id string) *Entry {
 	return entry
 }
 
-func GetListEx(stmt *sqlite.Stmt, v *vector.Vector) {
+func GetListEx(stmt *sqlite.Stmt) []*Entry{
+	v := []*Entry{}
 	for (stmt.Next()) {
 		entry, scanerr := StatementScan(stmt, true)
 		must(scanerr)
-		v.Push(entry);
+		v = append(v, entry)
 	}
+	return v
 }
 
-func (tl *Tasklist) Retrieve(theselect, query string) (v *vector.Vector) {
-	v = new(vector.Vector);
-
+func (tl *Tasklist) Retrieve(theselect, query string) []*Entry {
 	stmt, serr := tl.conn.Prepare(theselect)
 	must(serr)
 	defer stmt.Finalize()
@@ -297,12 +321,11 @@ func (tl *Tasklist) Retrieve(theselect, query string) (v *vector.Vector) {
 	}
 	must(serr)
 
-	GetListEx(stmt, v)
-	return
+	return GetListEx(stmt)
 }
 
 func (tl *Tasklist) GetSavedSearches() []string {
-	var v vector.StringVector
+	v := make([]string, 0)
 
 	stmt, serr := tl.conn.Prepare("SELECT name FROM saved_searches;")
 	must(serr)
@@ -312,14 +335,14 @@ func (tl *Tasklist) GetSavedSearches() []string {
 	for stmt.Next() {
 		var name string
 		must(stmt.Scan(&name))
-		v.Push(name)
+		v = append(v, name)
 	}
 
-	return ([]string)(v)
+	return v
 }
 
 func (tl *Tasklist) GetSubcols(theselect string) []string {
-	var v vector.StringVector
+	v := make([]string, 0)
 
 	stmtStr := "SELECT DISTINCT name FROM columns WHERE value = ''"
 	if theselect != "" { stmtStr += " AND id IN (" + theselect + ")"}
@@ -334,10 +357,10 @@ func (tl *Tasklist) GetSubcols(theselect string) []string {
 	for stmt.Next() {
 		var name string
 		must(stmt.Scan(&name))
-		v.Push(name)
+		v = append(v, name)
 	}
 
-	return ([]string)(v)
+	return v
 }
 
 func (tl *Tasklist) RunTimedTriggers() {

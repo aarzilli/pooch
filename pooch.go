@@ -12,7 +12,6 @@ import (
 	"tabwriter"
 	"bufio"
 	"strings"
-	"container/vector"
 	"strconv"
 )
 
@@ -33,8 +32,6 @@ var commands map[string](func (args []string)) = map[string](func (args []string
 	"rename": CmdRename,
 
 	"multiserve": CmdMultiServe,
-
-	"port": CmdPort,
 }
 
 var help_commands map[string](func ()) = map[string](func ()){
@@ -51,8 +48,6 @@ var help_commands map[string](func ()) = map[string](func ()){
 	"tsvup": HelpTsvUpdate,
 	"rename": HelpRename,
 	"compat": CompatHelp,
-
-	"port": HelpPort,
 }
 
 func CheckCondition(cond bool, format string, a ...interface{}) {
@@ -186,11 +181,9 @@ func HelpRemove() {
 	fmt.Fprintf(os.Stderr, "\tRemoves specified entry from <db>\n")
 }
 
-func GetSizesForList(v *vector.Vector) (id_size int, title_size int) {
+func GetSizesForList(v []*Entry) (id_size int, title_size int) {
 	title_size, id_size = 0, 0
-	for _, entry := range *v {
-		var e *Entry;
-		e = entry.(*Entry)
+	for _, e := range v {
 		if len(e.Title()) > title_size {
 			title_size = len(e.Title())
 		}
@@ -205,7 +198,7 @@ func GetSizesForList(v *vector.Vector) (id_size int, title_size int) {
 
 var LINE_SIZE int = 80
 
-func CmdListEx(v *vector.Vector) {
+func CmdListEx(v []*Entry) {
 	id_size, title_size := GetSizesForList(v)
 
 	spare_size := LINE_SIZE - id_size - title_size - len(TRIGGER_AT_SHORT_FORMAT)
@@ -219,14 +212,11 @@ func CmdListEx(v *vector.Vector) {
 
 	var curp Priority = INVALID
 	
-	for _, e := range *v {
-		entry := e.(*Entry)
-
+	for _, entry := range v {
 		if entry.Priority() != curp {
 			curp = entry.Priority()
 			fmt.Printf("\n%s:\n", strings.ToUpper(curp.String()))
 		}
-
 		
 		timeString := TimeString(entry.TriggerAt(), entry.Sort())
 		

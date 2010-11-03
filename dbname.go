@@ -9,7 +9,6 @@ import (
 	"os"
 	"path"
 	"strings"
-	"container/vector"
 )
 
 func FixExtension(name string) string {
@@ -23,7 +22,9 @@ func FixExtension(name string) string {
 func WithOpenDefault(rest func(tl *Tasklist)) {
 	dbname := os.Getenv("POOCHDB")
 	if dbname == "" { panic("POOCHDB Not Set") }
-	WithOpen(dbname, rest)
+	tl := OpenOrCreate(dbname)
+	defer tl.Close()
+	rest(tl)
 }
 
 func SearchFile(name string) (outname string, found bool) {
@@ -55,28 +56,4 @@ func Base(dbpath string) string {
 	return name[0:(len(name)-len(".pooch"))]
 }
 
-func GetAllDefaultDBs() (dbs []string, names []string) {
-	vdbs := (*vector.StringVector)(&dbs)
-	vnames := (*vector.StringVector)(&names)
-	
-	for _, curpath := range strings.Split(os.Getenv("POOCHPATH"), ":", -1) {
-		curdir, err := os.Open(curpath, os.O_RDONLY, 0)
-		if err != nil { continue }
-
-		infos, rderr := curdir.Readdir(-1)
-		if rderr != nil { continue }
-
-		for _, info := range infos {
-			matches, _ := path.Match("*.pooch", info.Name)
-			if !matches { continue }
-
-			dbpath := path.Join(curpath, info.Name)
-			Log(DEBUG, "adding:", dbpath)
-			vdbs.Push(dbpath)
-			vnames.Push(Base(dbpath))
-		}
-	}
-
-	return dbs, names
-}
 

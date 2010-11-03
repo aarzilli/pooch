@@ -2,7 +2,6 @@ package main
 
 import (
 	"unicode"
-	"container/vector"
 	"strings"
 //	"fmt"
 )
@@ -12,7 +11,7 @@ type TokenizerFunc func(t *Tokenizer) (string, int);
 type Tokenizer struct {
 	input []int
 	i int
-	rewindBuffer *vector.StringVector
+	rewindBuffer []string
 	next int
 	toktable []TokenizerFunc
 }
@@ -38,7 +37,7 @@ var standardTokTable []TokenizerFunc = []TokenizerFunc{
 }	
 
 func NewTokenizer(input string) *Tokenizer {
-	return &Tokenizer{ []int(input), 0, new(vector.StringVector), 0, standardTokTable }
+	return &Tokenizer{ []int(input), 0, make([]string, 0), 0, standardTokTable }
 }
 
 func anyChar(ch int) bool {
@@ -85,14 +84,14 @@ func RepeatedTokenizerTo(fn func(int)bool, translation string) TokenizerFunc {
 }
 
 func (t *Tokenizer) Next() string {
-	if t.next < t.rewindBuffer.Len() {
-		r := t.rewindBuffer.At(t.next)
+	if t.next < len(t.rewindBuffer) {
+		r := t.rewindBuffer[t.next]
 		t.next++
 		return r
 	}
 
 	r := t.RealNext()
-	t.rewindBuffer.Push(r)
+	t.rewindBuffer = append(t.rewindBuffer, r)
 	t.next++
 	return r
 }
@@ -115,11 +114,11 @@ func (t *Tokenizer) RealNext() string {
 
 type Parser struct {
 	tkzer *Tokenizer
-	showCols *vector.StringVector
+	showCols []string
 }
 
 func NewParser(tkzer *Tokenizer) *Parser {
-	return &Parser{tkzer, new(vector.StringVector)}
+	return &Parser{tkzer, make([]string, 0)}
 }
 
 type SimpleExpr struct {
@@ -217,7 +216,7 @@ func (p *Parser) ParseSimpleExpression(r *SimpleExpr) bool {
 
 		r.name = tagName
 		if isShowCols {
-			p.showCols.Push(tagName)
+			p.showCols = append(p.showCols, tagName)
 		}
 
 		return true
@@ -226,20 +225,17 @@ func (p *Parser) ParseSimpleExpression(r *SimpleExpr) bool {
 
 func (p *Parser) ParseAndExpr(r *AndExpr) bool {
 	return p.ParseSpeculative(func() bool {
-		var subExpr vector.Vector
+		r.subExpr = make([]*SimpleExpr, 0)
 
 		for {
 			expr := &SimpleExpr{}
 			if !p.ParseSimpleExpression(expr) { break }
 			p.ParseToken(" ") // optional separation space (it is not parsed by ParseSimpleExpression when there is a value involved
-			subExpr.Push(expr)
+			r.subExpr = append(r.subExpr, expr)
 		}
 
-		if subExpr.Len() == 0 { return false }
+		if len(r.subExpr) == 0 { return false }
 
-		r.subExpr = make([]*SimpleExpr, subExpr.Len())
-		for i, v := range subExpr { r.subExpr[i] = v.(*SimpleExpr) }
-		
 		return true
 	})
 }
@@ -264,32 +260,26 @@ func (p *Parser) ParseBoolOr(r *AndExpr) bool {
 func (p *Parser) Parse() *BoolExpr {
 	r := &BoolExpr{}
 
-	var ored vector.Vector
-	var removed vector.Vector
-	var query vector.StringVector
+	r.ored = make([]*AndExpr, 0)
+	r.removed = make([]*SimpleExpr, 0)
+	query := make([]string, 0)
 
 	for {
 		simpleSubExpr := &SimpleExpr{}
 		if p.ParseBoolExclusion(simpleSubExpr) {
-			removed.Push(simpleSubExpr)
+			r.removed = append(r.removed, simpleSubExpr)
 			continue
 		}
 
 		andSubExpr := &AndExpr{}
 		if p.ParseBoolOr(andSubExpr) {
-			ored.Push(andSubExpr)
+			r.ored = append(r.ored, andSubExpr)
 			continue
 		}
 
 		if p.ParseToken("") { break }
-		if !p.ParseToken(" ") { query.Push(p.tkzer.Next()) } // either reads a space as the next token or saves it
+		if !p.ParseToken(" ") { query = append(query, p.tkzer.Next()) } // either reads a space as the next token or saves it
 	}
-
-	r.ored = make([]*AndExpr, ored.Len())
-	for i, v := range ored { r.ored[i] = v.(*AndExpr) }
-	
-	r.removed = make([]*SimpleExpr, removed.Len())
-	for i, v := range removed { r.removed[i] = v.(*SimpleExpr) }
 
 	r.query = strings.Join([]string(query), " ")
 

@@ -125,18 +125,16 @@ func isQuickTagStart(ch uint8) bool {
 }
 
 func Strtok(input, chars string) []string {
-	var r vector.StringVector
+	r := make([]string, 0)
 	i, lastIdx := 0, 0
 	for {
 		i = strings.IndexAny(input[lastIdx+1:len(input)], chars)
 		if i == -1 { break }
-		r.Push(input[lastIdx:lastIdx+i+1])
+		r = append(r, input[lastIdx:lastIdx+i+1])
 		lastIdx += i+1
 	}
 
-	r.Push(input[lastIdx:len(input)])
-
-	return ([]string)(r)
+	return append(r, input[lastIdx:len(input)])
 }
 
 var SanitizeRE *regexp.Regexp = regexp.MustCompile("[^a-zA-Z0-9.,/\\^!?]")

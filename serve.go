@@ -251,9 +251,7 @@ func ListServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	io.WriteString(c, "<td valign='top'><table width='100%' id='maintable' style='border-collapse: collapse;'>")
 	
 	var curp Priority = INVALID
-	for _, e := range *v {
-		entry := e.(*Entry)
-		
+	for _, entry := range v {
 		if curp != entry.Priority() {
 			EntryListPriorityChangeHTML(entry, c)
 			curp = entry.Priority()
@@ -293,9 +291,7 @@ func GetCalendarEvents(tl *Tasklist, query string, r *vector.Vector, start, end 
 	theselect, query := SearchParse(query, true, false, []string { "tasks.trigger_at_field IS NOT NULL", "tasks.trigger_at_field > " + tl.Quote(start), "tasks.trigger_at_field < " + tl.Quote(end) }, tl)
 	v := tl.Retrieve(theselect, query)
 
-	for _, e := range *v {
-		entry := e.(*Entry)
-
+	for _, entry := range v {
 		className := fmt.Sprintf("alt%d", entry.CatHash() % 6)
 
 		r.Push(ToCalendarEvent(entry, className))

@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"container/vector"
 	"strings"
 )
 
@@ -13,7 +12,7 @@ func mms(a string, b string) {
 }
 
 func mmt(a string, b []string) {
-	var uptohere vector.StringVector
+	uptohere := make([]string, 0)
 	defer func() {
 		if r := recover(); r != nil {
 			panic(fmt.Sprintf("Failed matching [%v] to [%v]\n", []string(uptohere), b))
@@ -22,7 +21,7 @@ func mmt(a string, b []string) {
 	t := NewTokenizer(a)
 	for _, v := range b {
 		x := t.Next()
-		uptohere.Push(x)
+		uptohere = append(uptohere, x)
 		mms(x, v)
 	}
 	mms(t.Next(), "")

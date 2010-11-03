@@ -16,7 +16,7 @@ type MultiuserDb struct {
 }
 
 func OpenMultiuserDb(directory string) *MultiuserDb{
-	multiuserDb, err := SqliteCachedOpen(path.Join(directory, "users.db"))
+	multiuserDb, err := sqlite.Open(path.Join(directory, "users.db"))
 	must(err)
 	MustExec(multiuserDb, "CREATE TABLE for multiuser db", "CREATE TABLE IF NOT EXISTS users (username TEXT, salt TEXT, passhash BLOB)")
 	MustExec(multiuserDb, "CREATE TABLE for multiuser db (cookies)", "CREATE TABLE IF NOT EXISTS cookies (username TEXT, cookie TEXT)")
@@ -139,7 +139,7 @@ func MultiWrapperTasklistWithIdServer(fn TasklistWithIdServer) http.HandlerFunc 
 }
 
 func (mdb *MultiuserDb) Close() {
-	SqliteCachedClose(mdb.conn)
+	mdb.conn.Close()
 }
 
 var multiuserDb *MultiuserDb
