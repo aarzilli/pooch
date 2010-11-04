@@ -76,7 +76,7 @@ func ParseDateTime(input string) (datetime *time.Time, error string) {
 		return
 	}
 	
-	if (strings.Index(input, " ") != -1) { // has time
+	if (strings.Index(input, " ") != -1) || (strings.Index(input, ",") != -1){ // has time
 		if datetime, err = time.Parse("2006-1-2 15:04", input); err == nil { return }
 		if datetime, err = time.Parse("2006-1-2,15:04", input); err == nil { return }
 
