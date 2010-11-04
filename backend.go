@@ -73,14 +73,14 @@ func internalTasklistOpenOrCreate(filename string) *Tasklist {
 
 	if !HasTable(conn, "settings") { // optimization, if tasks exists do not try to create anything
 		MustExec(conn, "CREATE TABLE tasks", "CREATE TABLE IF NOT EXISTS tasks(id TEXT PRIMARY KEY, title_field TEXT, text_field TEXT, priority INTEGER, repeat_field INTEGER, trigger_at_field DATE, sort TEXT);")
-		MustExec(conn, "CREATE INDEX tasks", "CREATE INDEX tasks_id ON tasks(id);")
+		MustExec(conn, "CREATE INDEX tasks", "CREATE INDEX IF NOT EXISTS tasks_id ON tasks(id);")
 
 		if !HasTable(conn, "ridx") { // Workaround for non-accepted CREATE VIRTUAL TABLE IF NOT EXISTS
 			MustExec(conn, "CREATE VIRTUAL TABLE ridx", "CREATE VIRTUAL TABLE ridx USING fts3(id TEXT, title_field TEXT, text_field TEXT);")
 		}
 		
 		MustExec(conn, "CREATE TABLE (for columns)", "CREATE TABLE IF NOT EXISTS columns(id TEXT, name TEXT, value TEXT, FOREIGN KEY (id) REFERENCES tasks (id) ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED)")
-		MustExec(conn, "CREATE INDEX columns", "CREATE INDEX columns_id ON columns(id);")
+		MustExec(conn, "CREATE INDEX columns", "CREATE INDEX IF NOT EXISTS columns_id ON columns(id);")
 		
 		MustExec(conn, "CREATE TABLE (for saved searches)", "CREATE TABLE IF NOT EXISTS saved_searches(name TEXT, value TEXT);")
 
