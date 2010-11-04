@@ -26,7 +26,7 @@ const (
 )
 
 func makeLogger(w io.Writer) *log.Logger {
-	return log.New(w, "", log.Ldate + log.Ltime)
+	return log.New(w, "", log.Ldate + log.Ltime + log.Lmicroseconds)
 }
 
 var logger *log.Logger = makeLogger(os.Stderr)
