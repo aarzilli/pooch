@@ -71,21 +71,30 @@ func internalTasklistOpenOrCreate(filename string) *Tasklist {
 	conn, err := sqlite.Open(filename)
 	must(err)
 
-	if !HasTable(conn, "tasks") { // optimization, if tasks exists do not try to create anything
+	if !HasTable(conn, "settings") { // optimization, if tasks exists do not try to create anything
 		MustExec(conn, "CREATE TABLE tasks", "CREATE TABLE IF NOT EXISTS tasks(id TEXT PRIMARY KEY, title_field TEXT, text_field TEXT, priority INTEGER, repeat_field INTEGER, trigger_at_field DATE, sort TEXT);")
+		MustExec(conn, "CREATE INDEX tasks", "CREATE INDEX tasks_id ON tasks(id);")
 
 		if !HasTable(conn, "ridx") { // Workaround for non-accepted CREATE VIRTUAL TABLE IF NOT EXISTS
 			MustExec(conn, "CREATE VIRTUAL TABLE ridx", "CREATE VIRTUAL TABLE ridx USING fts3(id TEXT, title_field TEXT, text_field TEXT);")
 		}
 		
 		MustExec(conn, "CREATE TABLE (for columns)", "CREATE TABLE IF NOT EXISTS columns(id TEXT, name TEXT, value TEXT, FOREIGN KEY (id) REFERENCES tasks (id) ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED)")
+		MustExec(conn, "CREATE INDEX columns", "CREATE INDEX columns_id ON columns(id);")
 		
 		MustExec(conn, "CREATE TABLE (for saved searches)", "CREATE TABLE IF NOT EXISTS saved_searches(name TEXT, value TEXT);")
+
+		if !HasTable(conn, "settings") {
+			MustExec(conn, "CREATE TABLE (settings)", "CREATE TABLE IF NOT EXISTS settings(name TEXT UNIQUE, value TEXT);")
+			MustExec(conn, "default settings", "INSERT INTO settings(name, value) VALUES (\"timezone\", \"0\");")
+			MustExec(conn, "default settings", "INSERT INTO settings(name, value) VALUES (\"theme\", \"list.css\");")
+		}
 	}
 
 	tasklist := &Tasklist{filename, conn, &sync.Mutex{}, 1, time.Seconds()}
 	tasklist.RunTimedTriggers()
 	tasklist.MustExec("PRAGMA on tasklist.Open", "PRAGMA foreign_keys = ON;")
+	tasklist.MustExec("PRAGMA synchronous on tasklist.Open", "PRAGMA synchronous = OFF;") // makes inserts many many times faster
 
 	return tasklist
 }
@@ -341,6 +350,49 @@ func (tl *Tasklist) GetSavedSearches() []string {
 	return v
 }
 
+func (tl *Tasklist) GetSetting(name string) string {
+	stmt, serr := tl.conn.Prepare("SELECT value FROM settings WHERE name = ?;")
+	must(serr)
+	defer stmt.Finalize()
+	must(stmt.Exec(name))
+
+	if !stmt.Next() { return "" }
+
+	var value string
+	must(stmt.Scan(&value))
+	return value
+}
+
+func (tl *Tasklist) GetSettings() (r map[string]string) {
+	r = make(map[string]string)
+	stmt, serr := tl.conn.Prepare("SELECT name, value FROM settings")
+	must(serr)
+	defer stmt.Finalize()
+	must(stmt.Exec())
+
+	for stmt.Next() {
+		var name, value string
+		must(stmt.Scan(&name, &value))
+		r[name] = value
+	}
+	
+	return
+}
+
+func (tl *Tasklist) SetSetting(name, value string) {
+	stmt, serr := tl.conn.Prepare("INSERT OR REPLACE INTO settings(name, value) VALUES (?, ?);")
+	must(serr)
+	defer stmt.Finalize()
+	must(stmt.Exec(name, value))
+}
+
+func (tl *Tasklist) SetSettings(settings map[string]string) {
+	for k, v := range settings {
+		Logf(INFO, "Saving %s to %s\n", v, k);
+		tl.MustExec("", "INSERT OR REPLACE INTO settings(name, value) VALUES (?, ?);", k, v)
+	}
+}
+
 func (tl *Tasklist) GetSubcols(theselect string) []string {
 	v := make([]string, 0)
 
@@ -364,7 +416,6 @@ func (tl *Tasklist) GetSubcols(theselect string) []string {
 }
 
 func (tl *Tasklist) RunTimedTriggers() {
-	//tl.MustExec("PRAGMA on tasklist.Open", "PRAGMA foreign_keys = OFF;")
 	stmt, serr := tl.conn.Prepare("SELECT tasks.id, tasks.title_field, tasks.text_field, tasks.priority, tasks.repeat_field, tasks.trigger_at_field, tasks.sort, group_concat(columns.name||':'||columns.value, '\n') FROM tasks NATURAL JOIN columns WHERE tasks.trigger_at_field < ? AND tasks.priority = ? GROUP BY id");
 	must(serr)
 	defer stmt.Finalize()
@@ -389,8 +440,6 @@ func (tl *Tasklist) RunTimedTriggers() {
 
 		tl.MustExec("UPDATE for Tasklist.RunTimedTriggers", "UPDATE tasks SET priority = ? WHERE id = ?", NOW, entry.Id());
 	}
-	
-	tl.MustExec("PRAGMA on tasklist.Open", "PRAGMA foreign_keys = ON;")
 }
 
 func (tl *Tasklist) UpgradePriority(id string, special bool) Priority {

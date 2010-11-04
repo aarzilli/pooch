@@ -67,13 +67,13 @@ var ListHeaderCloseHTML ExecutableTemplate = MakeExecutableTemplate(`
 `)
 
 var EntryListHeaderHTML ExecutableTemplate = MakeExecutableTemplate(`
+  <div style='float: right'><small><a href='/opts'>options</a></small></div>
   <h2>{query|html} <span style='font-size: small'><a href='cal?q={query|url}'>as calendar</a></span></h2>
   <p><form onsubmit='return add_entry("{query|html}")'>
   <label for='text'>New entry:</label>&nbsp;<input size='50' type='newentry' id='newentry' name='text'/><input type='button' value='add' onclick='javascript:add_entry("{query|html}")'/>
   </form>
 
   <p><form method='get' action='/list'>
-  <input type='hidden' id='theme' name='theme' value='{theme}'/>
   <label for='query'>Query:</label>&nbsp;<input size='50' type='text' id='q' name='q' value='{query|html}'/> <input type='submit' value='search'/> &nbsp; <input type='checkbox' name='done' value='1' {includeDone|html}> include done <input type='button' style='float: right' value='save query' onClick='javascript:savesearch()'/>
   </form>
 `)
@@ -128,7 +128,7 @@ var EntryListEntryEditorHTML ExecutableTemplate = MakeExecutableTemplate(`
 `)
 
 var SubcolEntryHTML ExecutableTemplate = MakeExecutableTemplate(`
-<a href='list?theme={theme|url}&q={dst|url}'>{name|html}</a><br>
+<a href='list?q={dst|url}'>{name|html}</a><br>
 `)
 
 var CalendarHeaderHTML ExecutableTemplate = MakeExecutableTemplate(`
@@ -242,3 +242,27 @@ var MustLogInHTML ExecutableTemplate = MakeExecutableTemplate(`
   </body>
 </html>
 `)
+
+var OptionsPageHeader ExecutableTemplate = MakeExecutableTemplate(`
+<html>
+  <head>
+    <title>Options</title>
+  </head>
+  <body>
+    <h2>Options</h2>
+    <form action="/opts" method="get">
+      <input type='hidden' name='save' value='save'/>
+`)
+
+var OptionsPageLine ExecutableTemplate = MakeExecutableTemplate(`
+      <label for='{name|html}'>{name|html}</label><input type='text' name='{name|html}' id='{name|html}' value='{value|html}'/></br>
+`)
+
+var OptionsPageEnd ExecutableTemplate = MakeExecutableTemplate(`
+      <input type='submit' value='save'/>
+    </form>
+  </body>
+</html>
+`)
+
+

@@ -183,17 +183,17 @@ func SaveServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	io.WriteString(c, "saved-at-timestamp: " + time.LocalTime().Format("2006-01-02 15:04:05"))
 }
 
-func ShowSubcols(c http.ResponseWriter, query, theme string, tl *Tasklist) {
-	SubcolEntryHTML(map[string]string{"theme": theme, "name": "index", "dst": ""}, c)
+func ShowSubcols(c http.ResponseWriter, query string, tl *Tasklist) {
+	SubcolEntryHTML(map[string]string{"name": "index", "dst": ""}, c)
 
 	for _, v := range tl.GetSavedSearches() {
-		SubcolEntryHTML(map[string]string{"theme": theme, "name": "@%"+v, "dst": "@%"+v}, c)
+		SubcolEntryHTML(map[string]string{"name": "@%"+v, "dst": "@%"+v}, c)
 	}
 
 	io.WriteString(c, "<hr/>\n")
 	
 	for _, v := range tl.GetSubcols("") {
-		SubcolEntryHTML(map[string]string{"theme": theme, "name": "@"+v, "dst": "@"+v}, c)
+		SubcolEntryHTML(map[string]string{"name": "@"+v, "dst": "@"+v}, c)
 	}
 
 	Logf(DEBUG, "Query is: %s\n", query)
@@ -207,7 +207,7 @@ func ShowSubcols(c http.ResponseWriter, query, theme string, tl *Tasklist) {
 		for _, v := range subcols {
 			if _, ok := set[v]; ok { continue }
 			dst := fmt.Sprintf("%s@%s", query, v)
-			SubcolEntryHTML(map[string]string{"theme": theme, "name": dst, "dst": dst}, c)
+			SubcolEntryHTML(map[string]string{"name": dst, "dst": dst}, c)
 		}
 	}
 }
@@ -218,11 +218,8 @@ func ShowSubcols(c http.ResponseWriter, query, theme string, tl *Tasklist) {
 func ListServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	includeDone := req.FormValue("done") != ""
 	var css string
-	if req.FormValue("theme") != "" {
-		css = req.FormValue("theme")
-	} else {
-		css = "list.css"
-	}
+
+	css = tl.GetSetting("theme")
 	
 	query := req.FormValue("q")
 	
@@ -234,18 +231,18 @@ func ListServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	JavascriptInclude(c, "/int.js")
 	JavascriptInclude(c, "/calendar.js")
 	
-	ListHeaderCloseHTML(map[string]string{ "theme": css }, c)
+	ListHeaderCloseHTML(map[string]string{}, c)
 	
 	includeDoneStr := ""
 	if includeDone { includeDoneStr = "checked" }
-	EntryListHeaderHTML(map[string]string{ "query": query, "theme": css, "includeDone": includeDoneStr }, c)
+	EntryListHeaderHTML(map[string]string{ "query": query, "includeDone": includeDoneStr }, c)
 		
 	io.WriteString(c, "<p>")
 	
 	io.WriteString(c, "<table width='100%' style='border-collapse: collapse;'><tr>")
 	
 	io.WriteString(c, "<td valign='top' style='width: 10%'><div style='padding-top: 30px'>")
-	ShowSubcols(c, query, css, tl)
+	ShowSubcols(c, query, tl)
 	io.WriteString(c, "</div></td>")
 	
 	io.WriteString(c, "<td valign='top'><table width='100%' id='maintable' style='border-collapse: collapse;'>")
@@ -259,7 +256,6 @@ func ListServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 		
 		entryEntry := map[string](interface{}){
 			"entry": entry,
-			"theme": css,
 			"etime": TimeString(entry.TriggerAt(), entry.Sort()),
 			"ecats": entry.CatString(),
 		}
@@ -350,6 +346,27 @@ func SaveSearchServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	io.WriteString(c, "query-saved: " + name)
 }
 
+func OptionServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
+	if req.FormValue("save") == "save" {
+		must(req.ParseForm())
+		settings := make(map[string]string)
+		for k, v := range req.Form {
+			if k != "save" { settings[k] = v[0] }
+		}
+		tl.SetSettings(settings)
+	}
+	
+	settings := tl.GetSettings()
+
+	OptionsPageHeader(nil, c)
+	
+	for k, v := range settings {
+		OptionsPageLine(map[string]string{ "name": k, "value": v }, c)
+	}
+	
+	OptionsPageEnd(nil, c)
+}
+
 func SetupHandleFunc(wrapperTasklistServer func(TasklistServer)http.HandlerFunc, wrapperTasklistWithIdServer func(TasklistWithIdServer)http.HandlerFunc) {
 	http.HandleFunc("/", WrapperServer(StaticInMemoryServer))
 	http.HandleFunc("/static-hello.html", WrapperServer(HelloServer))
@@ -363,6 +380,7 @@ func SetupHandleFunc(wrapperTasklistServer func(TasklistServer)http.HandlerFunc,
 	http.HandleFunc("/remove", WrapperServer(wrapperTasklistWithIdServer(RemoveServer)))
 	http.HandleFunc("/htmlget", WrapperServer(wrapperTasklistWithIdServer(HtmlGetServer)))
 	http.HandleFunc("/save-search", WrapperServer(wrapperTasklistServer(SaveSearchServer)))
+	http.HandleFunc("/opts", WrapperServer(wrapperTasklistServer(OptionServer)))
 
 	// Calendar urls
 	http.HandleFunc("/cal", WrapperServer(CalendarServer))
