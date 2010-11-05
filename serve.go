@@ -61,7 +61,11 @@ func WrapperServer(sub http.HandlerFunc) http.HandlerFunc {
 
 		Logf(INFO, "REQ\t%s\t%s\n", c.RemoteAddr(), req)
 
-		sub(c, req)
+		if req.Method == "HEAD" {
+			//do nothing
+		} else {
+			sub(c, req)
+		}
 
 		Logf(INFO, "QER\t%s\t%s\n", c.RemoteAddr(), req)
 	}
@@ -146,7 +150,6 @@ func ChangePriorityServer(c http.ResponseWriter, req *http.Request, tl *Tasklist
 
 func GetServer(c http.ResponseWriter, req *http.Request, tl *Tasklist, id string) {
 	entry := tl.Get(id)
-	
 	io.WriteString(c, time.LocalTime().Format("2006-01-02 15:04:05") + "\n")
 	json.NewEncoder(c).Encode(MarshalEntry(entry))
 }
