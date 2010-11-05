@@ -30,7 +30,7 @@ var enabledCaching bool = true
 var tasklistCache map[string]*Tasklist = make(map[string]*Tasklist)
 var tasklistCacheMutex sync.Mutex
 
-func MustExec(conn *sqlite.Conn, name string, stmt string, v...interface{}) {
+func MustExec(conn *sqlite.Conn, stmt string, v...interface{}) {
 	must(conn.Exec(stmt, v...))
 }
 
@@ -42,16 +42,16 @@ func HasTable(conn *sqlite.Conn, name string) bool {
 	return stmt.Next()
 }
 
-func (tasklist *Tasklist) MustExec(name string, stmt string, v...interface{}) {
-	MustExec(tasklist.conn, name, stmt, v...)
+func (tasklist *Tasklist) MustExec(stmt string, v...interface{}) {
+	MustExec(tasklist.conn, stmt, v...)
 }
 
-func (tasklist *Tasklist) WithTransaction(name string, f func()) {
+func (tasklist *Tasklist) WithTransaction(f func()) {
 	if enabledCaching {
 		tasklist.mutex.Lock()
 		defer tasklist.mutex.Unlock()
 	} else {
-		tasklist.MustExec(fmt.Sprintf("BEGIN TRANSACTION for %s", name), "BEGIN EXCLUSIVE TRANSACTION")
+		tasklist.MustExec("BEGIN EXCLUSIVE TRANSACTION")
 		defer func() {
 			if rerr := recover(); rerr != nil {
 				Logf(ERROR, "Rolling back a failed transaction, because of %v\n", rerr)
@@ -59,7 +59,7 @@ func (tasklist *Tasklist) WithTransaction(name string, f func()) {
 				panic(rerr)
 			} else {
 				Logf(DEBUG, "Transaction committed\n")
-				tasklist.MustExec(fmt.Sprintf("COMMIT TRANSACTION for %s", name), "COMMIT TRANSACTION")
+				tasklist.MustExec("COMMIT TRANSACTION")
 			}
 		}()
 	}
@@ -72,29 +72,29 @@ func internalTasklistOpenOrCreate(filename string) *Tasklist {
 	must(err)
 
 	if !HasTable(conn, "settings") { // optimization, if tasks exists do not try to create anything
-		MustExec(conn, "CREATE TABLE tasks", "CREATE TABLE IF NOT EXISTS tasks(id TEXT PRIMARY KEY, title_field TEXT, text_field TEXT, priority INTEGER, repeat_field INTEGER, trigger_at_field DATE, sort TEXT);")
-		MustExec(conn, "CREATE INDEX tasks", "CREATE INDEX IF NOT EXISTS tasks_id ON tasks(id);")
+		MustExec(conn, "CREATE TABLE IF NOT EXISTS tasks(id TEXT PRIMARY KEY, title_field TEXT, text_field TEXT, priority INTEGER, repeat_field INTEGER, trigger_at_field DATE, sort TEXT);")
+		MustExec(conn, "CREATE INDEX IF NOT EXISTS tasks_id ON tasks(id);")
 
 		if !HasTable(conn, "ridx") { // Workaround for non-accepted CREATE VIRTUAL TABLE IF NOT EXISTS
-			MustExec(conn, "CREATE VIRTUAL TABLE ridx", "CREATE VIRTUAL TABLE ridx USING fts3(id TEXT, title_field TEXT, text_field TEXT);")
+			MustExec(conn, "CREATE VIRTUAL TABLE ridx USING fts3(id TEXT, title_field TEXT, text_field TEXT);")
 		}
 		
-		MustExec(conn, "CREATE TABLE (for columns)", "CREATE TABLE IF NOT EXISTS columns(id TEXT, name TEXT, value TEXT, FOREIGN KEY (id) REFERENCES tasks (id) ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED)")
-		MustExec(conn, "CREATE INDEX columns", "CREATE INDEX IF NOT EXISTS columns_id ON columns(id);")
+		MustExec(conn, "CREATE TABLE IF NOT EXISTS columns(id TEXT, name TEXT, value TEXT, FOREIGN KEY (id) REFERENCES tasks (id) ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED)")
+		MustExec(conn, "CREATE INDEX IF NOT EXISTS columns_id ON columns(id);")
 		
-		MustExec(conn, "CREATE TABLE (for saved searches)", "CREATE TABLE IF NOT EXISTS saved_searches(name TEXT, value TEXT);")
+		MustExec(conn, "CREATE TABLE IF NOT EXISTS saved_searches(name TEXT, value TEXT);")
 
 		if !HasTable(conn, "settings") {
-			MustExec(conn, "CREATE TABLE (settings)", "CREATE TABLE IF NOT EXISTS settings(name TEXT UNIQUE, value TEXT);")
-			MustExec(conn, "default settings", "INSERT INTO settings(name, value) VALUES (\"timezone\", \"0\");")
-			MustExec(conn, "default settings", "INSERT INTO settings(name, value) VALUES (\"theme\", \"list.css\");")
+			MustExec(conn, "CREATE TABLE IF NOT EXISTS settings(name TEXT UNIQUE, value TEXT);")
+			MustExec(conn, "INSERT INTO settings(name, value) VALUES (\"timezone\", \"0\");")
+			MustExec(conn, "INSERT INTO settings(name, value) VALUES (\"theme\", \"list.css\");")
 		}
 	}
 
 	tasklist := &Tasklist{filename, conn, &sync.Mutex{}, 1, time.Seconds()}
 	tasklist.RunTimedTriggers()
-	tasklist.MustExec("PRAGMA on tasklist.Open", "PRAGMA foreign_keys = ON;")
-	tasklist.MustExec("PRAGMA synchronous on tasklist.Open", "PRAGMA synchronous = OFF;") // makes inserts many many times faster
+	tasklist.MustExec("PRAGMA foreign_keys = ON;")
+	tasklist.MustExec("PRAGMA synchronous = OFF;") // makes inserts many many times faster
 
 	return tasklist
 }
@@ -180,8 +180,8 @@ func (tasklist *Tasklist) MakeRandomId() string {
 }
 
 func (tasklist *Tasklist) Remove(id string) {
-	tasklist.MustExec("DELETE for tasklist.Remove", "DELETE FROM tasks WHERE id = ?", id)
-	tasklist.MustExec("DELETE for tasklist.Remove (ridx)", "DELETE FROM ridx WHERE id = ?", id)
+	tasklist.MustExec("DELETE FROM tasks WHERE id = ?", id)
+	tasklist.MustExec("DELETE FROM ridx WHERE id = ?", id)
 }
 
 func FormatTriggerAtForAdd(e *Entry) string {
@@ -208,7 +208,7 @@ func (tasklist *Tasklist) Quote(in string) string {
 func (tasklist *Tasklist) addColumns(e *Entry) {
 	for k, v := range e.Columns() {
 		Logf(DEBUG, "Adding column %s\n", k)
-		tasklist.MustExec("INSERT for extra columns for Tasklist.Add", "INSERT INTO columns(id, name, value) VALUES (?, ?, ?)", e.Id(), k, v)
+		tasklist.MustExec("INSERT INTO columns(id, name, value) VALUES (?, ?, ?)", e.Id(), k, v)
 	}
 }
 
@@ -218,8 +218,8 @@ func (tasklist *Tasklist) Add(e *Entry) {
 	tasklist.WithTransaction("backend.Add", func() {
 		priority := e.Priority()
 		freq := e.Freq()
-		tasklist.MustExec("INSERT statement for Tasklist.Add", "INSERT INTO tasks(id, title_field, text_field, priority, repeat_field, trigger_at_field, sort) VALUES (?, ?, ?, ?, ?, ?, ?)", e.Id(), e.Title(), e.Text(), priority.ToInteger(), freq.ToInteger(), triggerAtString, e.Sort())
-		tasklist.MustExec("INSERT statement for Tasklist.Add (in ridx)", "INSERT INTO ridx(id, title_field, text_field) VALUES (?, ?, ?)", e.Id(), e.Title(), e.Text())
+		tasklist.MustExec("INSERT INTO tasks(id, title_field, text_field, priority, repeat_field, trigger_at_field, sort) VALUES (?, ?, ?, ?, ?, ?, ?)", e.Id(), e.Title(), e.Text(), priority.ToInteger(), freq.ToInteger(), triggerAtString, e.Sort())
+		tasklist.MustExec("INSERT INTO ridx(id, title_field, text_field) VALUES (?, ?, ?)", e.Id(), e.Title(), e.Text())
 		tasklist.addColumns(e);
 		
 	})
@@ -234,8 +234,8 @@ func (tasklist *Tasklist) Add(e *Entry) {
 
 func (tl *Tasklist) SaveSearch(name string, query string) {
 	tl.WithTransaction("backend.SaveSearch", func() {
-		tl.MustExec("SaveSearch remove", "DELETE FROM saved_searches WHERE name = ?", name);
-		tl.MustExec("SaveSearch insert", "INSERT INTO saved_searches(name, value) VALUES(?, ?)", name, query)
+		tl.MustExec("DELETE FROM saved_searches WHERE name = ?", name);
+		tl.MustExec("INSERT INTO saved_searches(name, value) VALUES(?, ?)", name, query)
 	})
 }
 
@@ -245,10 +245,10 @@ func (tasklist *Tasklist) Update(e *Entry, simpleUpdate bool) {
 	freq := e.Freq()
 
 	tasklist.WithTransaction("backend.Update", func() {
-		tasklist.MustExec("UPDATE for tasklist.Update", "UPDATE tasks SET title_field = ?, text_field = ?, priority = ?, repeat_field = ?, trigger_at_field = ?, sort = ? WHERE id = ?", e.Title(), e.Text(), priority.ToInteger(), freq.ToInteger(), triggerAtString, e.Sort(), e.Id())
+		tasklist.MustExec("UPDATE tasks SET title_field = ?, text_field = ?, priority = ?, repeat_field = ?, trigger_at_field = ?, sort = ? WHERE id = ?", e.Title(), e.Text(), priority.ToInteger(), freq.ToInteger(), triggerAtString, e.Sort(), e.Id())
 		if !simpleUpdate {
-			tasklist.MustExec("UPDATE for tasklist.Update (in ridx)", "UPDATE ridx SET title_field = ?, text_field = ? WHERE id = ?", e.Title(), e.Text(), e.Id())
-			tasklist.MustExec("DELETE of columns for tasklist.Update", "DELETE FROM columns WHERE id = ?", e.Id())
+			tasklist.MustExec("UPDATE ridx SET title_field = ?, text_field = ? WHERE id = ?", e.Title(), e.Text(), e.Id())
+			tasklist.MustExec("DELETE FROM columns WHERE id = ?", e.Id())
 			tasklist.addColumns(e);
 		}
 	})
@@ -389,7 +389,7 @@ func (tl *Tasklist) SetSetting(name, value string) {
 func (tl *Tasklist) SetSettings(settings map[string]string) {
 	for k, v := range settings {
 		Logf(INFO, "Saving %s to %s\n", v, k);
-		tl.MustExec("", "INSERT OR REPLACE INTO settings(name, value) VALUES (?, ?);", k, v)
+		tl.MustExec("INSERT OR REPLACE INTO settings(name, value) VALUES (?, ?);", k, v)
 	}
 }
 
@@ -438,7 +438,7 @@ func (tl *Tasklist) RunTimedTriggers() {
 
 		Log(DEBUG, "   updating now")
 
-		tl.MustExec("UPDATE for Tasklist.RunTimedTriggers", "UPDATE tasks SET priority = ? WHERE id = ?", NOW, entry.Id());
+		tl.MustExec("UPDATE tasks SET priority = ? WHERE id = ?", NOW, entry.Id());
 	}
 }
 

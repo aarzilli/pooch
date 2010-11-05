@@ -18,13 +18,13 @@ type MultiuserDb struct {
 func OpenMultiuserDb(directory string) *MultiuserDb{
 	multiuserDb, err := sqlite.Open(path.Join(directory, "users.db"))
 	must(err)
-	MustExec(multiuserDb, "CREATE TABLE for multiuser db", "CREATE TABLE IF NOT EXISTS users (username TEXT, salt TEXT, passhash BLOB)")
-	MustExec(multiuserDb, "CREATE TABLE for multiuser db (cookies)", "CREATE TABLE IF NOT EXISTS cookies (username TEXT, cookie TEXT)")
+	MustExec(multiuserDb, "CREATE TABLE IF NOT EXISTS users (username TEXT, salt TEXT, passhash BLOB)")
+	MustExec(multiuserDb, "CREATE TABLE IF NOT EXISTS cookies (username TEXT, cookie TEXT)")
 	return &MultiuserDb{multiuserDb, directory}
 }
 
 func (mdb *MultiuserDb) SaveIdCookie(username, idCookie string) {
-	MustExec(mdb.conn, "INSERT for login", "INSERT INTO cookies(username, cookie) VALUES(?,?)", username, idCookie)
+	MustExec(mdb.conn, "INSERT INTO cookies(username, cookie) VALUES(?,?)", username, idCookie)
 }
 
 func (mdb *MultiuserDb) Exists(username string) bool {
@@ -81,7 +81,7 @@ func (mdb *MultiuserDb) Verify(username, password string) bool {
 func (mdb *MultiuserDb) Register(username, password string) {
 	salt := MakeRandomString(8)
 	hashedPassword := PasswordHashing(salt, password)
-	MustExec(mdb.conn, "INSERT for Register", "INSERT INTO users(username, salt, passhash) VALUES(?, ?, ?)", username, salt, hashedPassword)
+	MustExec(mdb.conn, "INSERT INTO users(username, salt, passhash) VALUES(?, ?, ?)", username, salt, hashedPassword)
 }
 
 func (mdb *MultiuserDb) UsernameFromCookie(req *http.Request) string {
