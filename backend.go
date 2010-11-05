@@ -164,7 +164,6 @@ func MakeRandomString(size int) string {
 	base64.StdEncoding.Encode(encbuf, buf)
 
 	return strings.Replace(string(encbuf), "+", "_", -1)
-	
 }
 
 func (tasklist *Tasklist) MakeRandomId() string {
@@ -221,7 +220,6 @@ func (tasklist *Tasklist) Add(e *Entry) {
 		tasklist.MustExec("INSERT INTO tasks(id, title_field, text_field, priority, repeat_field, trigger_at_field, sort) VALUES (?, ?, ?, ?, ?, ?, ?)", e.Id(), e.Title(), e.Text(), priority.ToInteger(), freq.ToInteger(), triggerAtString, e.Sort())
 		tasklist.MustExec("INSERT INTO ridx(id, title_field, text_field) VALUES (?, ?, ?)", e.Id(), e.Title(), e.Text())
 		tasklist.addColumns(e);
-		
 	})
 
 	if CurrentLogLevel <= DEBUG {

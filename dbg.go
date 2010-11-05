@@ -61,18 +61,36 @@ func WriteStackTrace(rerr interface{}, out io.Writer) {
 }
 
 
-func CheckArgs(args []string, min int, max int, cmd string) {
+func CheckArgs(args []string, accepted map[string]bool, min int, max int, cmd string) (nargs []string, flags map[string]bool) {
+	nargs = []string{}
+	flags = make(map[string]bool)
+
+	for _, arg := range args {
+		if arg[0] == '-' {
+			arg = arg[1:len(arg)]
+			if v, ok := accepted[arg]; v && ok {
+				flags[arg] = true
+			} else {
+				Complain(false, "Unknown flag " + arg + "\n")
+			}
+		} else {
+			nargs = append(nargs, arg)
+		}
+	}
+	
 	if min > -1 {
-		if len(args) < min {
+		if len(nargs) < min {
 			Complain(false, "Not enough arguments for " + cmd + "\n")
 		}
 	}
 
 	if max > -1 {
-		if len(args) > max {
+		if len(nargs) > max {
 			Complain(false, "Too many arguments for " + cmd + "\n")
 		}
 	}
+
+	return
 }
 
 func Complain(usage bool, format string, a ...interface{}) {

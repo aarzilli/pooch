@@ -13,6 +13,7 @@ import (
 	"bufio"
 	"strings"
 	"strconv"
+	"json"
 )
 
 //import _ "http/pprof"
@@ -30,7 +31,7 @@ var commands map[string](func (args []string)) = map[string](func (args []string
 	"colist": CmdColist,
 	"tsvup": CmdTsvUpdate,
 	"rename": CmdRename,
-
+	
 	"multiserve": CmdMultiServe,
 }
 
@@ -57,9 +58,9 @@ func CheckCondition(cond bool, format string, a ...interface{}) {
 	}
 }
 
-func CheckArgsOpenDb(args []string, min int, max int, cmd string, rest func(tl *Tasklist)) {
-	CheckArgs(args, min, max, cmd)
-	WithOpenDefault(rest)
+func CheckArgsOpenDb(args []string, flags map[string]bool, min int, max int, cmd string, rest func(tl *Tasklist, args []string, flags map[string]bool)) {
+	nargs, nflags := CheckArgs(args, flags, min, max, cmd)
+	WithOpenDefault(func(tl *Tasklist) { rest(tl, nargs, nflags) })
 }
 
 func CheckId(tl *Tasklist, id string, cmd string) {
@@ -68,14 +69,14 @@ func CheckId(tl *Tasklist, id string, cmd string) {
 }
 
 func CmdCreate(args []string) {
-	CheckArgs(args, 1, 1, "create")
-
+	CheckArgs(args, map[string]bool{}, 1, 1, "create")
+	
 	filename, found := Resolve(args[0])
 	
 	Log(DEBUG, "Resolved filename: ", filename)
-
+	
 	CheckCondition(found, "Database already exists at: %s\n", filename)
-
+	
 	tasklist := OpenOrCreate(filename)
 	tasklist.Close()
 }
@@ -86,7 +87,7 @@ func HelpCreate() {
 }
 
 func CmdQuickAdd(args []string) {
-	CheckArgsOpenDb(args, 0, 1000, "add", func(tl *Tasklist) {
+	CheckArgsOpenDb(args, map[string]bool{}, 0, 1000, "add", func(tl *Tasklist, args []string, flags map[string]bool) {
 		entry, parse_errors := QuickParse(strings.Join(args[0:], " "), "", nil)
 		
 		fmt.Fprintf(os.Stderr, "%s\n", strings.Join(*parse_errors, "\n"))
@@ -103,7 +104,7 @@ func HelpQuickAdd() {
 }
 
 func CmdQuickUpdate(args []string) {
-	CheckArgsOpenDb(args, 1, 1000, "update", func (tl *Tasklist) {
+	CheckArgsOpenDb(args, map[string]bool{}, 1, 1000, "update", func (tl *Tasklist, args []string, flags map[string]bool) {
 		CheckId(tl, args[0], "update")
 		
 		entry, parse_errors := QuickParse(strings.Join(args[1:], " "), "", nil)
@@ -121,22 +122,32 @@ func HelpQuickUpdate() {
 }
 
 func CmdSearch(args []string) {
-	CheckArgsOpenDb(args, 0, 1000, "search", func(tl *Tasklist) {
-		theselect, query := SearchParse(strings.Join(args[0:], " "), false, false, nil, tl)
-
+	CheckArgsOpenDb(args, map[string]bool{ "t": true, "d": true, "j": true }, 0, 1000, "search", func(tl *Tasklist, args []string, flags map[string]bool) {
+		includeDone := flags["d"]; tsv := flags["t"]; js := flags["j"]
+		
+		theselect, query := SearchParse(strings.Join(args[0:], " "), includeDone, false, nil, tl)
+		
 		Logf(DEBUG, "Search statement [%s] with query [%s]\n", theselect, query)
-
-		CmdListEx(tl.Retrieve(theselect, query))
+		
+		entries := tl.Retrieve(theselect, query)
+		switch {
+		case tsv: CmdListExTsv(entries)
+		case js: CmdListExJS(entries)
+		default: CmdListEx(entries)
+		}
 	})
 }
 
 func HelpSearch() {
-	fmt.Fprintf(os.Stderr, "Usage: search <search string>\n\n")
+	fmt.Fprintf(os.Stderr, "Usage: search [-dtj] <search string>\n\n")
 	fmt.Fprintf(os.Stderr, "\tReturns a list of matching entries\n")
+	fmt.Fprintf(os.Stderr, "\t-t\tWrites output in tsv format\n")
+	fmt.Fprintf(os.Stderr, "\t-d\tIncludes done entries\n")
+	fmt.Fprintf(os.Stderr, "\t-j\tPrints JSON\n")
 }
 
 func CmdSaveSearch(args []string) {
-	CheckArgsOpenDb(args, 1, 1000, "savesearch", func(tl *Tasklist) {
+	CheckArgsOpenDb(args, map[string]bool{}, 1, 1000, "savesearch", func(tl *Tasklist, args []string, flags map[string]bool) {
 		tl.SaveSearch(args[0], strings.Join(args[1:], " "))
 	})
 }
@@ -147,14 +158,14 @@ func HelpSaveSearch() {
 }
 
 func CmdColist(args []string) {
-	CheckArgsOpenDb(args, 0, 1, "colist", func(tl *Tasklist) {
+	CheckArgsOpenDb(args, map[string]bool{}, 0, 1, "colist", func(tl *Tasklist, args []string, flags map[string]bool) {
 		theselect, base := "", ""
 		set := make(map[string]string)
 		if len(args) > 0 {
 			base = args[0]
 			_, theselect = SearchParseToken("+"+base, tl, set, false)
 		}
-
+		
 		subcols := tl.GetSubcols(theselect);
 		
 		for _, x := range subcols {
@@ -170,7 +181,7 @@ func HelpColist() {
 }
 
 func CmdRemove(args []string) {
-	CheckArgsOpenDb(args, 1, 1, "remove", func (tl *Tasklist) {
+	CheckArgsOpenDb(args, map[string]bool{}, 1, 1, "remove", func (tl *Tasklist, args []string, flags map[string]bool) {
 		CheckId(tl, args[0], "remove")
 		tl.Remove(args[0])
 	})
@@ -198,11 +209,18 @@ func GetSizesForList(v []*Entry) (id_size int, title_size int) {
 
 var LINE_SIZE int = 80
 
+func CmdListExTsv(v []*Entry) {
+	for _, entry := range v {
+		timeString := TimeString(entry.TriggerAt(), entry.Sort())
+		fmt.Printf("%s\t%s\t%s\n", entry.Id(), entry.Title(), timeString)
+	}
+}
+
 func CmdListEx(v []*Entry) {
 	id_size, title_size := GetSizesForList(v)
-
+	
 	spare_size := LINE_SIZE - id_size - title_size - len(TRIGGER_AT_SHORT_FORMAT)
-
+	
 	if (title_size != 0) && (id_size != 0) {
 		if spare_size > 0 {
 			title_size += spare_size * title_size / (title_size + id_size)
@@ -219,7 +237,7 @@ func CmdListEx(v []*Entry) {
 		}
 		
 		timeString := TimeString(entry.TriggerAt(), entry.Sort())
-		
+
 		fmt.Printf("%s%s %s%s %s\n",
 			entry.Id(), strings.Repeat(" ", id_size - len(entry.Id())),
 			entry.Title(), strings.Repeat(" ", title_size - len(entry.Title())),
@@ -227,8 +245,14 @@ func CmdListEx(v []*Entry) {
 	}
 }
 
+func CmdListExJS(v []*Entry) {
+	for _, entry := range v {
+		json.NewEncoder(os.Stdout).Encode(MarshalEntry(entry))
+	}
+}
+
 func CmdServe(args []string) {
-	CheckArgs(args, 1, 1, "serve")
+	CheckArgs(args, map[string]bool{}, 1, 1, "serve")
 
 	port, converr := strconv.Atoi(args[0])
 	CheckCondition(converr != nil, "Invalid port number %s: %s\n", args[0], converr)
@@ -241,7 +265,7 @@ func HelpServe() {
 }
 
 func CmdMultiServe(args []string) {
-	CheckArgs(args, 3, 3, "multiserve")
+	CheckArgs(args, map[string]bool{}, 3, 3, "multiserve")
 	_, converr := strconv.Atoi(args[0])
 	CheckCondition(converr != nil, "Invalid port number %s: %s\n", args[0], converr)
 	logfile, err := os.Open(args[2], os.O_WRONLY|os.O_CREAT|os.O_APPEND, 0666)
@@ -264,7 +288,7 @@ func HelpMultiServe() {
 }
 
 func CmdTsvUpdate(argv []string) {
-	CheckArgsOpenDb(argv, 0, 0, "tsvup", func (tl *Tasklist) {
+	CheckArgsOpenDb(argv, map[string]bool{}, 0, 0, "tsvup", func (tl *Tasklist, args []string, flags map[string]bool) {
 		in := bufio.NewReader(os.Stdin)
 		
 		for line, err := in.ReadString('\n'); err == nil; line, err = in.ReadString('\n') {
@@ -289,7 +313,7 @@ func HelpTsvUpdate() {
 }
 
 func CmdRename(argv []string) {
-	CheckArgsOpenDb(argv, 1, 2, "rename", func (tl *Tasklist) {
+	CheckArgsOpenDb(argv, map[string]bool{}, 1, 2, "rename", func (tl *Tasklist, args []string, flags map[string]bool) {
 		src_id := argv[0]
 		dst_id := tl.MakeRandomId()
 		if len(argv) > 1 { dst_id = argv[1] }
@@ -307,7 +331,7 @@ func HelpRename() {
 }
 
 func CmdGet(args []string) {
-	CheckArgsOpenDb(args, 1, 1, "get", func(tl *Tasklist) {
+	CheckArgsOpenDb(args, map[string]bool{}, 1, 1, "get", func(tl *Tasklist, args []string, flags map[string]bool) {
 		id := args[0]
 		CheckId(tl, id, "get")
 		
@@ -323,7 +347,7 @@ func HelpGet() {
 
 
 func CmdHelp(args []string) {
-	CheckArgs(args, 0, 1, "help")
+	CheckArgs(args, map[string]bool{}, 0, 1, "help")
 	if len(args) <= 0 {
 		flag.Usage()
 	} else {
