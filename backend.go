@@ -215,7 +215,7 @@ func (tasklist *Tasklist) addColumns(e *Entry) {
 func (tasklist *Tasklist) Add(e *Entry) {
 	triggerAtString := FormatTriggerAtForAdd(e)
 
-	tasklist.WithTransaction("backend.Add", func() {
+	tasklist.WithTransaction(func() {
 		priority := e.Priority()
 		freq := e.Freq()
 		tasklist.MustExec("INSERT INTO tasks(id, title_field, text_field, priority, repeat_field, trigger_at_field, sort) VALUES (?, ?, ?, ?, ?, ?, ?)", e.Id(), e.Title(), e.Text(), priority.ToInteger(), freq.ToInteger(), triggerAtString, e.Sort())
@@ -233,7 +233,7 @@ func (tasklist *Tasklist) Add(e *Entry) {
 }
 
 func (tl *Tasklist) SaveSearch(name string, query string) {
-	tl.WithTransaction("backend.SaveSearch", func() {
+	tl.WithTransaction(func() {
 		tl.MustExec("DELETE FROM saved_searches WHERE name = ?", name);
 		tl.MustExec("INSERT INTO saved_searches(name, value) VALUES(?, ?)", name, query)
 	})
@@ -244,7 +244,7 @@ func (tasklist *Tasklist) Update(e *Entry, simpleUpdate bool) {
 	priority := e.Priority()
 	freq := e.Freq()
 
-	tasklist.WithTransaction("backend.Update", func() {
+	tasklist.WithTransaction(func() {
 		tasklist.MustExec("UPDATE tasks SET title_field = ?, text_field = ?, priority = ?, repeat_field = ?, trigger_at_field = ?, sort = ? WHERE id = ?", e.Title(), e.Text(), priority.ToInteger(), freq.ToInteger(), triggerAtString, e.Sort(), e.Id())
 		if !simpleUpdate {
 			tasklist.MustExec("UPDATE ridx SET title_field = ?, text_field = ? WHERE id = ?", e.Title(), e.Text(), e.Id())
