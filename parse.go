@@ -497,8 +497,7 @@ func MarshalEntry(entry *Entry) *UnmarshalEntry {
 		freq.String(),
 		triggerAtString,
 		entry.Sort(),
-		entry.ColString(),
-		"") // task list isn't watched on other side
+		entry.ColString()) 
 }
 
 func ToCalendarEvent(entry *Entry, className string) *CalendarEvent {

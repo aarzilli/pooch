@@ -81,7 +81,6 @@ type UnmarshalEntry struct {
 	TriggerAt string
 	Sort string
 	Cols string
-	Tasklist string
 }
 
 type CalendarEvent struct {
@@ -109,8 +108,8 @@ func must(err os.Error) {
 	if err != nil { panic(err) }
 }
 
-func MakeUnmarshalEntry(id string, title string, text string, priority Priority, freq string, triggerAt string, sort string, cols string, tasklist string) *UnmarshalEntry {
-	return &UnmarshalEntry{id, title, text, priority, freq, triggerAt, sort, cols, tasklist}
+func MakeUnmarshalEntry(id string, title string, text string, priority Priority, freq string, triggerAt string, sort string, cols string) *UnmarshalEntry {
+	return &UnmarshalEntry{id, title, text, priority, freq, triggerAt, sort, cols}
 }
 
 func MakeEntry(id string, title string, text string, priority Priority, freq Frequency, triggerAt *time.Time, sort string, columns Columns) *Entry {
