@@ -55,17 +55,17 @@ func WrapperServer(sub http.HandlerFunc) http.HandlerFunc {
 				io.WriteString(c, fmt.Sprintf("Internal server error: %s", rerr))
 			}
 		}()
-
+		
 		if !strings.HasPrefix(c.RemoteAddr(), "127.0.0.1:") { Log(ERROR, "Rejected request from:", c.RemoteAddr()); return }
-
+		
 		Logf(INFO, "REQ\t%s\t%s\n", c.RemoteAddr(), req)
-
+		
 		if req.Method == "HEAD" {
 			//do nothing
 		} else {
 			sub(c, req)
 		}
-
+		
 		Logf(INFO, "QER\t%s\t%s\n", c.RemoteAddr(), req)
 	}
 }
@@ -134,7 +134,7 @@ func CheckBool(in string, name string) bool {
 	} else {
 		panic(fmt.Sprintf("Parameter %s not in true or false", name))
 	}
-
+	
 	return false
 }
 
@@ -222,10 +222,16 @@ func ListServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	includeDone := req.FormValue("done") != ""
 	query := req.FormValue("q")
 	includeDoneStr := ""; if includeDone { includeDoneStr = "checked" }
+	removeSearch := ""; if IsSavedQuery(query) { removeSearch = "remove-search" }
 	
 	v := tl.Retrieve(SearchParse(query, includeDone, false, nil, tl))
 	
-	ListHeaderHTML(map[string]string{ "query": query, "theme": css, "includeDone": includeDoneStr }, c)
+	ListHeaderHTML(map[string]string{
+		"query": query,
+		"theme": css,
+		"includeDone": includeDoneStr,
+		"removeSearch": removeSearch},
+		c)
 	ShowSubcols(c, query, tl)
 	SubcolsEnder(map[string]string{ }, c)
 	
@@ -318,6 +324,13 @@ func SaveSearchServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	io.WriteString(c, "query-saved: " + name)
 }
 
+func RemoveSearchServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
+	query := req.FormValue("query")
+	if !IsSavedQuery(query) { return }
+	name := query[2:len(query)]
+	tl.RemoveSaveSearch(name)
+}
+
 func OptionServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	if req.FormValue("save") == "save" {
 		must(req.ParseForm())
@@ -352,6 +365,7 @@ func SetupHandleFunc(wrapperTasklistServer func(TasklistServer)http.HandlerFunc,
 	http.HandleFunc("/remove", WrapperServer(wrapperTasklistWithIdServer(RemoveServer)))
 	http.HandleFunc("/htmlget", WrapperServer(wrapperTasklistWithIdServer(HtmlGetServer)))
 	http.HandleFunc("/save-search", WrapperServer(wrapperTasklistServer(SaveSearchServer)))
+	http.HandleFunc("/remove-search", WrapperServer(wrapperTasklistServer(RemoveSearchServer)))
 	http.HandleFunc("/opts", WrapperServer(wrapperTasklistServer(OptionServer)))
 
 	// Calendar urls

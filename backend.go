@@ -230,9 +230,13 @@ func (tasklist *Tasklist) Add(e *Entry) {
 	Log(DEBUG, "Add finished!")
 }
 
+func (tl *Tasklist) RemoveSaveSearch(name string) {
+	tl.MustExec("DELETE FROM saved_searches WHERE name = ?", name)
+}
+
 func (tl *Tasklist) SaveSearch(name string, query string) {
 	tl.WithTransaction(func() {
-		tl.MustExec("DELETE FROM saved_searches WHERE name = ?", name);
+		tl.RemoveSaveSearch(name)
 		tl.MustExec("INSERT INTO saved_searches(name, value) VALUES(?, ?)", name, query)
 	})
 }

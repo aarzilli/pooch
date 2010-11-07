@@ -190,8 +190,12 @@ func SearchParseSub(tl *Tasklist, input string, ored, removed *vector.StringVect
 	}
 }
 
+func IsSavedQuery(input string) bool {
+	return (len(input) > 2) && (input[0:2] == "@%")
+}
+
 func SearchParse(input string, wantsDone, guessParse bool, extraWhereClauses []string, tl *Tasklist) (theselect, query string){
-	if (len(input) > 2) && (input[0:2] == "@%") {
+	if IsSavedQuery(input) {
 		name := input[2:len(input)]
 		search := tl.GetSavedSearch(name)
 		Logf(DEBUG, "Retrieving saved query: %s [%s]\n", name, search)

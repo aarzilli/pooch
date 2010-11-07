@@ -87,7 +87,7 @@ function add_row(id) {
 function add_entry(query) {
     var netext = document.getElementById('newentry').value;
 
-    var req = new XMLHttpRequest();
+    var req = new XMLHttpRequest()
     req.open("GET", "qadd?q=" + encodeURIComponent(query) + "&text=" + encodeURIComponent(netext), true);
     req.onreadystatechange = function() {
         if (req.readyState == 4) {
@@ -223,4 +223,13 @@ function savesearch() {
         }
     };
     req.send(null)
+}
+
+function removesearch() {
+    var req = new XMLHttpRequest();
+    req.open("GET", "remove-search?query=" + encodeURIComponent(document.getElementById('q').value), true);
+    req.onreadystatechange = function() {
+        //Nothing to do
+    };
+    req.send(null);
 }
