@@ -348,6 +348,17 @@ func (tl *Tasklist) GetSavedSearches() []string {
 	return v
 }
 
+func (tl *Tasklist) GetSavedSearch(name string) string {
+	stmt, serr := tl.conn.Prepare("SELECT value FROM saved_searches WHERE name = ?")
+	must(serr)
+	defer stmt.Finalize()
+	must(stmt.Exec(name))
+	if !stmt.Next() { return "" }
+	var value string
+	must(stmt.Scan(&value))
+	return value
+}
+
 func (tl *Tasklist) GetSetting(name string) string {
 	stmt, serr := tl.conn.Prepare("SELECT value FROM settings WHERE name = ?;")
 	must(serr)
