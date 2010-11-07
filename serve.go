@@ -10,7 +10,6 @@ import (
 	"http"
 	"io"
 	"fmt"
-	"template"
 	"strings"
 	"json"
 	"time"
@@ -219,36 +218,16 @@ func ShowSubcols(c http.ResponseWriter, query string, tl *Tasklist) {
  * Tasklist
  */
 func ListServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
+	css := tl.GetSetting("theme")
 	includeDone := req.FormValue("done") != ""
-	var css string
-
-	css = tl.GetSetting("theme")
-	
 	query := req.FormValue("q")
+	includeDoneStr := ""; if includeDone { includeDoneStr = "checked" }
 	
 	v := tl.Retrieve(SearchParse(query, includeDone, false, nil, tl))
 	
-	ListHeaderHTML(map[string]string{ "query": query, "theme": css }, c)
-	JavascriptInclude(c, "/shortcut.js")
-	JavascriptInclude(c, "/json.js")
-	JavascriptInclude(c, "/int.js")
-	JavascriptInclude(c, "/calendar.js")
-	
-	ListHeaderCloseHTML(map[string]string{}, c)
-	
-	includeDoneStr := ""
-	if includeDone { includeDoneStr = "checked" }
-	EntryListHeaderHTML(map[string]string{ "query": query, "includeDone": includeDoneStr }, c)
-		
-	io.WriteString(c, "<p>")
-	
-	io.WriteString(c, "<table width='100%' style='border-collapse: collapse;'><tr>")
-	
-	io.WriteString(c, "<td valign='top' style='width: 10%'><div style='padding-top: 30px'>")
+	ListHeaderHTML(map[string]string{ "query": query, "theme": css, "includeDone": includeDoneStr }, c)
 	ShowSubcols(c, query, tl)
-	io.WriteString(c, "</div></td>")
-	
-	io.WriteString(c, "<td valign='top'><table width='100%' id='maintable' style='border-collapse: collapse;'>")
+	SubcolsEnder(map[string]string{ }, c)
 	
 	var curp Priority = INVALID
 	for _, entry := range v {
@@ -263,21 +242,11 @@ func ListServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 			"ecats": entry.CatString(),
 		}
 		
-		
-		io.WriteString(c, "    <tr class='entry'>\n")
 		EntryListEntryHTML(entryEntry, c)
-		io.WriteString(c, "    </tr>\n")
-		
-		io.WriteString(c, "    <tr id='editor_")
-		template.HTMLEscape(c, []byte(entry.Id()))
-		io.WriteString(c, "' class='editor' style='display: none'>\n")
 		EntryListEntryEditorHTML(entryEntry, c)
-		io.WriteString(c, "    </tr>\n")
 	}
 
-	io.WriteString(c, "</table></td>")
-	
-	io.WriteString(c, "</tr></table></body></html>")
+	ListEnderHTML(nil, c)
 }
 
 func CalendarServer(c http.ResponseWriter, req *http.Request) {

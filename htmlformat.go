@@ -50,23 +50,16 @@ var ListHeaderHTML ExecutableTemplate = MakeExecutableTemplate(`
   <title>Pooch: {query|html}</title>
   <link type='text/css' rel='stylesheet' href='{theme}'>
   <link type='text/css' rel='stylesheet' href='calendar.css'>
-`)
-
-var JavascriptIncludeHTML ExecutableTemplate = MakeExecutableTemplate(`
-  <script src='{fname|url}'>
+  <script src='/shortcut.js'>
   </script>
-`)
-
-func JavascriptInclude(c io.Writer, name string) {
-	JavascriptIncludeHTML(map[string]string{"fname": name}, c)
-}
-
-var ListHeaderCloseHTML ExecutableTemplate = MakeExecutableTemplate(`
+  <script src='/json.js'>
+  </script>
+  <script src='/int.js'>
+  </script>
+  <script src='/calendar.js'>
+  </script>
 </head>
 <body onload='javascript:setup()'>
-`)
-
-var EntryListHeaderHTML ExecutableTemplate = MakeExecutableTemplate(`
   <div style='float: right'><small><a href='/opts'>options</a></small></div>
   <h2>{query|html} <span style='font-size: small'><a href='cal?q={query|url}'>as calendar</a></span></h2>
   <p><form onsubmit='return add_entry("{query|html}")'>
@@ -76,6 +69,14 @@ var EntryListHeaderHTML ExecutableTemplate = MakeExecutableTemplate(`
   <p><form method='get' action='/list'>
   <label for='query'>Query:</label>&nbsp;<input size='50' type='text' id='q' name='q' value='{query|html}'/> <input type='submit' value='search'/> &nbsp; <input type='checkbox' name='done' value='1' {includeDone|html}> include done <input type='button' style='float: right' value='save query' onClick='javascript:savesearch()'/>
   </form>
+  <p>
+  <table width='100%' style='border-collapse: collapse;'><tr>
+  <td valign='top' style='width: 10%'><div style='padding-top: 30px'>
+`)
+
+var SubcolsEnder ExecutableTemplate = MakeExecutableTemplate(`
+  </div></td>
+  <td valign='top'><table width='100%' id='maintable' style='border-collapse: collapse;'>
 `)
 
 var EntryListPriorityChangeHTML ExecutableTemplate = MakeExecutableTemplate(`
@@ -85,6 +86,7 @@ var EntryListPriorityChangeHTML ExecutableTemplate = MakeExecutableTemplate(`
 `)
 
 var EntryListEntryHTML ExecutableTemplate = MakeExecutableTemplate(`
+    <tr class='entry'>
     {.section entry}
       <td class='etitle' onclick='javascript:toggle_editor("{id|html}", event)'>{title|html}</td>
 
@@ -96,10 +98,12 @@ var EntryListEntryHTML ExecutableTemplate = MakeExecutableTemplate(`
 
       <td class='ecats'>{ecats}</td>
    {.end}
+   </tr>
 `)
 
 var EntryListEntryEditorHTML ExecutableTemplate = MakeExecutableTemplate(`
     {.section entry}
+    <tr id='editor_{id|html}' class='editor' style='display: none'>
       <td colspan=4>
         <form id='ediv_{id|html}'>
           <p><input name='edtilte' id='edtitle' type='text' style='width: 99%; padding-bottom: 5px'/><br>
@@ -124,7 +128,13 @@ var EntryListEntryEditorHTML ExecutableTemplate = MakeExecutableTemplate(`
           <input type='button' value='reload', onclick='javascript:fill_editor("{id|html}")'/></p>
         </form>
       </td>
+    </tr>
     {.end}
+`)
+
+var ListEnderHTML ExecutableTemplate = MakeExecutableTemplate(`
+</table></td>
+</tr></table></body></html>
 `)
 
 var SubcolEntryHTML ExecutableTemplate = MakeExecutableTemplate(`
