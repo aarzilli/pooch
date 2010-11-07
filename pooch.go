@@ -363,6 +363,8 @@ func HelpHelp() {
 }
 
 func main() {
+	SetLogger(os.Stderr)
+	
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Usage of %s:\n", os.Args[0])
 		tw := tabwriter.NewWriter(os.Stderr, 8, 8, 4, ' ', 0)
