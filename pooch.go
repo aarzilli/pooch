@@ -88,7 +88,7 @@ func HelpCreate() {
 
 func CmdQuickAdd(args []string) {
 	CheckArgsOpenDb(args, map[string]bool{}, 0, 1000, "add", func(tl *Tasklist, args []string, flags map[string]bool) {
-		entry, parse_errors := QuickParse(strings.Join(args[0:], " "), "", nil)
+		entry, parse_errors := QuickParse(strings.Join(args[0:], " "), "", nil, 0)
 		
 		fmt.Fprintf(os.Stderr, "%s\n", strings.Join(*parse_errors, "\n"))
 		
@@ -107,7 +107,7 @@ func CmdQuickUpdate(args []string) {
 	CheckArgsOpenDb(args, map[string]bool{}, 1, 1000, "update", func (tl *Tasklist, args []string, flags map[string]bool) {
 		CheckId(tl, args[0], "update")
 		
-		entry, parse_errors := QuickParse(strings.Join(args[1:], " "), "", nil)
+		entry, parse_errors := QuickParse(strings.Join(args[1:], " "), "", nil, 0)
 		
 		fmt.Fprintf(os.Stderr, "%s\n", strings.Join(*parse_errors, "\n"))
 		
@@ -123,6 +123,7 @@ func HelpQuickUpdate() {
 
 func CmdSearch(args []string) {
 	CheckArgsOpenDb(args, map[string]bool{ "t": true, "d": true, "j": true }, 0, 1000, "search", func(tl *Tasklist, args []string, flags map[string]bool) {
+		timezone := tl.GetTimezone()
 		includeDone := flags["d"]; tsv := flags["t"]; js := flags["j"]
 		
 		theselect, query := SearchParse(strings.Join(args[0:], " "), includeDone, false, nil, tl)
@@ -131,9 +132,9 @@ func CmdSearch(args []string) {
 		
 		entries := tl.Retrieve(theselect, query)
 		switch {
-		case tsv: CmdListExTsv(entries)
-		case js: CmdListExJS(entries)
-		default: CmdListEx(entries)
+		case tsv: CmdListExTsv(entries, timezone)
+		case js: CmdListExJS(entries, timezone)
+		default: CmdListEx(entries, timezone)
 		}
 	})
 }
@@ -209,14 +210,14 @@ func GetSizesForList(v []*Entry) (id_size int, title_size int) {
 
 var LINE_SIZE int = 80
 
-func CmdListExTsv(v []*Entry) {
+func CmdListExTsv(v []*Entry, timezone int) {
 	for _, entry := range v {
-		timeString := TimeString(entry.TriggerAt(), entry.Sort())
+		timeString := TimeString(entry.TriggerAt(), entry.Sort(), timezone)
 		fmt.Printf("%s\t%s\t%s\n", entry.Id(), entry.Title(), timeString)
 	}
 }
 
-func CmdListEx(v []*Entry) {
+func CmdListEx(v []*Entry, timezone int) {
 	id_size, title_size := GetSizesForList(v)
 	
 	spare_size := LINE_SIZE - id_size - title_size - len(TRIGGER_AT_SHORT_FORMAT)
@@ -236,7 +237,7 @@ func CmdListEx(v []*Entry) {
 			fmt.Printf("\n%s:\n", strings.ToUpper(curp.String()))
 		}
 		
-		timeString := TimeString(entry.TriggerAt(), entry.Sort())
+		timeString := TimeString(entry.TriggerAt(), entry.Sort(), timezone)
 
 		fmt.Printf("%s%s %s%s %s\n",
 			entry.Id(), strings.Repeat(" ", id_size - len(entry.Id())),
@@ -245,9 +246,9 @@ func CmdListEx(v []*Entry) {
 	}
 }
 
-func CmdListExJS(v []*Entry) {
+func CmdListExJS(v []*Entry, timezone int) {
 	for _, entry := range v {
-		json.NewEncoder(os.Stdout).Encode(MarshalEntry(entry))
+		json.NewEncoder(os.Stdout).Encode(MarshalEntry(entry, timezone))
 	}
 }
 
@@ -292,7 +293,7 @@ func CmdTsvUpdate(argv []string) {
 		in := bufio.NewReader(os.Stdin)
 		
 		for line, err := in.ReadString('\n'); err == nil; line, err = in.ReadString('\n') {
-			entry := ParseTsvFormat(strings.Trim(line, "\t\n "), tl);
+			entry := ParseTsvFormat(strings.Trim(line, "\t\n "), tl, tl.GetTimezone());
 			if tl.Exists(entry.Id()) {
 				fmt.Printf("UPDATING\t%s\t%s\n", entry.Id(), entry.TriggerAt().Format("2006-01-02"))
 				tl.Update(entry, false)

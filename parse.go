@@ -29,7 +29,7 @@ func ParsePriority(s string) (p Priority, err string) {
 	case "timed": return TIMED, ""
 	case "done": return DONE, ""
 	}
-	return INVALID, fmt.Sprintf("Unknown priority: ", s)
+	return INVALID, fmt.Sprintf("Unknown priority: %s", s)
 }
 
 func ParseFrequency(s string) (freq Frequency, err string) {
@@ -58,7 +58,8 @@ func FixYear(datetime *time.Time) {
 	}
 }
 
-func ParseDateTime(input string) (datetime *time.Time, error string) {
+func ParseDateTime(input string, timezone int) (datetime *time.Time, error string) {
+	//TODO: use timezone
 	//Date formats:
 	// dd/mm
 	// yyyy-mm-dd
@@ -286,7 +287,7 @@ func SearchParse(input string, wantsDone, guessParse bool, extraWhereClauses []s
  The query string will be utilized to guess categories to associate with the input string
  */
 
-func QuickParse(input string, query string, tl *Tasklist) (*Entry, *vector.StringVector) {
+func QuickParse(input string, query string, tl *Tasklist, timezone int) (*Entry, *vector.StringVector) {
 	lastEnd := 0
 	r := ""
 	errors := new(vector.StringVector)
@@ -340,7 +341,7 @@ func QuickParse(input string, query string, tl *Tasklist) (*Entry, *vector.Strin
 
 		default:
 			quickTagSplit := strings.Split(quickTag, "+", 2)
-			triggerAt, _ = ParseDateTime(quickTagSplit[0])
+			triggerAt, _ = ParseDateTime(quickTagSplit[0], timezone)
 
 			if (triggerAt == nil) {
 				Logf(DEBUG, "Found quickTag:[%s] -- no special meaning found, using it as a category", quickTag)
@@ -383,7 +384,12 @@ func QuickParse(input string, query string, tl *Tasklist) (*Entry, *vector.Strin
 	return MakeEntry("", r, "", priority, freq, triggerAt, sort, cols), errors
 }
 
-func TimeString(triggerAt *time.Time, sort string) string {
+func TimeString(triggerAt *time.Time, sort string, timezone int) string {
+	//TODO: usare timezone
+	if triggerAt != nil {
+		triggerAt.ZoneOffset = -timezone * 60; defer func() { triggerAt.ZoneOffset = 0 }()
+	}
+	
 	if triggerAt != nil {
 		now := time.LocalTime()
 		showYear := (triggerAt.Format("2006") != now.Format("2006"))
@@ -417,8 +423,8 @@ func isNumber(tk string) (n float, ok bool) {
 	return n, true
 }
 
-func DemarshalEntry(umentry *UnmarshalEntry) *Entry {
-	triggerAt, err := ParseDateTime(umentry.TriggerAt)
+func DemarshalEntry(umentry *UnmarshalEntry, timezone int) *Entry {
+	triggerAt, err := ParseDateTime(umentry.TriggerAt, timezone)
 
 	if err != "" {
 		panic("demarshalling error: " + err)
@@ -461,7 +467,7 @@ func DemarshalEntry(umentry *UnmarshalEntry) *Entry {
 				// Normalizes value
 				
 				Logf(DEBUG, "Normalizing: [%s]\n", value)
-				if t, _ := ParseDateTime(value); t != nil {
+				if t, _ := ParseDateTime(value, timezone); t != nil {
 					value = t.Format(TRIGGER_AT_FORMAT)
 				} else if n, ok := isNumber(value); ok {
 					value = fmt.Sprintf("%0.6f", n)
@@ -491,7 +497,8 @@ func DemarshalEntry(umentry *UnmarshalEntry) *Entry {
 		cols)
 }
 
-func MarshalEntry(entry *Entry) *UnmarshalEntry {
+func MarshalEntry(entry *Entry, timezone int) *UnmarshalEntry {
+	//TODO: use timezone
 	triggerAt := entry.TriggerAt()
 	triggerAtString := ""
 	if triggerAt != nil {
@@ -524,10 +531,10 @@ func ToCalendarEvent(entry *Entry, className string) *CalendarEvent {
 	return &r
 }
 
-func ParseTsvFormat(in string, tl *Tasklist) *Entry {
+func ParseTsvFormat(in string, tl *Tasklist, timezone int) *Entry {
 	fields := strings.Split(in, "\t", 4)
 
-	entry, _ := QuickParse(fields[1], "", tl)
+	entry, _ := QuickParse(fields[1], "", tl, timezone)
 
 	priority, err := ParsePriority(fields[2])
 	if err != "" {
@@ -538,7 +545,7 @@ func ParseTsvFormat(in string, tl *Tasklist) *Entry {
 	var sort string
 	if priority == TIMED {
 		var dterr string
-		if triggerAt, dterr = ParseDateTime(fields[3]); dterr != "" {
+		if triggerAt, dterr = ParseDateTime(fields[3], timezone); dterr != "" {
 			panic(fmt.Sprintf("Error parsing tsv line: %s", dterr))
 		}
 		sort = SortFromTriggerAt(triggerAt)

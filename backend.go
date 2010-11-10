@@ -14,6 +14,7 @@ import (
 	"encoding/base64"
 	"strings"
 	"sync"
+	"strconv"
 
 	"gosqlite.googlecode.com/hg/sqlite"
 )
@@ -268,7 +269,7 @@ func StatementScan(stmt *sqlite.Stmt, hasCols bool) (*Entry, os.Error) {
 	} else {
 		scanerr = stmt.Scan(&id, &title, &text, &priority_num, &freq_num, &trigger_str, &sort)
 	}
-	triggerAt, _ := ParseDateTime(trigger_str)
+	triggerAt, _ := ParseDateTime(trigger_str, 0)
 	freq := Frequency(freq_num)
 	priority := Priority(priority_num)
 
@@ -374,6 +375,11 @@ func (tl *Tasklist) GetSetting(name string) string {
 	var value string
 	must(stmt.Scan(&value))
 	return value
+}
+
+func (tl *Tasklist) GetTimezone() int {
+	r, _ := strconv.Atoi(tl.GetSetting("timezone"))
+	return r
 }
 
 func (tl *Tasklist) GetSettings() (r map[string]string) {

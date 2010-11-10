@@ -60,7 +60,8 @@ var ListHeaderHTML ExecutableTemplate = MakeExecutableTemplate(`
   </script>
 </head>
 <body onload='javascript:setup()'>
-  <div style='float: right'><small><a href='/opts'>options</a></small></div>
+  <div style='float: right'><p align='right'><small><a href='/opts'>options</a></small><br><small>Current timezone: {timezone|html}</small></div>
+  <div style='float: right'></div>
   <h2>{query|html} <span style='font-size: small'><a href='cal?q={query|url}'>as calendar</a></span></h2>
   <p><form onsubmit='return add_entry("{query|html}")'>
   <label for='text'>New entry:</label>&nbsp;<input size='50' type='newentry' id='newentry' name='text'/><input type='button' value='add' onclick='javascript:add_entry("{query|html}")'/>
@@ -91,7 +92,9 @@ var EntryListPriorityChangeHTML ExecutableTemplate = MakeExecutableTemplate(`
 `)
 
 var EntryListEntryHTML ExecutableTemplate = MakeExecutableTemplate(`
+    {.section heading}
     <tr class='entry'>
+    {.end}
     {.section entry}
       <td class='etitle' onclick='javascript:toggle_editor("{id|html}", event)'>{title|html}</td>
 
@@ -103,12 +106,16 @@ var EntryListEntryHTML ExecutableTemplate = MakeExecutableTemplate(`
 
       <td class='ecats'>{ecats}</td>
    {.end}
+   {.section heading}
    </tr>
+   {.end}
 `)
 
 var EntryListEntryEditorHTML ExecutableTemplate = MakeExecutableTemplate(`
+    {.section heading}
+    <tr id='editor_{@|html}' class='editor' style='display: none'>
+    {.end}
     {.section entry}
-    <tr id='editor_{id|html}' class='editor' style='display: none'>
       <td colspan=4>
         <form id='ediv_{id|html}'>
           <p><input name='edtilte' id='edtitle' type='text' style='width: 99%; padding-bottom: 5px'/><br>
@@ -133,6 +140,8 @@ var EntryListEntryEditorHTML ExecutableTemplate = MakeExecutableTemplate(`
           <input type='button' value='reload', onclick='javascript:fill_editor("{id|html}")'/></p>
         </form>
       </td>
+    {.end}
+    {.section heading}
     </tr>
     {.end}
 `)

@@ -150,7 +150,7 @@ func ChangePriorityServer(c http.ResponseWriter, req *http.Request, tl *Tasklist
 func GetServer(c http.ResponseWriter, req *http.Request, tl *Tasklist, id string) {
 	entry := tl.Get(id)
 	io.WriteString(c, time.LocalTime().Format("2006-01-02 15:04:05") + "\n")
-	json.NewEncoder(c).Encode(MarshalEntry(entry))
+	json.NewEncoder(c).Encode(MarshalEntry(entry, tl.GetTimezone()))
 }
 
 func RemoveServer(c http.ResponseWriter, req *http.Request, tl *Tasklist, id string) {
@@ -159,7 +159,7 @@ func RemoveServer(c http.ResponseWriter, req *http.Request, tl *Tasklist, id str
 }
 
 func QaddServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
-	entry, _ := QuickParse(CheckFormValue(req, "text"), req.FormValue("q"), tl)
+	entry, _ := QuickParse(CheckFormValue(req, "text"), req.FormValue("q"), tl, tl.GetTimezone())
 	entry.SetId(tl.MakeRandomId())
 	
 	tl.Add(entry)
@@ -173,7 +173,7 @@ func SaveServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	
 	if !tl.Exists(umentry.Id) { panic("Specified id does not exists") }
 	
-	entry := DemarshalEntry(umentry)
+	entry := DemarshalEntry(umentry, tl.GetTimezone())
 	
 	if CurrentLogLevel <= DEBUG {
 		Log(DEBUG, "Saving entry:\n")
@@ -219,6 +219,7 @@ func ShowSubcols(c http.ResponseWriter, query string, tl *Tasklist) {
  */
 func ListServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	css := tl.GetSetting("theme")
+	timezone := tl.GetTimezone()
 	includeDone := req.FormValue("done") != ""
 	query := req.FormValue("q")
 	includeDoneStr := ""; if includeDone { includeDoneStr = "checked" }
@@ -229,6 +230,7 @@ func ListServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	ListHeaderHTML(map[string]string{
 		"query": query,
 		"theme": css,
+		"timezone": fmt.Sprintf("%d", timezone),
 		"includeDone": includeDoneStr,
 		"removeSearch": removeSearch},
 		c)
@@ -243,8 +245,9 @@ func ListServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 		}
 		
 		entryEntry := map[string](interface{}){
+			"heading": entry.Id(),
 			"entry": entry,
-			"etime": TimeString(entry.TriggerAt(), entry.Sort()),
+			"etime": TimeString(entry.TriggerAt(), entry.Sort(), timezone),
 			"ecats": entry.CatString(),
 		}
 		
@@ -307,8 +310,9 @@ func HtmlGetServer(c http.ResponseWriter, req *http.Request, tl *Tasklist, id st
 	entry := tl.Get(id)
 	
 	entryEntry := map[string](interface{}){
+		"heading": nil,
 		"entry": entry,
-		"etime": TimeString(entry.TriggerAt(), entry.Sort()),
+		"etime": TimeString(entry.TriggerAt(), entry.Sort(), tl.GetTimezone()),
 		"ecats": entry.CatString(),
 	}
 	
