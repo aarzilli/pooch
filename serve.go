@@ -149,7 +149,7 @@ func ChangePriorityServer(c http.ResponseWriter, req *http.Request, tl *Tasklist
 
 func GetServer(c http.ResponseWriter, req *http.Request, tl *Tasklist, id string) {
 	entry := tl.Get(id)
-	io.WriteString(c, time.LocalTime().Format("2006-01-02 15:04:05") + "\n")
+	io.WriteString(c, time.UTC().Format("2006-01-02 15:04:05") + "\n")
 	json.NewEncoder(c).Encode(MarshalEntry(entry, tl.GetTimezone()))
 }
 
@@ -182,7 +182,7 @@ func SaveServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	
 	tl.Update(entry, false);
 	
-	io.WriteString(c, "saved-at-timestamp: " + time.LocalTime().Format("2006-01-02 15:04:05"))
+	io.WriteString(c, "saved-at-timestamp: " + time.UTC().Format("2006-01-02 15:04:05"))
 }
 
 func ShowSubcols(c http.ResponseWriter, query string, tl *Tasklist) {
@@ -290,8 +290,8 @@ func CalendarEventServer(c http.ResponseWriter, req *http.Request, tl *Tasklist)
 		panic(fmt.Sprintf("Error converting start parameter to int %s: %s", req.FormValue("end"), err))
 	}
 
-	start := time.SecondsToLocalTime(startSecs).Format("2006-01-02")
-	end := time.SecondsToLocalTime(endSecs).Format("2006-01-02")
+	start := time.SecondsToUTC(startSecs).Format("2006-01-02")
+	end := time.SecondsToUTC(endSecs).Format("2006-01-02")
 
 	r := new(vector.Vector)
 

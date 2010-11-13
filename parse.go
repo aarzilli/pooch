@@ -20,46 +20,65 @@ import (
 var TRIGGER_AT_FORMAT string = "2006-01-02 15:04"
 var TRIGGER_AT_SHORT_FORMAT string = "02/01 15:04"
 
-func ParsePriority(s string) (p Priority, err string) {
-	switch strings.ToLower(strings.TrimSpace(s)) {
-	case "sticky": return STICKY, ""
-	case "now": return NOW, ""
-	case "later": return LATER, ""
-	case "notes": return NOTES, ""
-	case "timed": return TIMED, ""
-	case "done": return DONE, ""
-	}
-	return INVALID, fmt.Sprintf("Unknown priority: %s", s)
+type ParseError struct {
+	error string
 }
 
-func ParseFrequency(s string) (freq Frequency, err string) {
+func MakeParseError(error string) *ParseError {
+	return &ParseError{error}
+}
+
+func (pe *ParseError) String() string {
+	return pe.error
+}
+
+func ParsePriority(s string) (p Priority, err *ParseError) {
 	switch strings.ToLower(strings.TrimSpace(s)) {
-	case "daily": return Frequency(1), ""
-	case "weekly": return Frequency(7), ""
-	case "biweekly": return Frequency(14), ""
-	case "monthly": return Frequency(30), ""
-	case "yearly": return Frequency(365), ""
-	case "": return Frequency(0), ""
+	case "sticky": return STICKY, nil
+	case "now": return NOW, nil
+	case "later": return LATER, nil
+	case "notes": return NOTES, nil
+	case "timed": return TIMED, nil
+	case "done": return DONE, nil
+	}
+	return INVALID, MakeParseError(fmt.Sprintf("Unknown priority: %s", s))
+}
+
+func ParseFrequency(s string) (freq Frequency, err *ParseError) {
+	switch strings.ToLower(strings.TrimSpace(s)) {
+	case "daily": return Frequency(1), nil
+	case "weekly": return Frequency(7), nil
+	case "biweekly": return Frequency(14), nil
+	case "monthly": return Frequency(30), nil
+	case "yearly": return Frequency(365), nil
+	case "": return Frequency(0), nil
 	default:
 		i, err := strconv.Atoi(s)
 		if err == nil {
-			return Frequency(i), ""
+			return Frequency(i), nil
 		}
 	}
 
-	return Frequency(0), fmt.Sprintf("Unparsable frequency: %s", s)
+	return Frequency(0), MakeParseError(fmt.Sprintf("Unparsable frequency: %s", s))
 }
 
 func FixYear(datetime *time.Time) {
-	if datetime.Format("01-02") > time.LocalTime().Format("01-02") {
-		datetime.Year = time.LocalTime().Year	
+	if datetime.Format("01-02") > time.UTC().Format("01-02") {
+		datetime.Year = time.UTC().Year	
 	} else {
-		datetime.Year = time.LocalTime().Year+1
+		datetime.Year = time.UTC().Year+1
 	}
 }
 
-func ParseDateTime(input string, timezone int) (datetime *time.Time, error string) {
-	//TODO: use timezone
+func TimeParseTimezone(layout, input string, timezone int) (*time.Time, os.Error) {
+	t, err := time.Parse(layout, input)
+	if err != nil { return nil, err }
+	t = time.SecondsToUTC(t.Seconds() - (int64(timezone) * 60 * 60))
+	t.ZoneOffset = timezone * 60
+	return t, nil
+}
+
+func ParseDateTime(input string, timezone int) (datetime *time.Time, error *ParseError) {
 	//Date formats:
 	// dd/mm
 	// yyyy-mm-dd
@@ -68,7 +87,7 @@ func ParseDateTime(input string, timezone int) (datetime *time.Time, error strin
 	// hh:mm:ss
 
 	datetime = nil
-	error = ""
+	error = nil
 
 	var err os.Error
 	input = strings.TrimSpace(input)
@@ -78,27 +97,27 @@ func ParseDateTime(input string, timezone int) (datetime *time.Time, error strin
 	}
 	
 	if (strings.Index(input, " ") != -1) || (strings.Index(input, ",") != -1){ // has time
-		if datetime, err = time.Parse("2006-1-2 15:04", input); err == nil { return }
-		if datetime, err = time.Parse("2006-1-2,15:04", input); err == nil { return }
+		if datetime, err = TimeParseTimezone("2006-1-2 15:04", input, timezone); err == nil { return }
+		if datetime, err = TimeParseTimezone("2006-1-2,15:04", input, timezone); err == nil { return }
 
-		if datetime, err = time.Parse("2006-1-2 15:04:05", input); err == nil { return }
-		if datetime, err = time.Parse("2006-1-2,15:04:05", input); err == nil { return }
+		if datetime, err = TimeParseTimezone("2006-1-2 15:04:05", input, timezone); err == nil { return }
+		if datetime, err = TimeParseTimezone("2006-1-2,15:04:05", input, timezone); err == nil { return }
 
-		if datetime, err = time.Parse("2/1 15:04:05", input); err == nil { FixYear(datetime); return }
-		if datetime, err = time.Parse("2/1,15:04:05", input); err == nil { FixYear(datetime); return }
+		if datetime, err = TimeParseTimezone("2/1 15:04:05", input, timezone); err == nil { FixYear(datetime); return }
+		if datetime, err = TimeParseTimezone("2/1,15:04:05", input, timezone); err == nil { FixYear(datetime); return }
 
-		if datetime, err = time.Parse("2/1 15:04", input); err == nil { FixYear(datetime); return }
-		if datetime, err = time.Parse("2/1,15:04", input); err == nil { FixYear(datetime); return }
+		if datetime, err = TimeParseTimezone("2/1 15:04", input, timezone); err == nil { FixYear(datetime); return }
+		if datetime, err = TimeParseTimezone("2/1,15:04", input, timezone); err == nil { FixYear(datetime); return }
 
-		if datetime, err = time.Parse("2/1 15", input); err == nil { FixYear(datetime); return }
-		if datetime, err = time.Parse("2/1,15", input); err == nil { FixYear(datetime); return }
+		if datetime, err = TimeParseTimezone("2/1 15", input, timezone); err == nil { FixYear(datetime); return }
+		if datetime, err = TimeParseTimezone("2/1,15", input, timezone); err == nil { FixYear(datetime); return }
 	} else { // doesn't have time
-		if datetime, err = time.Parse("2/1", input); err == nil { FixYear(datetime); return }
+		if datetime, err = TimeParseTimezone("2/1", input, timezone); err == nil { FixYear(datetime); return }
 
-		if datetime, err = time.Parse("2006-1-2", input); err == nil { FixYear(datetime); return }
+		if datetime, err = TimeParseTimezone("2006-1-2", input, timezone); err == nil { FixYear(datetime); return }
 	}
 
-	error = fmt.Sprintf("Unparsable date: %s", input)
+	error = MakeParseError(fmt.Sprintf("Unparsable date: %s", input))
 	return
 }
 
@@ -117,7 +136,7 @@ func SortFromTriggerAt(triggerAt *time.Time) string {
 		return triggerAt.Format("2006-01-02")
 	}
 	
-	return time.LocalTime().Format("2006-01-02")
+	return time.UTC().Format("2006-01-02")
 }
 
 
@@ -385,13 +404,8 @@ func QuickParse(input string, query string, tl *Tasklist, timezone int) (*Entry,
 }
 
 func TimeString(triggerAt *time.Time, sort string, timezone int) string {
-	//TODO: usare timezone
 	if triggerAt != nil {
-		triggerAt.ZoneOffset = -timezone * 60; defer func() { triggerAt.ZoneOffset = 0 }()
-	}
-	
-	if triggerAt != nil {
-		now := time.LocalTime()
+		now := time.UTC()
 		showYear := (triggerAt.Format("2006") != now.Format("2006"))
 		showTime := (triggerAt.Format("15:04") != "00:00")
 
@@ -405,8 +419,12 @@ func TimeString(triggerAt *time.Time, sort string, timezone int) string {
 		if showTime {
 			formatString += " 15:04"
 		}
+
+		z := time.SecondsToUTC(triggerAt.Seconds() + (int64(timezone) * 60 * 60))
+		z.ZoneOffset = timezone * 60
 		
-		return "@ " + triggerAt.Format(formatString)
+		return "@ " + z.Format(formatString)
+		//return "@ " + triggerAt.Format(formatString)
 	} else {
 		return sort
 	}
@@ -425,22 +443,13 @@ func isNumber(tk string) (n float, ok bool) {
 
 func DemarshalEntry(umentry *UnmarshalEntry, timezone int) *Entry {
 	triggerAt, err := ParseDateTime(umentry.TriggerAt, timezone)
-
-	if err != "" {
-		panic("demarshalling error: " + err)
-	}
+	must(err)
 	
 	sort := umentry.Sort
-
-	if sort == "" {
-		sort = SortFromTriggerAt(triggerAt)
-	}
+	if sort == "" { sort = SortFromTriggerAt(triggerAt) }
 
 	freq, err := ParseFrequency(umentry.Freq)
-
-	if err != "" {
-		panic(err)
-	}
+	must(err)
 
 	cols := make(Columns)
 
@@ -498,11 +507,12 @@ func DemarshalEntry(umentry *UnmarshalEntry, timezone int) *Entry {
 }
 
 func MarshalEntry(entry *Entry, timezone int) *UnmarshalEntry {
-	//TODO: use timezone
 	triggerAt := entry.TriggerAt()
 	triggerAtString := ""
 	if triggerAt != nil {
-		triggerAtString = triggerAt.Format(TRIGGER_AT_FORMAT)
+		z := time.SecondsToUTC(triggerAt.Seconds() + (int64(timezone) * 60 * 60))
+		z.ZoneOffset = timezone * 60
+		triggerAtString = z.Format(TRIGGER_AT_FORMAT)
 	}
 
 	freq := entry.Freq()
@@ -518,17 +528,14 @@ func MarshalEntry(entry *Entry, timezone int) *UnmarshalEntry {
 		entry.ColString()) 
 }
 
-func ToCalendarEvent(entry *Entry, className string) *CalendarEvent {
-	r := CalendarEvent{}
-
-	r.id = entry.Id()
-	r.title = entry.Title()
-	r.allDay = true
-	//r.start = fmt.Sprintf("%d", entry.TriggerAt().Seconds() +10)
-	r.start = entry.TriggerAt().Format(time.RFC3339)
-	r.className = className
-
-	return &r
+func ToCalendarEvent(entry *Entry, className string) map[string]interface{} {
+	return map[string]interface{}{
+		"id": entry.Id(),
+		"title": entry.Title(),
+		"allDay": true,
+		"start": entry.TriggerAt().Format(time.RFC3339),
+		"className": className,
+	}
 }
 
 func ParseTsvFormat(in string, tl *Tasklist, timezone int) *Entry {
@@ -537,17 +544,13 @@ func ParseTsvFormat(in string, tl *Tasklist, timezone int) *Entry {
 	entry, _ := QuickParse(fields[1], "", tl, timezone)
 
 	priority, err := ParsePriority(fields[2])
-	if err != "" {
-		panic(fmt.Sprintf("Error parsing tsv line: %s", err))
-	}
+	must(err)
 
 	var triggerAt *time.Time = nil
 	var sort string
 	if priority == TIMED {
-		var dterr string
-		if triggerAt, dterr = ParseDateTime(fields[3], timezone); dterr != "" {
-			panic(fmt.Sprintf("Error parsing tsv line: %s", dterr))
-		}
+		triggerAt, dterr := ParseDateTime(fields[3], timezone)
+		must(dterr)
 		sort = SortFromTriggerAt(triggerAt)
 	} else {
 		sort = fields[3]

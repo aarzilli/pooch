@@ -439,7 +439,7 @@ func (tl *Tasklist) RunTimedTriggers() {
 	must(serr)
 	defer stmt.Finalize()
 
-	must(stmt.Exec(time.LocalTime().Format("2006-01-02 15:04:05"), TIMED))
+	must(stmt.Exec(time.UTC().Format("2006-01-02 15:04:05"), TIMED))
 
 	for stmt.Next() {
 		entry, scanerr := StatementScan(stmt, true)

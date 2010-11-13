@@ -83,14 +83,6 @@ type UnmarshalEntry struct {
 	Cols string
 }
 
-type CalendarEvent struct {
-	id string
-	title string
-	allDay bool
-	start string
-	className string
-}
-
 type Columns map[string]string
 
 type Entry struct {
@@ -205,8 +197,7 @@ func (e *Entry) UpgradePriority(special bool) {
 		case TIMED:
 			e.priority = DONE
 		default:
-			//fmt.Printf("trigger: %d cur: %d\n", e.TriggerAt().Seconds(), time.LocalTime().Seconds())
-			if e.TriggerAt().Seconds() > time.LocalTime().Seconds() { // trigger time is in the future
+			if e.TriggerAt().Seconds() > time.UTC().Seconds() { // trigger time is in the future
 				e.priority = TIMED
 			} else {
 				e.priority = NOW
