@@ -24,7 +24,7 @@ type ParseError struct {
 	error string
 }
 
-func MakeParseError(error string) *ParseError {
+func MakeParseError(error string) os.Error {
 	return &ParseError{error}
 }
 
@@ -32,7 +32,7 @@ func (pe *ParseError) String() string {
 	return pe.error
 }
 
-func ParsePriority(s string) (p Priority, err *ParseError) {
+func ParsePriority(s string) (p Priority, err os.Error) {
 	switch strings.ToLower(strings.TrimSpace(s)) {
 	case "sticky": return STICKY, nil
 	case "now": return NOW, nil
@@ -44,7 +44,7 @@ func ParsePriority(s string) (p Priority, err *ParseError) {
 	return INVALID, MakeParseError(fmt.Sprintf("Unknown priority: %s", s))
 }
 
-func ParseFrequency(s string) (freq Frequency, err *ParseError) {
+func ParseFrequency(s string) (freq Frequency, err os.Error) {
 	switch strings.ToLower(strings.TrimSpace(s)) {
 	case "daily": return Frequency(1), nil
 	case "weekly": return Frequency(7), nil
@@ -78,7 +78,7 @@ func TimeParseTimezone(layout, input string, timezone int) (*time.Time, os.Error
 	return t, nil
 }
 
-func ParseDateTime(input string, timezone int) (datetime *time.Time, error *ParseError) {
+func ParseDateTime(input string, timezone int) (datetime *time.Time, error os.Error) {
 	//Date formats:
 	// dd/mm
 	// yyyy-mm-dd
