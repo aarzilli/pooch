@@ -49,6 +49,7 @@ var help_commands map[string](func ()) = map[string](func ()){
 	"tsvup": HelpTsvUpdate,
 	"rename": HelpRename,
 	"compat": CompatHelp,
+	"multiserve": HelpMultiServe,
 }
 
 func CheckCondition(cond bool, format string, a ...interface{}) {
@@ -386,6 +387,7 @@ func main() {
 		w.WriteString("\tremove\tRemove entry\n")
 		w.WriteString("\n")
 		w.WriteString("\tserve\tStart http server\n")
+		w.WriteString("\tmultiserve\tStart multiuser http server\n")
 
 		w.Flush()
 		tw.Flush()
