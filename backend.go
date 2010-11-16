@@ -110,6 +110,7 @@ func OpenOrCreate(filename string) *Tasklist {
 
 	if r, ok := tasklistCache[filename]; ok && r != nil {
 		r.refs++
+		r.RunTimedTriggers() // must run timed triggers anyways
 		return r
 	}
 
