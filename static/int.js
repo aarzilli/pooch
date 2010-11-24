@@ -212,10 +212,9 @@ function change_priority(name, event) {
     req.send(null)
 }
 
-function savesearch() {
-    var name = prompt("save search to:");
+function savesearch_ex(name, query) {
     var req = new XMLHttpRequest();
-    req.open("GET", "save-search?name=" + encodeURIComponent(name) + "&query=" + encodeURIComponent(document.getElementById('q').value), true);
+    req.open("GET", "save-search?name=" + encodeURIComponent(name) + "&query=" + encodeURIComponent(query), true);
     req.onreadystatechange = function() {
         if (req.readyState != 4) return;
         if (!req.responseText.match(/^query-saved: /)) {
@@ -223,6 +222,25 @@ function savesearch() {
         }
     };
     req.send(null)
+}
+
+function savesearch() {
+    var name = prompt("save search to:");
+    savesearch_ex(name, document.getElementById('q').value)
+}
+
+function editsearch() {
+    var req = new XMLHttpRequest();
+    req.open("GET", "save-search?name=" + encodeURIComponent(document.getElementById('q').value), true);
+    req.onreadystatechange = function() {
+        if (req.readyState != 4) return;
+        if (req.responseText.match(/^query-saved: /)) {
+            query = req.responseText.substring(13);
+            newquery = prompt("Edit query for " + document.getElementById('q').value, query);
+            if ((newquery != "") && (newquery != null)) savesearch_ex(document.getElementById('q').value, newquery);
+        }
+    };
+    req.send(null);
 }
 
 function removesearch() {

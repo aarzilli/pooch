@@ -330,8 +330,18 @@ func HtmlGetServer(c http.ResponseWriter, req *http.Request, tl *Tasklist, id st
 func SaveSearchServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	name := req.FormValue("name")
 	query := req.FormValue("query")
-	tl.SaveSearch(name, query)
-	io.WriteString(c, "query-saved: " + name)
+
+	if (len(name) > 2) && (name[0] == '@') && (name[1] == '%') {
+		name = name[2:len(name)]
+	}
+	
+	if query != "" {
+		tl.SaveSearch(name, query)
+	} else {
+		query = tl.GetSavedSearch(name)
+	}
+	Logf(INFO, "Query: %s %s", name, query)
+	io.WriteString(c, "query-saved: " + query)
 }
 
 func RemoveSearchServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
