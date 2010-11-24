@@ -238,10 +238,15 @@ func ListServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	SubcolsEnder(map[string]string{ }, c)
 	
 	var curp Priority = INVALID
-	for _, entry := range v {
+	for idx, entry := range v {
 		if curp != entry.Priority() {
 			EntryListPriorityChangeHTML(entry, c)
 			curp = entry.Priority()
+		}
+
+		htmlClass := "entry"
+		if idx % 2 != 0 {
+			htmlClass += " oddentry"
 		}
 		
 		entryEntry := map[string](interface{}){
@@ -249,6 +254,7 @@ func ListServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 			"entry": entry,
 			"etime": TimeString(entry.TriggerAt(), entry.Sort(), timezone),
 			"ecats": entry.CatString(),
+			"htmlClass": htmlClass,
 		}
 		
 		EntryListEntryHTML(entryEntry, c)

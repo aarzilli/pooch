@@ -39,7 +39,12 @@ table {
 
 .entry {
     background: none repeat scroll 0 0 #163A59;
-    border: 1px solid #0F304D;
+    border: 1px solid black;
+}
+
+.oddentry {
+    background-color: #0F304D;
+    border-color: black;
 }
 
 .entry > td {

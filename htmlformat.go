@@ -92,7 +92,7 @@ var EntryListPriorityChangeHTML ExecutableTemplate = MakeExecutableTemplate(`
 
 var EntryListEntryHTML ExecutableTemplate = MakeExecutableTemplate(`
     {.section heading}
-    <tr class='entry'>
+    <tr class='{htmlClass}'>
     {.end}
     {.section entry}
       <td class='etitle' onclick='javascript:toggle_editor("{id|html}", event)'><a href="javascript:toggle_editor("{id|html}", event)'>{title|html}</a></td>
