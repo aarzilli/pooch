@@ -435,8 +435,14 @@ func (tl *Tasklist) GetSubcols(theselect string) []string {
 	return v
 }
 
+func (tl *Tasklist) RenameTag(src, dst string) {
+	if isQuickTagStart(src[0]) { src = src[1:len(src)] }
+	if isQuickTagStart(dst[0]) { dst = dst[1:len(dst)] }
+	tl.MustExec("UPDATE columns SET name = ? WHERE name = ?", dst, src)
+}
+
 func (tl *Tasklist) RunTimedTriggers() {
-	stmt, serr := tl.conn.Prepare("SELECT tasks.id, tasks.title_field, tasks.text_field, tasks.priority, tasks.repeat_field, tasks.trigger_at_field, tasks.sort, group_concat(columns.name||':'||columns.value, '\n') FROM tasks NATURAL JOIN columns WHERE tasks.trigger_at_field < ? AND tasks.priority = ? GROUP BY id");
+	stmt, serr := tl.conn.Prepare("SELECT tasks.id, tasks.title_field, tasks.text_field, tasks.priority, tasks.repeat_field, tasks.trigger_at_field, tasks.sort, group_concat(columns.name||':'||columns.value, '\n') FROM tasks NATURAL JOIN columns WHERE tasks.trigger_at_field < ? AND tasks.priority = ? GROUP BY id")
 	must(serr)
 	defer stmt.Finalize()
 

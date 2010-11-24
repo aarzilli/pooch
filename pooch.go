@@ -31,6 +31,7 @@ var commands map[string](func (args []string)) = map[string](func (args []string
 	"colist": CmdColist,
 	"tsvup": CmdTsvUpdate,
 	"rename": CmdRename,
+	"rentag": CmdRenTag,
 	
 	"multiserve": CmdMultiServe,
 }
@@ -48,6 +49,7 @@ var help_commands map[string](func ()) = map[string](func ()){
 	"colist": HelpColist,
 	"tsvup": HelpTsvUpdate,
 	"rename": HelpRename,
+	"rentag": HelpRenTag,
 	"compat": CompatHelp,
 	"multiserve": HelpMultiServe,
 }
@@ -332,6 +334,19 @@ func HelpRename() {
 	fmt.Fprintf(os.Stderr, "\tRenames src_id into dst_id (or a random id if nothing is specified\n")
 }
 
+func CmdRenTag(argv []string) {
+	CheckArgsOpenDb(argv, map[string]bool{}, 2, 2, "rentag", func (tl *Tasklist, args []string, flags map[string]bool) {
+		src_tag := argv[0]
+		dst_tag := argv[1]
+		tl.RenameTag(src_tag, dst_tag)
+	})
+}
+
+func HelpRenTag() {
+	fmt.Fprintf(os.Stderr, "usage: rentag src_tag dst_tag\n")
+	fmt.Fprintf(os.Stderr, "\tRenames <src_tag> to <dst_tag>\n")
+}
+
 func CmdGet(args []string) {
 	CheckArgsOpenDb(args, map[string]bool{}, 1, 1, "get", func(tl *Tasklist, args []string, flags map[string]bool) {
 		id := args[0]
@@ -385,6 +400,8 @@ func main() {
 		w.WriteString("\tupdate\tUpdate command\n")
 		w.WriteString("\ttsvup\tAdd or update from tsv file\n")
 		w.WriteString("\tremove\tRemove entry\n")
+		w.WriteString("\trename\tRename entry\n")
+		w.WriteString("\trentag\tRename tags\n")
 		w.WriteString("\n")
 		w.WriteString("\tserve\tStart http server\n")
 		w.WriteString("\tmultiserve\tStart multiuser http server\n")

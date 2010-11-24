@@ -335,6 +335,13 @@ func RemoveSearchServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) 
 	tl.RemoveSaveSearch(name)
 }
 
+func RenTagServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
+	sourceTag := req.FormValue("from")
+	destTag := req.FormValue("to")
+	tl.RenameTag(sourceTag, destTag)
+	io.WriteString(c, "rename successful")
+}
+
 func OptionServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	if req.FormValue("save") == "save" {
 		must(req.ParseForm())
@@ -371,6 +378,7 @@ func SetupHandleFunc(wrapperTasklistServer func(TasklistServer)http.HandlerFunc,
 	http.HandleFunc("/save-search", WrapperServer(wrapperTasklistServer(SaveSearchServer)))
 	http.HandleFunc("/remove-search", WrapperServer(wrapperTasklistServer(RemoveSearchServer)))
 	http.HandleFunc("/opts", WrapperServer(wrapperTasklistServer(OptionServer)))
+	http.HandleFunc("/rentag", WrapperServer(wrapperTasklistServer(RenTagServer)))
 
 	// Calendar urls
 	http.HandleFunc("/cal", WrapperServer(CalendarServer))
