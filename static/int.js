@@ -34,6 +34,8 @@ function remove_entry(name) {
 }
 
 function save_editor(form) {
+    if (form.elements['edtitle'].disabled != "") return;
+    
     obj = new Object();
     obj.title = form.elements['edtitle'].value;
     obj.text = form.elements['edtext'].value;
@@ -174,8 +176,8 @@ function save_editor_by_id(name, event) {
 
 function close_editor(row) {
     var ed = editor_from_row(row);
-    change_editor_disabled(ed, "yes");
     save_editor(ed);
+    change_editor_disabled(ed, "yes");
     row.style['display'] = 'none';
 }
 
