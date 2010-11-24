@@ -8,29 +8,24 @@ function setup() {
 }
 
 function remove_entry(name) {
-    var req = new XMLHttpRequest();
-    req.open("GET", "remove?id=" + encodeURIComponent(name), true);
-    req.onreadystatechange = function() {
-        if (req.readyState == 4) {
-            if (req.responseText.match(/^removed/)) {
-                var maintable = document.getElementById("maintable");
-                for (var i in maintable.rows) {
-                    if (maintable.rows[i] == null) continue; // deleted rows
-                    if (maintable.rows[i].id == null) continue; // rows without id
-                    
-                    if (maintable.rows[i].id == "editor_" + name) {
-                        maintable.deleteRow(i);
-                        maintable.deleteRow(i-1); // this is the title
-                        break;
-                    }
-                }
-            } else {
-                var ts = document.getElementById("ts_" + v.id);
-                ts.innerHTML = "Remove failed: " + req.responseText;
-            }
-        }
-    };
-    req.send(null);
+  $.ajax({ url: "remove?id=" + encodeURIComponent(name), success: function(data, textStatus, req) {
+	if (data.match(/^removed/)) {
+	  var maintable = document.getElementById("maintable");
+	  for (var i in maintable.rows) {
+	    if (maintable.rows[i] == null) continue; // deleted rows
+	    if (maintable.rows[i].id == null) continue; // rows without id
+            
+	    if (maintable.rows[i].id == "editor_" + name) {
+	      maintable.deleteRow(i);
+	      maintable.deleteRow(i-1); // this is the title
+	      break;
+	    }
+	  }
+	} else {
+	  var ts = document.getElementById("ts_" + v.id);
+	  ts.innerHTML = "Remove failed: " + data;
+	}
+      }});
 }
 
 function save_editor(form) {
@@ -47,65 +42,47 @@ function save_editor(form) {
     obj.cols = form.elements['edcols'].value;
     
     var ts = document.getElementById("ts_"+obj.id);
-    var req = new XMLHttpRequest();
-    req.open("POST", "/save", true);
-    req.onreadystatechange = function() {
-        if (req.readyState == 4) {
-            if (req.responseText.match(/^saved-at-timestamp: /)) {
-                ts.innerHTML = req.responseText.substr("saved-at-timestamp: ".length)
-            } else {
-                ts.innerHTML = " LAST SAVE FAILED: " + req.responseText;
-            }
-        }
-    };
-    req.send(obj.toJSONString())
+    $.ajax({ type: "POST", url: "/save", data: obj.toJSONString(), success: function(data, textStatus, req) {
+	  if (data.match(/^saved-at-timestamp: /)) {
+	    ts.innerHTML = data.substr("saved-at-timestamp: ".length);
+	  } else {
+	    ts.innerHTML = " LAST SAVE FAILED: " + data;
+	  }
+	}});
 }
 
 function add_row(id) {
-    var req = new XMLHttpRequest();
-    req.open("GET", "htmlget?type=add&id=" + encodeURIComponent(id), true);
-    req.onreadystatechange = function() {
-        if (req.readyState == 4) {
-            var newrows = req.responseText.split("\u2029", 2);
+  $.ajax({ url: "htmlget?type=add&id=" + encodeURIComponent(id), success: function(data, textStatus, req) {
+	var newrows = data.split("\u2029", 2);
+	
+	var maintable = document.getElementById("maintable");
+	
+	var newrow1 = maintable.insertRow(0);
+	newrow1.setAttribute("class", "entry");
+	newrow1.innerHTML = newrows[0];
+	  
+	var newrow2 = maintable.insertRow(1);
+	newrow2.setAttribute("id", "editor_"+encodeURIComponent(id));
+	newrow2.setAttribute("class", "editor");
+	newrow2.setAttribute("style", "display: none");
+	newrow2.innerHTML = newrows[1];
 
-            var maintable = document.getElementById("maintable");
-
-            var newrow1 = maintable.insertRow(0)
-            newrow1.setAttribute("class", "entry")
-            newrow1.innerHTML = newrows[0]
-
-            var newrow2 = maintable.insertRow(1)
-            newrow2.setAttribute("id", "editor_"+encodeURIComponent(id))
-            newrow2.setAttribute("class", "editor")
-            newrow2.setAttribute("style", "display: none")
-            newrow2.innerHTML = newrows[1]
-
-            save_open_editor(true);
-        }
-    }
-    req.send(null)
+	save_open_editor(true);
+      }});
 }
 
 function add_entry(query) {
     var netext = document.getElementById('newentry').value;
-
-    var req = new XMLHttpRequest()
-    req.open("GET", "qadd?q=" + encodeURIComponent(query) + "&text=" + encodeURIComponent(netext), true);
-    req.onreadystatechange = function() {
-        if (req.readyState == 4) {
-            if (req.responseText.match(/^added: /)) {
-                newid = req.responseText.substr("added: ".length);
-                add_row(newid)
-                
-                document.getElementById('newentry').value = "";
-                
-            } else {
-                alert("ADD FAILED: " + req.responseText)
-            }
-            
-        }
-    };
-    req.send(null);
+    $.ajax({ url: "qadd?q=" + encodeURIComponent(query) + "&text=" + encodeURIComponent(netext), success: function(data, textStatus, req) {
+	  if (data.match(/^added: /)) {
+	    newid = data.substr("added: ".length);
+	    add_row(newid);
+	    
+	    document.getElementById('newentry').value = "";
+	  } else {
+	    alert("ADD FAILED: " + data);
+	  }
+	}});
     return false;
 }
 
@@ -123,27 +100,23 @@ function change_editor_disabled(ed, disabledStatus) {
 
 function fill_editor(name) {
     var ed = document.getElementById("ediv_"+name);
-    var req = new XMLHttpRequest();
-    req.open("GET", "get?id=" + encodeURIComponent(name), true);
-    req.onreadystatechange = function() {
-        if (req.readyState == 4) {
-            var timestamp = req.responseText.split("\n", 2)[0];
-            var jsonObj = req.responseText.substr(timestamp.length);
-            v = jsonObj.parseJSON();
-            ed.elements['edtitle'].value = v.Title;
-            ed.elements['edtext'].value = v.Text;
-            ed.elements['edat'].value = v.TriggerAt;
-            ed.elements['edsort'].value = v.Sort;
-            ed.elements['edid'].value = v.Id;
-            ed.elements['edprio'].value = v.Priority;
-            ed.elements['edfreq'].value = v.Freq;
-            ed.elements['edcols'].value = v.Cols;
-            var ts = document.getElementById("ts_" + v.Id);
-            ts.innerHTML = timestamp;
-            change_editor_disabled(ed, "");
-        }
-    }
-    req.send(null)
+    
+    $.ajax({url: "get?id=" + encodeURIComponent(name), success: function(data, textStatus, req) {
+	  var timestamp = data.split("\n", 2)[0];
+	  var jsonObj = data.substr(timestamp.length);
+	  v = jsonObj.parseJSON();
+	  ed.elements['edtitle'].value = v.Title;
+	  ed.elements['edtext'].value = v.Text;
+	  ed.elements['edat'].value = v.TriggerAt;
+	  ed.elements['edsort'].value = v.Sort;
+	  ed.elements['edid'].value = v.Id;
+	  ed.elements['edprio'].value = v.Priority;
+	  ed.elements['edfreq'].value = v.Freq;
+	  ed.elements['edcols'].value = v.Cols;
+	  var ts = document.getElementById("ts_" + v.Id);
+	  ts.innerHTML = timestamp;
+	  change_editor_disabled(ed, "");
+	}});
 }
 
 function editor_from_row(row) {
@@ -206,39 +179,30 @@ function toggle_editor(name, event) {
 }
 
 function change_priority(name, event) {
-    var req = new XMLHttpRequest();
-    req.open("GET", "change-priority?id=" + encodeURIComponent(name) + "&special=" + event.shiftKey, true);
-    req.onreadystatechange = function() {
-        if (req.readyState == 4) {
-            if (req.responseText.match(/^priority-change-to: /)) {
-                priority = req.responseText.substr("priority-change-to: ".length);
-                priorityNum = priority[0]
-                priority = priority.substr(2)
-                var epr = document.getElementById('epr_'+name);
-                epr.value = priority;
-                epr.setAttribute("class", "priorityclass_" + priority);
-
-                // changes the value saved inside the editor div so that saving the editor contents doesn't revert a changed priority
-                var ed = document.getElementById("ediv_"+name);
-                ed.elements["edprio"].value = priorityNum;
-            } else {
-                alert(req.responseText)
-            }
-        }
-    }
-    req.send(null)
+  $.ajax({ url: "change-priority?id=" + encodeURIComponent(name) + "&special=" + event.shiftKey, success: function(data, textStatus, req) {
+	if (data.match(/^priority-change-to: /)) {
+	  priority = data.substr("priority-change-to: ".length);
+	  priorityNum = priority[0];
+	  priority = priority.substr(2);
+	  var epr = document.getElementById('epr_'+name);
+	  epr.value = priority;
+	  epr.setAttribute("class", "priorityclass_" + priority);
+	  
+	  // changes the value saved inside the editor div so that saving the editor contents doesn't revert a changed priority
+	  var ed = document.getElementById("ediv_"+name);
+	  ed.elements["edprio"].value = priorityNum;
+	} else {
+	  alert(data);
+	}
+      }});
 }
 
 function savesearch_ex(name, query) {
-    var req = new XMLHttpRequest();
-    req.open("GET", "save-search?name=" + encodeURIComponent(name) + "&query=" + encodeURIComponent(query), true);
-    req.onreadystatechange = function() {
-        if (req.readyState != 4) return;
-        if (!req.responseText.match(/^query-saved: /)) {
-            alert(req.responseText);
+  $.ajax({ url: "save-search?name=" + encodeURIComponent(name) + "&query=" + encodeURIComponent(query), success: function(data, textStatus, req) {
+	if (!data.match(/^query-saved: /)) {
+	  alert(data);
         }
-    };
-    req.send(null)
+      }});
 }
 
 function savesearch() {
@@ -247,24 +211,15 @@ function savesearch() {
 }
 
 function editsearch() {
-    var req = new XMLHttpRequest();
-    req.open("GET", "save-search?name=" + encodeURIComponent(document.getElementById('q').value), true);
-    req.onreadystatechange = function() {
-        if (req.readyState != 4) return;
-        if (req.responseText.match(/^query-saved: /)) {
-            query = req.responseText.substring(13);
-            newquery = prompt("Edit query for " + document.getElementById('q').value, query);
-            if ((newquery != "") && (newquery != null)) savesearch_ex(document.getElementById('q').value, newquery);
+  $.ajax({ url: "save-search?name=" + encodeURIComponent(document.getElementById('q').value), success: function(data, textStatus, req) {
+	if (data.match(/^query-saved: /)) {
+	  query = data.substring(13);
+	  newquery = prompt("Edit query for " + document.getElementById('q').value, query);
+	  if ((newquery != "") && (newquery != null)) savesearch_ex(document.getElementById('q').value, newquery);
         }
-    };
-    req.send(null);
+      }});
 }
 
 function removesearch() {
-    var req = new XMLHttpRequest();
-    req.open("GET", "remove-search?query=" + encodeURIComponent(document.getElementById('q').value), true);
-    req.onreadystatechange = function() {
-        //Nothing to do
-    };
-    req.send(null);
+  $.ajax({ url: "remove-search?query=" + encodeURIComponent(document.getElementById('q').value) });
 }

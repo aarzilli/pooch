@@ -50,14 +50,11 @@ var ListHeaderHTML ExecutableTemplate = MakeExecutableTemplate(`
   <title>Pooch: {query|html}</title>
   <link type='text/css' rel='stylesheet' href='{theme}'>
   <link type='text/css' rel='stylesheet' href='calendar.css'>
-  <script src='/shortcut.js'>
-  </script>
-  <script src='/json.js'>
-  </script>
-  <script src='/int.js'>
-  </script>
-  <script src='/calendar.js'>
-  </script>
+  <script src='/shortcut.js'></script>
+  <script src='/json.js'></script>
+  <script src='/jquery.js'></script>
+  <script src='/int.js'></script>
+  <script src='/calendar.js'></script>
 </head>
 <body onload='javascript:setup()'>
   <div style='float: right'><p align='right'><small><a href='/opts'>options</a>&nbsp;<a href="/advanced.html">advanced operations</a></small><br/><small>Current timezone: {timezone|html}</small></div>
