@@ -1,0 +1,106 @@
+/*
+   foreground: silver
+   background light 1: #163A59
+   background light 2: #0F304D
+
+   foreground dark 1: #67ABE5
+   foreground dark 2: #4C89BE
+*/
+
+
+/*
+ This program is distributed under the terms of GPLv3
+ Copyright 2010, Alessandro Arzilli
+ */
+
+* {
+    font-family: sans-serif;
+}
+
+a {
+    color: #4C89BE;
+}
+
+body {
+    background-color: black;
+    color: silver;
+    font-size: 8pt;
+}
+
+table {
+    font-size: 8pt;
+}
+
+.prchange > td {
+    padding-top: 10px;
+    font-size: large;
+    font-weight: bold;
+}
+
+.entry {
+    background: none repeat scroll 0 0 #163A59;
+    border: 1px solid #0F304D;
+}
+
+.entry > td {
+    padding: 4px;
+}
+
+.etitle {
+    width: 65%;
+    font-weight: bold;
+}
+
+.etitle > a {
+    text-decoration: none;
+    color: silver;
+}
+
+.epr {
+}
+
+.etime {
+}
+
+.priorityclass_now {
+    width: 60px;
+    color: #0FD400;
+    font-weight: bolder;
+    background-color: black;
+    font-size: xx-small;
+}
+.priorityclass_later {
+    width: 60px;
+    color: yellow;
+    background-color: black;
+    font-weight: bolder;    
+    font-size: xx-small;
+}
+.priorityclass_timed {
+    width: 60px;
+    color: orange;
+    background-color: black;
+    font-weight: bolder;    
+    font-size: xx-small;
+}
+.priorityclass_done {
+    width: 60px;
+    color: lightblue;
+    background-color: black;
+    font-weight: bolder;    
+    font-size: xx-small;
+}
+.priorityclass_sticky {
+    width: 60px;
+    color: lightblue;
+    background-color: black;
+    font-weight: bolder;    
+    font-size: xx-small;
+}
+.priorityclass_notes {
+    width: 60px;
+    color: lightblue;
+    background-color: black;
+    font-weight: bolder;    
+    font-size: xx-small;
+}
