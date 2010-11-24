@@ -60,8 +60,7 @@ var ListHeaderHTML ExecutableTemplate = MakeExecutableTemplate(`
   </script>
 </head>
 <body onload='javascript:setup()'>
-  <div style='float: right'><p align='right'><small><a href='/opts'>options</a></small><br><small>Current timezone: {timezone|html}</small></div>
-  <div style='float: right'></div>
+  <div style='float: right'><p align='right'><small><a href='/opts'>options</a>&nbsp;<a href="/advanced.html">advanced operations</a></small><br/><small>Current timezone: {timezone|html}</small></div>
   <h2>{query|html} <span style='font-size: small'><a href='cal?q={query|url}'>as calendar</a></span></h2>
   <p><form onsubmit='return add_entry("{query|html}")'>
   <label for='text'>New entry:</label>&nbsp;<input size='50' type='newentry' id='newentry' name='text'/><input type='button' value='add' onclick='javascript:add_entry("{query|html}")'/>
@@ -96,7 +95,7 @@ var EntryListEntryHTML ExecutableTemplate = MakeExecutableTemplate(`
     <tr class='entry'>
     {.end}
     {.section entry}
-      <td class='etitle' onclick='javascript:toggle_editor("{id|html}", event)'>{title|html}</td>
+      <td class='etitle' onclick='javascript:toggle_editor("{id|html}", event)'><a href="javascript:toggle_editor("{id|html}", event)'>{title|html}</a></td>
 
       <td class='epr'>
         <input type='button' class='priorityclass_{priority|priority}' id='epr_{id|html}' value='{priority|priority}' onclick='javascript:change_priority("{id|html}", event)'/>

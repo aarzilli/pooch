@@ -35,6 +35,11 @@ table {
 .etime {
 }
 
+.etitle > a {
+    text-decoration: none;
+    color: black;
+}
+
 .priorityclass_now {
     width: 60px;
     background-color: lightgreen;

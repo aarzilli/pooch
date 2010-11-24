@@ -40,8 +40,15 @@ table {
     width: 65%;
     font-weight: bold;
 }
+
+.etitle > a {
+    text-decoration: none;
+    color: #EAE8E9
+}
+
 .epr {
 }
+
 .etime {
 }
 
