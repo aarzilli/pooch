@@ -107,6 +107,18 @@ function add_entry(query) {
     return false;
 }
 
+function change_editor_disabled(ed, disabledStatus) {
+    ed.elements['edtitle'].disabled = disabledStatus;
+    ed.elements['edtext'].disabled = disabledStatus;
+    ed.elements['edat'].disabled = disabledStatus;
+    ed.elements['edsort'].disabled = disabledStatus;
+    ed.elements['edid'].disabled = disabledStatus;
+    ed.elements['edprio'].disabled = disabledStatus;
+    ed.elements['edfreq'].disabled = disabledStatus;
+    ed.elements['edcols'].disabled = disabledStatus;
+    ed.elements['savebtn'].disabled = disabledStatus;
+}
+
 function fill_editor(name) {
     var ed = document.getElementById("ediv_"+name);
     var req = new XMLHttpRequest();
@@ -126,6 +138,7 @@ function fill_editor(name) {
             ed.elements['edcols'].value = v.Cols;
             var ts = document.getElementById("ts_" + v.Id);
             ts.innerHTML = timestamp;
+            change_editor_disabled(ed, "");
         }
     }
     req.send(null)
@@ -160,7 +173,9 @@ function save_editor_by_id(name, event) {
 }
 
 function close_editor(row) {
-    save_editor(editor_from_row(row));
+    var ed = editor_from_row(row);
+    change_editor_disabled(ed, "yes");
+    save_editor(ed);
     row.style['display'] = 'none';
 }
 

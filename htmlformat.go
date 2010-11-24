@@ -118,25 +118,25 @@ var EntryListEntryEditorHTML ExecutableTemplate = MakeExecutableTemplate(`
     {.section entry}
       <td colspan=4>
         <form id='ediv_{id|html}'>
-          <p><input name='edtilte' id='edtitle' type='text' style='width: 99%; padding-bottom: 5px'/><br>
-          <textarea style='width: 65%; margin-right: 1%' name='edtext' id='edtext' rows=20>
+          <p><input name='edtilte' id='edtitle' type='text' style='width: 99%; padding-bottom: 5px' disabled='yes'/><br>
+          <textarea style='width: 65%; margin-right: 1%' name='edtext' id='edtext' disabled='yes' rows=20>
           </textarea>
-          <textarea style='width: 33%;' float: right' name='edcols' id='edcols' rows=20>
+          <textarea style='width: 33%;' float: right' name='edcols' id='edcols' disabled='yes' rows=20>
           </textarea>
           </p>
 
 		  <input name='edid' id='edid' type='hidden'/>
 		  <input name='edprio' id='edprio' type='hidden'/>
 
-		  <p>When: <input type='text' id='edat_{id|html}' name='edat' size=10/>
+		  <p>When: <input type='text' id='edat_{id|html}' name='edat' size=10 disabled='yes'/>
           <script>calendar.set("edat_{id|html}")</script>
-		  &nbsp Repeat: <input type='text' id='edfreq' name='edfreq' size=10/>
-		  &nbsp; Sort by: <input type='text' id='edsort' name='edsort' size=10/>
+		  &nbsp Repeat: <input type='text' id='edfreq' name='edfreq' size=10 disabled='yes'/>
+		  &nbsp; Sort by: <input type='text' id='edsort' name='edsort' size=10 disabled='yes'/>
           &nbsp; ID: {id|html}
           &nbsp; Timestamp: <span id='ts_{id|html}'>-------</span></p>
 
           <p><input type='button' style='float: right' value='remove' onclick='javascript:remove_entry("{id|html}", event)'/>
-          <input type='button' value='save' onclick='javascript:save_editor_by_id("{id|html}", event)'/>
+          <input type='button' id='savebtn' name='savebtn' value='save' onclick='javascript:save_editor_by_id("{id|html}", event)' disabled='yes'/>
           <input type='button' value='reload', onclick='javascript:fill_editor("{id|html}")'/></p>
         </form>
       </td>
