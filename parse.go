@@ -552,7 +552,8 @@ func ParseTsvFormat(in string, tl *Tasklist, timezone int) *Entry {
 	var triggerAt *time.Time = nil
 	var sort string
 	if priority == TIMED {
-		triggerAt, dterr := ParseDateTime(fields[3], timezone)
+		var dterr os.Error
+		triggerAt, dterr = ParseDateTime(fields[3], timezone)
 		must(dterr)
 		sort = SortFromTriggerAt(triggerAt)
 	} else {

@@ -24,7 +24,7 @@ function remove_entry(name) {
 	} else {
 	  $("#ts_"+v.id).html("Remove failed: " + data);
 	}
-      }});
+    }});
 }
 
 function save_editor(form) {
