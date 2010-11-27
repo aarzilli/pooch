@@ -165,7 +165,7 @@ func MakeRandomString(size int) string {
 	var encbuf []byte = make([]byte, base64.StdEncoding.EncodedLen(len(buf)))
 	base64.StdEncoding.Encode(encbuf, buf)
 
-	return strings.Replace(string(encbuf), "+", "_", -1)
+	return strings.Replace(strings.Replace(string(encbuf), "+", "_", -1), "/", "_", -1)
 }
 
 func (tasklist *Tasklist) MakeRandomId() string {
