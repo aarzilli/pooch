@@ -230,4 +230,8 @@ func (e *Entry) UpgradePriority(special bool) {
 	}
 }
 
+func RepeatString(ch string, num int) string {
+	if num < 0 { return "" }
+	return strings.Repeat(ch, num)
+}
 

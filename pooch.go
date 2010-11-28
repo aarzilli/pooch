@@ -196,16 +196,12 @@ func HelpRemove() {
 	fmt.Fprintf(os.Stderr, "\tRemoves specified entry from <db>\n")
 }
 
-func GetSizesForList(v []*Entry) (id_size int, title_size int) {
-	title_size, id_size = 0, 0
+func GetSizesForList(v []*Entry) (id_size, title_size, cat_size int) {
+	title_size, id_size, cat_size = 0, 0, 0
 	for _, e := range v {
-		if len(e.Title()) > title_size {
-			title_size = len(e.Title())
-		}
-
-		if len(e.Id()) > id_size {
-			id_size = len(e.Id())
-		}
+		if len(e.Title())+1 > title_size { title_size = len(e.Title())+1 }
+		if len(e.Id())+1 > id_size { id_size = len(e.Id())+1 }
+		if len(e.CatString())+1 > cat_size { cat_size = len(e.CatString())+1 }
 	}
 
 	return
@@ -221,15 +217,17 @@ func CmdListExTsv(v []*Entry, timezone int) {
 }
 
 func CmdListEx(v []*Entry, timezone int) {
-	id_size, title_size := GetSizesForList(v)
+	id_size, title_size, cat_size := GetSizesForList(v)
+
+	Logf(INFO, "Sizes: %d %d %d\n", id_size, title_size, cat_size)
 	
-	spare_size := LINE_SIZE - id_size - title_size - len(TRIGGER_AT_SHORT_FORMAT)
-	
-	if (title_size != 0) && (id_size != 0) {
-		if spare_size > 0 {
-			title_size += spare_size * title_size / (title_size + id_size)
-			id_size += spare_size * id_size / (title_size + id_size)
-		}
+	spare_size := LINE_SIZE - id_size - title_size - cat_size - len(TRIGGER_AT_SHORT_FORMAT)
+
+	size_sum := title_size + id_size + cat_size
+	if (size_sum != 0) && (spare_size > 0) {
+		title_size += spare_size * title_size / size_sum
+		id_size += spare_size * id_size / size_sum
+		cat_size += spare_size * cat_size / size_sum
 	}
 
 	var curp Priority = INVALID
@@ -242,9 +240,10 @@ func CmdListEx(v []*Entry, timezone int) {
 		
 		timeString := TimeString(entry.TriggerAt(), entry.Sort(), timezone)
 
-		fmt.Printf("%s%s %s%s %s\n",
-			entry.Id(), strings.Repeat(" ", id_size - len(entry.Id())),
-			entry.Title(), strings.Repeat(" ", title_size - len(entry.Title())),
+		fmt.Printf("%s%s %s%s %s%s %s\n",
+			entry.Id(), RepeatString(" ", id_size - len(entry.Id())),
+			entry.Title(), RepeatString(" ", title_size - len(entry.Title())),
+			entry.CatString(), RepeatString(" ", cat_size - len(entry.CatString())),
 			timeString)
 	}
 }
