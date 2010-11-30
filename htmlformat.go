@@ -130,7 +130,7 @@ var EntryListEntryEditorHTML ExecutableTemplate = MakeExecutableTemplate(`
 		  &nbsp Repeat: <input type='text' id='edfreq' name='edfreq' size=10 disabled='yes'/>
 		  &nbsp; Sort by: <input type='text' id='edsort' name='edsort' size=10 disabled='yes'/>
           &nbsp; ID: {id|html}
-          &nbsp; Timestamp: <span id='ts_{id|html}'>-------</span></p>
+          &nbsp; Timestamp: <img id='loading_{id|html}' style='display: none' src='loading.gif'/> <span id='ts_{id|html}'>-------</span></p>
 
           <p><input type='button' style='float: right' value='remove' onclick='javascript:remove_entry("{id|html}", event)'/>
           <input type='button' id='savebtn' name='savebtn' value='save' onclick='javascript:save_editor_by_id("{id|html}", event)' disabled='yes'/>

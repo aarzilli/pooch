@@ -39,6 +39,7 @@ function save_editor(form) {
     obj.priority = parseInt(form.elements['edprio'].value);
     obj.freq = form.elements['edfreq'].value;
     obj.cols = form.elements['edcols'].value;
+    $("#loading_"+obj.id).get(0).style.display = "inline";
     
     $.ajax({ type: "POST", url: "/save", data: obj.toJSONString(), success: function(data, textStatus, req) {
 	  if (data.match(/^saved-at-timestamp: /)) {
@@ -46,6 +47,7 @@ function save_editor(form) {
 	  } else {
 	    $("#ts_"+obj.id).html(" LAST SAVE FAILED: " + data);
 	  }
+	  $("#loading_"+obj.id).get(0).style.display = "none";
 	}});
 }
 
@@ -97,23 +99,25 @@ function change_editor_disabled(ed, disabledStatus) {
 }
 
 function fill_editor(name) {
-    $.ajax({url: "get?id=" + encodeURIComponent(name), success: function(data, textStatus, req) {
-	  var timestamp = data.split("\n", 2)[0];
-	  var jsonObj = data.substr(timestamp.length);
-	  v = jsonObj.parseJSON();
-	  var ed = $("#ediv_" + name).first().get(0);
-	  ed.elements['edtitle'].value = v.Title;
-	  ed.elements['edtext'].value = v.Text;
-	  ed.elements['edat'].value = v.TriggerAt;
-	  ed.elements['edsort'].value = v.Sort;
-	  ed.elements['edid'].value = v.Id;
-	  ed.elements['edprio'].value = v.Priority;
-	  ed.elements['edfreq'].value = v.Freq;
-	  ed.elements['edcols'].value = v.Cols;
-		  
-	  $("#ts_" + v.Id).html(timestamp);
-	  change_editor_disabled(ed, "");
-	}});
+  $("#loading_"+name).get(0).style.display = "inline";
+  $.ajax({url: "get?id=" + encodeURIComponent(name), success: function(data, textStatus, req) {
+	var timestamp = data.split("\n", 2)[0];
+	var jsonObj = data.substr(timestamp.length);
+	v = jsonObj.parseJSON();
+	var ed = $("#ediv_" + name).first().get(0);
+	ed.elements['edtitle'].value = v.Title;
+	ed.elements['edtext'].value = v.Text;
+	ed.elements['edat'].value = v.TriggerAt;
+	ed.elements['edsort'].value = v.Sort;
+	ed.elements['edid'].value = v.Id;
+	ed.elements['edprio'].value = v.Priority;
+	ed.elements['edfreq'].value = v.Freq;
+	ed.elements['edcols'].value = v.Cols;
+	
+	$("#ts_" + v.Id).html(timestamp);
+	change_editor_disabled(ed, "");
+	$("#loading_"+name).get(0).style.display = "none";
+      }});
 }
 
 function editor_from_row(row) {
