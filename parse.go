@@ -160,9 +160,22 @@ func Strtok(input, chars string) []string {
 	return append(r, input[lastIdx:len(input)])
 }
 
+func CheckColNameForShow(name string, showcols map[string]bool) string {
+	if name[len(name)-1] == '!' {
+		an := name[0:len(name)-1]
+		showcols[an[1:len(an)]] = true
+		return an
+	} else if name[len(name)-1] == '?' {
+		an := name[0:len(name)-1]
+		showcols[an[1:len(an)]] = true
+		return ""
+	}
+	return name
+}
+
 var SanitizeRE *regexp.Regexp = regexp.MustCompile("[^a-zA-Z0-9.,/\\^!?]")
 
-func SearchParseToken(input string, tl *Tasklist, set map[string]string, guessParse bool) (op uint8, theselect string) {
+func SearchParseToken(input string, tl *Tasklist, set map[string]string, showcols map[string]bool, guessParse bool) (op uint8, theselect string) {
 	var r vector.StringVector
 	
 	op = input[0]
@@ -171,7 +184,8 @@ func SearchParseToken(input string, tl *Tasklist, set map[string]string, guessPa
 		colsplit := strings.Split(col, "=", 2)
 
 		if len(colsplit) == 1 {
-			col = SanitizeRE.ReplaceAllString(col, "")
+			col = SanitizeRE.ReplaceAllString(CheckColNameForShow(col, showcols), "")
+			if col == "" { continue }
 			if guessParse {
 				r.Push(col)
 			} else {
@@ -180,7 +194,8 @@ func SearchParseToken(input string, tl *Tasklist, set map[string]string, guessPa
 			
 			if set != nil { set[col] = "" }
 		} else {
-			colsplit[0] = SanitizeRE.ReplaceAllString(colsplit[0], "")
+			colsplit[0] = SanitizeRE.ReplaceAllString(CheckColNameForShow(colsplit[0], showcols), "")
+			if colsplit[0] == "" { continue }
 			if !guessParse {
 				r.Push(fmt.Sprintf("SELECT id FROM columns WHERE name = '%s' AND value = %s", colsplit[0], tl.Quote(colsplit[1])))
 			}
@@ -197,9 +212,11 @@ func SearchParseToken(input string, tl *Tasklist, set map[string]string, guessPa
 	return op, strings.Join(([]string)(r), " INTERSECT ")
 }
 
-func SearchParseSub(tl *Tasklist, input string, ored, removed *vector.StringVector, guessParse bool) {
+func SearchParseSub(tl *Tasklist, input string, ored, removed *vector.StringVector, showcols map[string]bool, guessParse bool) {
 	for _, token := range Strtok(input, "+-") {
-		op, theselect := SearchParseToken(token, tl, nil, guessParse)
+		op, theselect := SearchParseToken(token, tl, nil, showcols, guessParse)
+
+		if theselect == "" { return }
 
 		switch op {
 		case '+':
@@ -217,14 +234,14 @@ func IsSavedQuery(input string) bool {
 	return (len(input) > 2) && (input[0:2] == "@%")
 }
 
-func SearchParse(input string, wantsDone, guessParse bool, extraWhereClauses []string, tl *Tasklist) (theselect, query string){
+func SearchParse(input string, wantsDone, guessParse bool, extraWhereClauses []string, showCols map[string]bool, tl *Tasklist) (theselect, query string) {
 	if IsSavedQuery(input) {
 		name := input[2:len(input)]
 		search := tl.GetSavedSearch(name)
 		Logf(DEBUG, "Retrieving saved query: %s [%s]\n", name, search)
-		return SearchParse(search, wantsDone, guessParse, extraWhereClauses, tl)
+		return SearchParse(search, wantsDone, guessParse, extraWhereClauses, showCols, tl)
 	}
-	
+
 	lastEnd := 0
 	r := ""
 	
@@ -251,7 +268,7 @@ func SearchParse(input string, wantsDone, guessParse bool, extraWhereClauses []s
 
 		//fmt.Printf("QuickTagParam: [%s]\n", quickTag)
 
-		SearchParseSub(tl, quickTag, &ored, &removed, guessParse)
+		SearchParseSub(tl, quickTag, &ored, &removed, showCols, guessParse)
 
 		if guessParse && (ored.Len() > 0) {
 			return ored.At(0), ""
@@ -367,8 +384,13 @@ func QuickParse(input string, query string, tl *Tasklist, timezone int) (*Entry,
 
 			if (triggerAt == nil) {
 				Logf(DEBUG, "Found quickTag:[%s] -- no special meaning found, using it as a category", quickTag)
-				cols[quickTag] = ""
-				catfound = true;
+				quickTagSplit = strings.Split(quickTag, "=", 2)
+				if len(quickTagSplit) == 1 {
+					cols[quickTag] = ""
+					catfound = true;
+				} else {
+					cols[quickTagSplit[0]] = quickTagSplit[1]
+				}
 			} else {
 				priority = TIMED
 				if (len(quickTagSplit) > 1) {
@@ -380,7 +402,7 @@ func QuickParse(input string, query string, tl *Tasklist, timezone int) (*Entry,
 	}
 
 	if tl != nil {
-		extraCats, _ := SearchParse(query, false, true, nil, tl)
+		extraCats, _ := SearchParse(query, false, true, nil, make(map[string]bool), tl)
 
 		if extraCats != "" {
 			Logf(DEBUG, "Extra categories: %s\n", extraCats)
@@ -406,6 +428,14 @@ func QuickParse(input string, query string, tl *Tasklist, timezone int) (*Entry,
 	return MakeEntry("", r, "", priority, freq, triggerAt, sort, cols), errors
 }
 
+func TimeFormatTimezone(atime *time.Time, format string, timezone int) string {
+	z := time.SecondsToUTC(atime.Seconds() + (int64(timezone) * 60 * 60))
+	z.ZoneOffset = timezone * 60
+	
+	return z.Format(format)
+
+}
+
 func TimeString(triggerAt *time.Time, sort string, timezone int) string {
 	if triggerAt != nil {
 		now := time.UTC()
@@ -423,10 +453,7 @@ func TimeString(triggerAt *time.Time, sort string, timezone int) string {
 			formatString += " 15:04"
 		}
 
-		z := time.SecondsToUTC(triggerAt.Seconds() + (int64(timezone) * 60 * 60))
-		z.ZoneOffset = timezone * 60
-		
-		return "@ " + z.Format(formatString)
+		return "@ " + TimeFormatTimezone(triggerAt, formatString, timezone)
 		//return "@ " + triggerAt.Format(formatString)
 	} else {
 		return sort
@@ -531,13 +558,14 @@ func MarshalEntry(entry *Entry, timezone int) *UnmarshalEntry {
 		entry.ColString()) 
 }
 
-func ToCalendarEvent(entry *Entry, className string) map[string]interface{} {
+func ToCalendarEvent(entry *Entry, className string, timezone int) map[string]interface{} {
 	return map[string]interface{}{
 		"id": entry.Id(),
 		"title": entry.Title(),
 		"allDay": true,
-		"start": entry.TriggerAt().Format(time.RFC3339),
+		"start": TimeFormatTimezone(entry.TriggerAt(), time.RFC3339, timezone),
 		"className": className,
+		"ignoreTimezone": true,
 	}
 }
 

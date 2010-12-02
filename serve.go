@@ -203,7 +203,7 @@ func ShowSubcols(c http.ResponseWriter, query string, tl *Tasklist) {
 	if len(query) > 0 && isQuickTagStart(query[0]) && strings.IndexAny(query, " ") == -1 {
 		Logf(DEBUG, "Adding stuff in\n");
 		set := make(map[string]string)
-		_, theselect := SearchParseToken("+"+query, tl, set, false)
+		_, theselect := SearchParseToken("+"+query, tl, set, make(map[string]bool), false)
 		subcols := tl.GetSubcols(theselect);
 
 		for _, v := range subcols {
@@ -224,8 +224,9 @@ func ListServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	query := req.FormValue("q")
 	includeDoneStr := ""; if includeDone { includeDoneStr = "checked" }
 	removeSearch := ""; if IsSavedQuery(query) { removeSearch = "remove-search" }
+	showCols := make(map[string]bool)
 	
-	v := tl.Retrieve(SearchParse(query, includeDone, false, nil, tl))
+	v := tl.Retrieve(SearchParse(query, includeDone, false, nil, showCols, tl))
 	
 	ListHeaderHTML(map[string]string{
 		"query": query,
@@ -271,16 +272,18 @@ func CalendarServer(c http.ResponseWriter, req *http.Request) {
 }
 
 func GetCalendarEvents(tl *Tasklist, query string, r *vector.Vector, start, end string, endSecs int64) {
-	theselect, query := SearchParse(query, true, false, []string { "tasks.trigger_at_field IS NOT NULL", "tasks.trigger_at_field > " + tl.Quote(start), "tasks.trigger_at_field < " + tl.Quote(end) }, tl)
+	theselect, query := SearchParse(query, true, false, []string { "tasks.trigger_at_field IS NOT NULL", "tasks.trigger_at_field > " + tl.Quote(start), "tasks.trigger_at_field < " + tl.Quote(end) }, make(map[string]bool), tl)
 	v := tl.Retrieve(theselect, query)
+
+	timezone := tl.GetTimezone()
 
 	for _, entry := range v {
 		className := fmt.Sprintf("alt%d", entry.CatHash() % 6)
 
-		r.Push(ToCalendarEvent(entry, className))
+		r.Push(ToCalendarEvent(entry, className, timezone))
 		if (entry.Freq() > 0) && (entry.Priority() == TIMED) {
 			for newEntry := entry.NextEntry(""); newEntry.Before(endSecs); newEntry = newEntry.NextEntry("") {
-				r.Push(ToCalendarEvent(newEntry, className))
+				r.Push(ToCalendarEvent(newEntry, className, timezone))
 			}
 		}
 	}

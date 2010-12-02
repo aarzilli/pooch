@@ -128,16 +128,18 @@ func CmdSearch(args []string) {
 	CheckArgsOpenDb(args, map[string]bool{ "t": true, "d": true, "j": true }, 0, 1000, "search", func(tl *Tasklist, args []string, flags map[string]bool) {
 		timezone := tl.GetTimezone()
 		includeDone := flags["d"]; tsv := flags["t"]; js := flags["j"]
+
+		showCols := make(map[string]bool)
 		
-		theselect, query := SearchParse(strings.Join(args[0:], " "), includeDone, false, nil, tl)
+		theselect, query := SearchParse(strings.Join(args[0:], " "), includeDone, false, nil, showCols, tl)
 		
-		Logf(DEBUG, "Search statement [%s] with query [%s]\n", theselect, query)
-		
+		Logf(INFO, "Search statement [%s] with query [%s]\n", theselect, query)
+
 		entries := tl.Retrieve(theselect, query)
 		switch {
-		case tsv: CmdListExTsv(entries, timezone)
+		case tsv: CmdListExTsv(entries, showCols, timezone)
 		case js: CmdListExJS(entries, timezone)
-		default: CmdListEx(entries, timezone)
+		default: CmdListEx(entries, showCols, timezone)
 		}
 	})
 }
@@ -167,7 +169,7 @@ func CmdColist(args []string) {
 		set := make(map[string]string)
 		if len(args) > 0 {
 			base = args[0]
-			_, theselect = SearchParseToken("+"+base, tl, set, false)
+			_, theselect = SearchParseToken("+"+base, tl, set, make(map[string]bool), false)
 		}
 		
 		subcols := tl.GetSubcols(theselect);
@@ -196,12 +198,20 @@ func HelpRemove() {
 	fmt.Fprintf(os.Stderr, "\tRemoves specified entry from <db>\n")
 }
 
-func GetSizesForList(v []*Entry) (id_size, title_size, cat_size int) {
+func GetSizesForList(v []*Entry, showCols map[string]bool) (id_size, title_size, cat_size int, colSizes map[string]int) {
 	title_size, id_size, cat_size = 0, 0, 0
+	colSizes = make(map[string]int)
+	for showCol, _ := range showCols {
+		colSizes[showCol] = len(showCol)
+	}
 	for _, e := range v {
 		if len(e.Title())+1 > title_size { title_size = len(e.Title())+1 }
 		if len(e.Id())+1 > id_size { id_size = len(e.Id())+1 }
 		if len(e.CatString())+1 > cat_size { cat_size = len(e.CatString())+1 }
+
+		for showCol, _ := range showCols {
+			if len(e.Columns()[showCol])+1 > colSizes[showCol] { colSizes[showCol] = len(e.Columns()[showCol])+1 }
+		}
 	}
 
 	return
@@ -209,28 +219,33 @@ func GetSizesForList(v []*Entry) (id_size, title_size, cat_size int) {
 
 var LINE_SIZE int = 80
 
-func CmdListExTsv(v []*Entry, timezone int) {
+func CmdListExTsv(v []*Entry, showCols map[string]bool, timezone int) {
+	fmt.Printf("\t\t")
+	for showCol, _ := range showCols {
+		fmt.Printf("\t%s", showCol)
+	}
+	fmt.Printf("\n")
+	
 	for _, entry := range v {
 		timeString := TimeString(entry.TriggerAt(), entry.Sort(), timezone)
-		fmt.Printf("%s\t%s\t%s\n", entry.Id(), entry.Title(), timeString)
+		fmt.Printf("%s\t%s\t%s", entry.Id(), entry.Title(), timeString)
+		for showCol, _ := range showCols {
+			fmt.Printf("\t%s", entry.Columns()[showCol])
+		}
+		fmt.Printf("\n")
 	}
 }
 
-func CmdListEx(v []*Entry, timezone int) {
-	id_size, title_size, cat_size := GetSizesForList(v)
-
-	Logf(INFO, "Sizes: %d %d %d\n", id_size, title_size, cat_size)
-	
-	spare_size := LINE_SIZE - id_size - title_size - cat_size - len(TRIGGER_AT_SHORT_FORMAT)
-
-	size_sum := title_size + id_size + cat_size
-	if (size_sum != 0) && (spare_size > 0) {
-		title_size += spare_size * title_size / size_sum
-		id_size += spare_size * id_size / size_sum
-		cat_size += spare_size * cat_size / size_sum
-	}
+func CmdListEx(v []*Entry, showCols map[string]bool, timezone int) {
+	id_size, title_size, cat_size, col_sizes := GetSizesForList(v, showCols)
 
 	var curp Priority = INVALID
+
+	fmt.Printf("%s %s %s %s", RepeatString(" ", id_size), RepeatString(" ", title_size), RepeatString(" ", 19), RepeatString(" ", cat_size))
+	for showCol, colSize := range col_sizes {
+		fmt.Printf(" %s%s", showCol, RepeatString(" ", colSize - len(showCol)))
+	}
+	fmt.Printf("\n")
 	
 	for _, entry := range v {
 		if entry.Priority() != curp {
@@ -240,11 +255,17 @@ func CmdListEx(v []*Entry, timezone int) {
 		
 		timeString := TimeString(entry.TriggerAt(), entry.Sort(), timezone)
 
-		fmt.Printf("%s%s %s%s %s%s %s\n",
+		fmt.Printf("%s%s %s%s %s%s %s%s",
 			entry.Id(), RepeatString(" ", id_size - len(entry.Id())),
 			entry.Title(), RepeatString(" ", title_size - len(entry.Title())),
-			entry.CatString(), RepeatString(" ", cat_size - len(entry.CatString())),
-			timeString)
+			timeString, RepeatString(" ", 19 - len(timeString)),
+			entry.CatString(), RepeatString(" ", cat_size - len(entry.CatString())))
+
+		for showCol, colSize := range col_sizes {
+			fmt.Printf(" %s%s", entry.Columns()[showCol], RepeatString(" ", colSize - len(entry.Columns()[showCol])))
+		}
+
+		fmt.Printf("\n")
 	}
 }
 
