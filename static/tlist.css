@@ -31,7 +31,13 @@ table {
     font-size: 8pt;
 }
 
-.prchange > td {
+.colname {
+    font-size: normal;
+    font-weight: bold;
+    padding-top: 10px;
+}
+
+.prchange {
     padding-top: 10px;
     font-size: large;
     font-weight: bold;

@@ -83,8 +83,13 @@ var SubcolsEnder ExecutableTemplate = MakeExecutableTemplate(`
 `)
 
 var EntryListPriorityChangeHTML ExecutableTemplate = MakeExecutableTemplate(`
-    <tr class='prchange'>
-      <td colspan=3>{priority|priority}</td>
+    <tr>
+      {.section entry}
+      <td class='prchange' colspan=4>{priority|priority}</td>
+      {.end}
+      {.repeated section colNames}
+      <td class='colname'>{@|html}</td>
+      {.end}
     </tr>
 `)
 
@@ -102,6 +107,10 @@ var EntryListEntryHTML ExecutableTemplate = MakeExecutableTemplate(`
       <td class='etime'>{etime}</td>
 
       <td class='ecats'>{ecats}</td>
+
+      {.repeated section cols}
+      <td class='ecol'>{@|html}</td>
+      {.end}
    {.end}
    {.section heading}
    </tr>

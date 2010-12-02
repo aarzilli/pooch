@@ -160,7 +160,8 @@ func RemoveServer(c http.ResponseWriter, req *http.Request, tl *Tasklist, id str
 
 func QaddServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	entry, _ := QuickParse(CheckFormValue(req, "text"), req.FormValue("q"), tl, tl.GetTimezone())
-	entry.SetId(tl.MakeRandomId())
+	if entry.Columns()["id"] != "" { entry.SetId(entry.Columns()["id"]) }
+	else { entry.SetId(tl.MakeRandomId()) }
 	
 	tl.Add(entry)
 	io.WriteString(c, "added: " + entry.Id())
@@ -225,15 +226,20 @@ func ListServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	includeDoneStr := ""; if includeDone { includeDoneStr = "checked" }
 	removeSearch := ""; if IsSavedQuery(query) { removeSearch = "remove-search" }
 	showCols := make(map[string]bool)
-	
+
 	v := tl.Retrieve(SearchParse(query, includeDone, false, nil, showCols, tl))
+
+	colNames := []string{}
+	for colName, _ := range showCols {
+		colNames = append(colNames, colName)
+	}
 	
-	ListHeaderHTML(map[string]string{
+	ListHeaderHTML(map[string]interface{}{
 		"query": query,
 		"theme": css,
 		"timezone": fmt.Sprintf("%d", timezone),
 		"includeDone": includeDoneStr,
-		"removeSearch": removeSearch},
+		"removeSearch": removeSearch },
 		c)
 	ShowSubcols(c, query, tl)
 	SubcolsEnder(map[string]string{ }, c)
@@ -241,13 +247,18 @@ func ListServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	var curp Priority = INVALID
 	for idx, entry := range v {
 		if curp != entry.Priority() {
-			EntryListPriorityChangeHTML(entry, c)
+			EntryListPriorityChangeHTML(map[string]interface{}{ "entry": entry, "colNames": colNames }, c)
 			curp = entry.Priority()
 		}
 
 		htmlClass := "entry"
 		if idx % 2 != 0 {
 			htmlClass += " oddentry"
+		}
+
+		cols := []string{}
+		for colName,  _ := range showCols {
+			cols = append(cols, entry.Columns()[colName])
 		}
 		
 		entryEntry := map[string](interface{}){
@@ -256,6 +267,7 @@ func ListServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 			"etime": TimeString(entry.TriggerAt(), entry.Sort(), timezone),
 			"ecats": entry.CatString(),
 			"htmlClass": htmlClass,
+			"cols": cols,
 		}
 		
 		EntryListEntryHTML(entryEntry, c)
@@ -317,12 +329,13 @@ func CalendarEventServer(c http.ResponseWriter, req *http.Request, tl *Tasklist)
 
 func HtmlGetServer(c http.ResponseWriter, req *http.Request, tl *Tasklist, id string) {
 	entry := tl.Get(id)
-	
+
 	entryEntry := map[string](interface{}){
 		"heading": nil,
 		"entry": entry,
 		"etime": TimeString(entry.TriggerAt(), entry.Sort(), tl.GetTimezone()),
 		"ecats": entry.CatString(),
+		"cols": []string{},
 	}
 	
 	EntryListEntryHTML(entryEntry, c)
