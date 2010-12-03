@@ -12,6 +12,8 @@
  *
  */
 
+//#define TRACE_VM 0
+
 #define _SCHEME_SOURCE
 #include "scheme-private.h"
 #ifndef WIN32
@@ -2243,8 +2245,25 @@ static INLINE void dump_stack_mark(scheme *sc)
 
 #define s_retbool(tf)    s_return(sc,(tf) ? sc->T : sc->F)
 
+typedef pointer (*dispatch_func)(scheme *, enum scheme_opcodes);
+
+typedef struct {
+  dispatch_func func;
+  char *name;
+  int min_arity;
+  int max_arity;
+  char *arg_tests_encoding;
+  char *realname;
+} op_code_info;
+
+static op_code_info dispatch_table[];
+
 static pointer opexe_0(scheme *sc, enum scheme_opcodes op) {
      pointer x, y;
+
+#ifdef TRACE_VM
+     printf("opexe_0 called %s\n", (dispatch_table+op)->realname);
+#endif
 
      switch (op) {
      case OP_LOAD:       /* load */
@@ -2601,6 +2620,10 @@ static pointer opexe_0(scheme *sc, enum scheme_opcodes op) {
 static pointer opexe_1(scheme *sc, enum scheme_opcodes op) {
      pointer x, y;
 
+#ifdef TRACE_VM
+     printf("opexe_1 called %s\n", (dispatch_table+op)->realname);
+#endif
+
      switch (op) {
      case OP_LET0REC:    /* letrec */
           new_frame_in_env(sc, sc->envir); 
@@ -2810,6 +2833,10 @@ static pointer opexe_2(scheme *sc, enum scheme_opcodes op) {
      num v;
 #if USE_MATH
      double dd;
+#endif
+
+#ifdef TRACE_VM
+     printf("opexe_2 called %s\n", (dispatch_table+op)->realname);
 #endif
 
      switch (op) {
@@ -3243,6 +3270,10 @@ static pointer opexe_3(scheme *sc, enum scheme_opcodes op) {
      num v;
      int (*comp_func)(num,num)=0;
 
+#ifdef TRACE_VM
+     printf("opexe_3 called %s\n", (dispatch_table+op)->realname);
+#endif
+
      switch (op) {
      case OP_NOT:        /* not */
           s_retbool(is_false(car(sc->args)));
@@ -3349,6 +3380,10 @@ static pointer opexe_3(scheme *sc, enum scheme_opcodes op) {
 
 static pointer opexe_4(scheme *sc, enum scheme_opcodes op) {
      pointer x, y;
+
+#ifdef TRACE_VM
+     printf("opexe_4 called %s\n", (dispatch_table+op)->realname);
+#endif
 
      switch (op) {
      case OP_FORCE:      /* force */
@@ -3563,6 +3598,10 @@ static pointer opexe_4(scheme *sc, enum scheme_opcodes op) {
 
 static pointer opexe_5(scheme *sc, enum scheme_opcodes op) {
      pointer x;
+
+#ifdef TRACE_VM
+     printf("opexe_5 called %s\n", (dispatch_table+op)->realname);
+#endif
 
      if(sc->nesting!=0) {
           int n=sc->nesting;
@@ -3860,6 +3899,10 @@ static pointer opexe_6(scheme *sc, enum scheme_opcodes op) {
      pointer x, y;
      long v;
 
+#ifdef TRACE_VM
+     printf("opexe_6 called %s\n", (dispatch_table+op)->realname);
+#endif
+
      switch (op) {
      case OP_LIST_LENGTH:     /* length */   /* a.k */
           v=list_length(sc,car(sc->args));
@@ -3910,7 +3953,7 @@ static pointer opexe_6(scheme *sc, enum scheme_opcodes op) {
      return sc->T; /* NOTREACHED */
 }
 
-typedef pointer (*dispatch_func)(scheme *, enum scheme_opcodes);
+
 
 typedef int (*test_predicate)(pointer);
 static int is_any(pointer p) { return 1;}
@@ -3959,18 +4002,10 @@ static struct {
 #define TST_INTEGER "\015"
 #define TST_NATURAL "\016"
 
-typedef struct {
-  dispatch_func func;
-  char *name;
-  int min_arity;
-  int max_arity;
-  char *arg_tests_encoding;
-} op_code_info;
-
 #define INF_ARG 0xffff
 
 static op_code_info dispatch_table[]= { 
-#define _OP_DEF(A,B,C,D,E,OP) {A,B,C,D,E}, 
+#define _OP_DEF(A,B,C,D,E,OP) {A,B,C,D,E,#OP}, 
 #include "opdefines.h" 
   { 0 } 
 }; 
@@ -4441,6 +4476,42 @@ void scheme_call(scheme *sc, pointer func, pointer args) {
 } 
 #endif
 
+pointer scheme_value(scheme *sc) {
+  return sc->value;
+}
+
+long scheme_ivalue(scheme *sc, pointer p) {
+  return sc->vptr->ivalue(p);
+}
+
+double scheme_rvalue(scheme *sc, pointer p) {
+  return sc->vptr->rvalue(p);
+}
+
+char *scheme_string_value(scheme *sc, pointer p) {
+  return sc->vptr->string_value(p);
+}
+
+int scheme_isinteger(scheme *sc, pointer p) {
+  return sc->vptr->is_integer(p);
+}
+
+int scheme_isreal(scheme *sc, pointer p) {
+  return sc->vptr->is_real(p);
+}
+
+int scheme_ischar(scheme *sc, pointer p) {
+  return sc->vptr->is_character(p);
+}
+
+int scheme_isstring(scheme *sc, pointer p) {
+  return sc->vptr->is_string(p);
+}
+
+int scheme_retcode(scheme *sc) {
+  return sc->retcode;
+}
+
 /* ========== Main ========== */
 
 #if STANDALONE
@@ -4536,5 +4607,4 @@ int main(int argc, char **argv) {
   
   return retcode;
 }
-
 #endif

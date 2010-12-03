@@ -133,7 +133,20 @@ SCHEME_EXPORT void scheme_load_string(scheme *sc, const char *cmd);
 void scheme_apply0(scheme *sc, const char *procname);
 SCHEME_EXPORT pointer scheme_apply1(scheme *sc, const char *procname, pointer);
 void scheme_set_external_data(scheme *sc, void *p);
-SCHEME_EXPORT void scheme_define(scheme *sc, pointer env, pointer symbol, pointer value);
+
+void scheme_define(scheme *sc, pointer env, pointer symbol, pointer value);
+pointer scheme_value(scheme *sc); /* returns return value of last expression */
+
+long scheme_ivalue(scheme *sc, pointer p);
+double scheme_rvalue(scheme *sc, pointer p);
+char *scheme_string_value(scheme *sc, pointer p);
+long scheme_charvalue(scheme *sc, pointer p);
+
+int scheme_isinteger(scheme *sc, pointer p);
+int scheme_isreal(scheme *sc, pointer p);
+int scheme_ischar(scheme *sc, pointer p);
+int scheme_isstring(scheme *sc, pointer p);
+int scheme_retcode(scheme *sc);
 
 typedef pointer (*foreign_func)(scheme *, pointer);
 
