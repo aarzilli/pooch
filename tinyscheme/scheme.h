@@ -147,6 +147,9 @@ int scheme_isreal(scheme *sc, pointer p);
 int scheme_ischar(scheme *sc, pointer p);
 int scheme_isstring(scheme *sc, pointer p);
 int scheme_retcode(scheme *sc);
+pointer scheme_nil(scheme *sc);
+
+void scheme_global_define(scheme *sc, pointer symbol, pointer value);
 
 typedef pointer (*foreign_func)(scheme *, pointer);
 

@@ -5,9 +5,16 @@ package gotinyscheme
 #include <stdlib.h>
 #include <stdio.h>
 
-void redirect_to_stdout(scheme *s) {
- scheme_set_output_port_file(s, stdout);
+pointer gocall(scheme *sc, pointer args) {
+ GoCall(sc, args);
+ return scheme_nil(sc);
 }
+
+void custom_init(scheme *s) {
+ scheme_set_output_port_file(s, stdout);
+ scheme_global_define(s, mk_symbol(s, "gocall"), mk_foreign_func(s, gocall));
+}
+
 */
 import "C"
 
@@ -16,6 +23,11 @@ import (
 	"fmt"
 	"strconv"
 )
+
+//export GoCall
+func GoCall(scheme *C.scheme, args C.pointer) {
+	fmt.Printf("ciao\n")
+}
 
 type Scheme struct {
 	scheme *C.scheme
@@ -28,7 +40,7 @@ type Value struct {
 
 func NewScheme() *Scheme {
 	s := C.scheme_init_new();
-	C.redirect_to_stdout(s)
+	C.custom_init(s)
 	return &Scheme{s}
 }
 

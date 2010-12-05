@@ -4512,6 +4512,14 @@ int scheme_retcode(scheme *sc) {
   return sc->retcode;
 }
 
+void scheme_global_define(scheme *sc, pointer symbol, pointer value) {
+  scheme_define(sc, sc->global_env, symbol, value);
+}
+
+pointer scheme_nil(scheme *sc) {
+  return sc->NIL;
+}
+
 /* ========== Main ========== */
 
 #if STANDALONE
