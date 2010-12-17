@@ -133,7 +133,7 @@ func CmdSearch(args []string) {
 		
 		theselect, query := SearchParse(strings.Join(args[0:], " "), includeDone, false, nil, showCols, tl)
 		
-		Logf(INFO, "Search statement [%s] with query [%s]\n", theselect, query)
+		Logf(DEBUG, "Search statement [%s] with query [%s]\n", theselect, query)
 
 		entries := tl.Retrieve(theselect, query)
 		switch {
