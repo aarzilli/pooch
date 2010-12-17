@@ -66,7 +66,7 @@ func CheckArgs(args []string, accepted map[string]bool, min int, max int, cmd st
 	flags = make(map[string]bool)
 
 	for _, arg := range args {
-		if arg[0] == '-' {
+		if (arg[0] == '-') && (len(arg) > 1) {
 			arg = arg[1:len(arg)]
 			if v, ok := accepted[arg]; v && ok {
 				flags[arg] = true

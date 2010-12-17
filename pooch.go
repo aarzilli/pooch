@@ -14,6 +14,7 @@ import (
 	"strings"
 	"strconv"
 	"json"
+	"container/vector"
 )
 
 //import _ "http/pprof"
@@ -91,13 +92,18 @@ func HelpCreate() {
 
 func CmdQuickAdd(args []string) {
 	CheckArgsOpenDb(args, map[string]bool{}, 0, 1000, "add", func(tl *Tasklist, args []string, flags map[string]bool) {
-		entry, parse_errors := QuickParse(strings.Join(args[0:], " "), "", nil, 0)
+		var parse_errors *vector.StringVector
+		var entry *Entry
 		
+		if (len(args) == 1) && (args[0] == "-") {
+			entry, parse_errors = ExtendedAddParse(tl.GetTimezone())
+		} else {
+			entry, _, parse_errors = QuickParse(strings.Join(args[0:], " "), "", nil, tl.GetTimezone())
+		}
 		fmt.Fprintf(os.Stderr, "%s\n", strings.Join(*parse_errors, "\n"))
-		
 		entry.SetId(tl.MakeRandomId())
-		
 		tl.Add(entry)
+		Logf(INFO, "Added entry: %s\n", entry.Id())
 	})
 }
 
@@ -110,7 +116,7 @@ func CmdQuickUpdate(args []string) {
 	CheckArgsOpenDb(args, map[string]bool{}, 1, 1000, "update", func (tl *Tasklist, args []string, flags map[string]bool) {
 		CheckId(tl, args[0], "update")
 		
-		entry, parse_errors := QuickParse(strings.Join(args[1:], " "), "", nil, 0)
+		entry, _, parse_errors := QuickParse(strings.Join(args[1:], " "), "", nil, 0)
 		
 		fmt.Fprintf(os.Stderr, "%s\n", strings.Join(*parse_errors, "\n"))
 		

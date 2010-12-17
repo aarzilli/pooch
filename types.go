@@ -102,8 +102,9 @@ func MakeEntry(id string, title string, text string, priority Priority, triggerA
 
 func (e *Entry) Title() string { return e.title; }
 func (e *Entry) Text() string { return e.text; }
+func (e *Entry) SetText(text string)  *Entry { e.text = text; return e }
 func (e *Entry) Id() string { return e.id; }
-func (e *Entry) SetId(id string) { e.id = id; }
+func (e *Entry) SetId(id string) *Entry { e.id = id; return e}
 func (e *Entry) Priority() Priority { return e.priority; }
 func (e *Entry) SetPriority(p Priority) { e.priority = p; }
 func (e *Entry) TriggerAt() *time.Time { return e.triggerAt; }
@@ -112,6 +113,14 @@ func (e *Entry) SetSort(sort string) { e.sort = sort; }
 func (e *Entry) Sort() string { return e.sort; }
 func (e *Entry) Columns() Columns { return e.columns; }
 func (e *Entry) Column(name string) (value string, ok bool) { value, ok = e.columns[name]; return; }
+func (e *Entry) SetColumns(cols Columns) *Entry { e.columns = cols; return e }
+
+func (e *Entry) MergeColumns(cols Columns) *Entry {
+	for k, v := range cols {
+		e.columns[k] = v
+	}
+	return e
+}
 
 func (e *Entry) Freq() int {
 	freqStr, ok := e.Column("freq")

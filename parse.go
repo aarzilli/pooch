@@ -15,6 +15,7 @@ import (
 	"regexp"
 	"bufio"
 	"tabwriter"
+	"io/ioutil"
 )
 
 var TRIGGER_AT_FORMAT string = "2006-01-02 15:04"
@@ -329,7 +330,7 @@ func SearchParse(input string, wantsDone, guessParse bool, extraWhereClauses []s
  The query string will be utilized to guess categories to associate with the input string
  */
 
-func QuickParse(input string, query string, tl *Tasklist, timezone int) (*Entry, *vector.StringVector) {
+func QuickParse(input string, query string, tl *Tasklist, timezone int) (*Entry, bool, *vector.StringVector) {
 	lastEnd := 0
 	r := ""
 	errors := new(vector.StringVector)
@@ -429,7 +430,7 @@ func QuickParse(input string, query string, tl *Tasklist, timezone int) (*Entry,
 
 	sort := SortFromTriggerAt(triggerAt)
 
-	return MakeEntry("", r, "", priority, triggerAt, sort, cols), errors
+	return MakeEntry("", r, "", priority, triggerAt, sort, cols), catfound, errors
 }
 
 func TimeFormatTimezone(atime *time.Time, format string, timezone int) string {
@@ -475,17 +476,11 @@ func isNumber(tk string) (n float, ok bool) {
 	return n, true
 }
 
-func DemarshalEntry(umentry *UnmarshalEntry, timezone int) *Entry {
-	triggerAt, err := ParseDateTime(umentry.TriggerAt, timezone)
-	must(err)
-	
-	sort := umentry.Sort
-	if sort == "" { sort = SortFromTriggerAt(triggerAt) }
-
+func ParseCols(colStr string, timezone int) (Columns, bool) {
 	cols := make(Columns)
-
+	
 	foundcat := false
-	for _, v := range strings.Split(umentry.Cols, "\n", -1) {
+	for _, v := range strings.Split(colStr, "\n", -1) {
 		vs := strings.Split(v, ":", 2)
 
 		if len(vs) == 0 { continue }
@@ -521,6 +516,18 @@ func DemarshalEntry(umentry *UnmarshalEntry, timezone int) *Entry {
 			}
 		}
 	}
+
+	return cols, foundcat
+}
+
+func DemarshalEntry(umentry *UnmarshalEntry, timezone int) *Entry {
+	triggerAt, err := ParseDateTime(umentry.TriggerAt, timezone)
+	must(err)
+	
+	sort := umentry.Sort
+	if sort == "" { sort = SortFromTriggerAt(triggerAt) }
+
+	cols, foundcat := ParseCols(umentry.Cols, timezone)
 
 	if !foundcat {
 		cols["uncat"] = ""
@@ -569,7 +576,7 @@ func ToCalendarEvent(entry *Entry, className string, timezone int) map[string]in
 func ParseTsvFormat(in string, tl *Tasklist, timezone int) *Entry {
 	fields := strings.Split(in, "\t", 4)
 
-	entry, _ := QuickParse(fields[1], "", tl, timezone)
+	entry, _, _ := QuickParse(fields[1], "", tl, timezone)
 
 	priority, err := ParsePriority(fields[2])
 	must(err)
@@ -636,4 +643,38 @@ func (entry *Entry) Print() {
 	w.WriteString("\n")
 	w.Flush()
 	tw.Flush()
+}
+
+func ReadForExtendedAdd() (quickAdd string, text string, colStr string) {
+	buf, err := ioutil.ReadAll(os.Stdin)
+	must(err)
+	input := string(buf)
+
+
+	text, colStr = "", ""
+
+	split := strings.Split(input, "\n", 2)
+	quickAdd = split[0]
+	if len(split) < 2 { return; }
+	
+	split = strings.Split(split[1], "\n@\n", 2)
+	text = split[0]
+	if len(split) < 2 { return; }
+
+	colStr = split[1]
+	return
+}
+
+func ExtendedAddParse(timezone int) (*Entry, *vector.StringVector) {
+	quickAdd, text, colStr := ReadForExtendedAdd()
+	entry, quickParseFoundCategory, parse_errors := QuickParse(quickAdd, "", nil, 0)
+	entry.SetText(text)
+	cols, parseColsFoundCategory := ParseCols(colStr, timezone)
+	entry.MergeColumns(cols)
+
+	if parseColsFoundCategory && !quickParseFoundCategory {
+		cols["uncat"] = "", false
+	}
+
+	return entry, parse_errors
 }

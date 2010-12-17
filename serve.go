@@ -159,7 +159,7 @@ func RemoveServer(c http.ResponseWriter, req *http.Request, tl *Tasklist, id str
 }
 
 func QaddServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
-	entry, _ := QuickParse(CheckFormValue(req, "text"), req.FormValue("q"), tl, tl.GetTimezone())
+	entry, _, _ := QuickParse(CheckFormValue(req, "text"), req.FormValue("q"), tl, tl.GetTimezone())
 	if entry.Columns()["id"] != "" {
 		entry.SetId(entry.Columns()["id"])
 	} else {
