@@ -456,10 +456,14 @@ func (tl *Tasklist) RunTimedTriggers() {
 			continue
 		}
 
-		Log(DEBUG, "Triggering:", entry.Id(), entry.TriggerAt(), entry.Freq());
-
 		if entry.Freq() > 0 {
+			Log(INFO, "Triggering:", entry.Id(), entry.TriggerAt(), entry.Freq());
 			tl.Add(entry.NextEntry(tl.MakeRandomId()));
+		} else if _, ok := entry.Column("!trigger"); ok {
+			Log(INFO, "Triggering:", entry.Id(), entry.TriggerAt(), "with trigger function")
+			//TODO: eseguire funzione
+		} else {
+			Log(INFO, "Triggering:", entry.Id(), entry.TriggerAt())
 		}
 
 		Log(DEBUG, "   updating now")

@@ -120,6 +120,7 @@ func (e *Entry) SetTriggerAt(tat *time.Time) { e.triggerAt = tat; }
 func (e *Entry) SetSort(sort string) { e.sort = sort; }
 func (e *Entry) Sort() string { return e.sort; }
 func (e *Entry) Columns() Columns { return e.columns; }
+func (e *Entry) Column(name string) (value string, ok bool) { value, ok = e.columns[name]; return; }
 
 func (entry *Entry) NextEntry(newId string) *Entry {
 	freq := entry.Freq()
