@@ -313,7 +313,7 @@ func SearchParse(input string, wantsDone, guessParse bool, extraWhereClauses []s
 	whereClause := ""
 	if whereClauses.Len() != 0 { whereClause = " WHERE " + strings.Join(([]string)(whereClauses), " AND ") }
 	
-	return fmt.Sprintf("SELECT tasks.id, tasks.title_field, tasks.text_field, tasks.priority, tasks.trigger_at_field, tasks.sort, group_concat(columns.name||':'||columns.value, '\n') FROM tasks NATURAL JOIN columns %s GROUP BY tasks.id ORDER BY priority, trigger_at_field ASC, sort DESC", whereClause), r
+	return fmt.Sprintf("SELECT tasks.id, tasks.title_field, tasks.text_field, tasks.priority, tasks.trigger_at_field, tasks.sort, group_concat(columns.name||':'||columns.value, '\v') FROM tasks NATURAL JOIN columns %s GROUP BY tasks.id ORDER BY priority, trigger_at_field ASC, sort DESC", whereClause), r
 }
 
 /*
@@ -468,6 +468,7 @@ func TimeString(triggerAt *time.Time, sort string, timezone int) string {
 }
 
 var numberRE *regexp.Regexp = regexp.MustCompile("^[0-9.]+$")
+var startMultilineRE *regexp.Regexp = regexp.MustCompile("^[ \t\n\r]*{$")
 
 func isNumber(tk string) (n float, ok bool) {
 	if !numberRE.MatchString(tk) { return -1, false }
@@ -476,43 +477,61 @@ func isNumber(tk string) (n float, ok bool) {
 	return n, true
 }
 
+func normalizeValue(value string, timezone int) string {
+	Logf(DEBUG, "Normalizing: [%s]\n", value)
+	if t, _ := ParseDateTime(value, timezone); t != nil {
+		value = t.Format(TRIGGER_AT_FORMAT)
+	} else if n, ok := isNumber(value); ok {
+		value = fmt.Sprintf("%0.6f", n)
+	}
+
+	return value
+}
+
 func ParseCols(colStr string, timezone int) (Columns, bool) {
 	cols := make(Columns)
+
+	multilineKey := ""
+	multilineValue := ""
 	
 	foundcat := false
 	for _, v := range strings.Split(colStr, "\n", -1) {
-		vs := strings.Split(v, ":", 2)
-
-		if len(vs) == 0 { continue }
-
-		if len(vs) == 1 {
-			// it's a category
-			x := strings.TrimSpace(v)
-			Logf(DEBUG, "Adding [%s]\n", x)
-			if x != "" {
-				cols[x] = ""
-				foundcat = true
+		if multilineKey != "" {
+			if v == "}" {
+				cols[multilineKey] = multilineValue
+				Logf(DEBUG, "Adding [%s] -> multiline\n", multilineKey)
+				multilineKey, multilineValue  = "", ""
+			} else {
+				multilineValue += v + "\n"
 			}
 		} else {
-			// it (may) be a column
-			key := strings.TrimSpace(vs[0])
-			value := strings.TrimSpace(vs[1])
+			vs := strings.Split(v, ":", 2)
 			
-			if key != "" {
-				// Normalizes value
-				
-				Logf(DEBUG, "Normalizing: [%s]\n", value)
-				if t, _ := ParseDateTime(value, timezone); t != nil {
-					value = t.Format(TRIGGER_AT_FORMAT)
-				} else if n, ok := isNumber(value); ok {
-					value = fmt.Sprintf("%0.6f", n)
+			if len(vs) == 0 { continue }
+			
+			if len(vs) == 1 {
+				// it's a category
+				x := strings.TrimSpace(v)
+				Logf(DEBUG, "Adding [%s]\n", x)
+				if x != "" {
+					cols[x] = ""
+					foundcat = true
 				}
+			} else {
+				// it (may) be a column
+				key := strings.TrimSpace(vs[0])
+				value := strings.TrimSpace(vs[1])
 
-				Logf(DEBUG, "Adding [%s] -> [%s]\n", key, value)
-
-				cols[key] = value
-
-				if value == "" { foundcat = true }
+				if key == "" { continue }
+				
+				if startMultilineRE.MatchString(value) {
+					multilineKey = key
+				} else {
+					value = normalizeValue(value, timezone)
+					Logf(DEBUG, "Adding [%s] -> [%s]\n", key, value)
+					cols[key] = value
+					if value == "" { foundcat = true }
+				}
 			}
 		}
 	}

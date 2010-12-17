@@ -112,8 +112,10 @@ func (e *Entry) SetTriggerAt(tat *time.Time) { e.triggerAt = tat; }
 func (e *Entry) SetSort(sort string) { e.sort = sort; }
 func (e *Entry) Sort() string { return e.sort; }
 func (e *Entry) Columns() Columns { return e.columns; }
-func (e *Entry) Column(name string) (value string, ok bool) { value, ok = e.columns[name]; return; }
+func (e *Entry) ColumnOk(name string) (value string, ok bool) { value, ok = e.columns[name]; return; }
+func (e *Entry) Column(name string) string { return e.columns[name];  }
 func (e *Entry) SetColumns(cols Columns) *Entry { e.columns = cols; return e }
+func (e *Entry) SetColumn(name, value string) *Entry { e.columns[name] = value; return e }
 
 func (e *Entry) MergeColumns(cols Columns) *Entry {
 	for k, v := range cols {
@@ -123,7 +125,7 @@ func (e *Entry) MergeColumns(cols Columns) *Entry {
 }
 
 func (e *Entry) Freq() int {
-	freqStr, ok := e.Column("freq")
+	freqStr, ok := e.ColumnOk("freq")
 	if !ok { return -1 }
 	freq := ParseFrequency(freqStr)
 	if freq > 0 { return freq }

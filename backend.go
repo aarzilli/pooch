@@ -17,11 +17,13 @@ import (
 	"strconv"
 
 	"gosqlite.googlecode.com/hg/sqlite"
+	"lua51"
 )
 
 type Tasklist struct {
 	filename string
 	conn *sqlite.Conn
+	luaState *lua51.State
 	mutex *sync.Mutex
 	refs int
 	timestamp int64
@@ -91,8 +93,8 @@ func internalTasklistOpenOrCreate(filename string) *Tasklist {
 			MustExec(conn, "INSERT INTO settings(name, value) VALUES (\"theme\", \"list.css\");")
 		}
 	}
-
-	tasklist := &Tasklist{filename, conn, &sync.Mutex{}, 1, time.Seconds()}
+	
+	tasklist := &Tasklist{filename, conn, MakeLuaState(), &sync.Mutex{}, 1, time.Seconds()}
 	tasklist.RunTimedTriggers()
 	tasklist.MustExec("PRAGMA foreign_keys = ON;")
 	tasklist.MustExec("PRAGMA synchronous = OFF;") // makes inserts many many times faster
@@ -124,6 +126,7 @@ func OpenOrCreate(filename string) *Tasklist {
 func (tasklist *Tasklist) Close() {
 	if !enabledCaching {
 		tasklist.conn.Close()
+		tasklist.luaState.Close()
 		return
 	}
 
@@ -141,6 +144,7 @@ func (tasklist *Tasklist) Close() {
 	Logf(INFO, "Closing connection to %s\n", tasklist.filename)
 	
 	tasklist.conn.Close()
+	tasklist.luaState.Close()
 	tasklistCache[tasklist.filename] = nil
 }
 
@@ -278,7 +282,7 @@ func StatementScan(stmt *sqlite.Stmt, hasCols bool) (*Entry, os.Error) {
 
 	cols := make(Columns)
 	if hasCols {
-		for _, v := range strings.Split(columns, "\n", -1) {
+		for _, v := range strings.Split(columns, "\v", -1) {
 			col := strings.Split(v, ":", 2)
 			Logf(DEBUG, "   col: %s\n", col)
 			cols[col[0]] = col[1]
@@ -291,7 +295,7 @@ func StatementScan(stmt *sqlite.Stmt, hasCols bool) (*Entry, os.Error) {
 }
 
 func (tl *Tasklist) Get(id string) *Entry {
-	stmt, serr := tl.conn.Prepare("SELECT tasks.id, tasks.title_field, tasks.text_field, tasks.priority, tasks.trigger_at_field, tasks.sort, group_concat(columns.name||':'||columns.value, '\n') FROM tasks NATURAL JOIN columns WHERE tasks.id = ? GROUP BY tasks.id")
+	stmt, serr := tl.conn.Prepare("SELECT tasks.id, tasks.title_field, tasks.text_field, tasks.priority, tasks.trigger_at_field, tasks.sort, group_concat(columns.name||':'||columns.value, '\v') FROM tasks NATURAL JOIN columns WHERE tasks.id = ? GROUP BY tasks.id")
 	must(serr)
 	defer stmt.Finalize()
 	must(stmt.Exec(id))
@@ -438,7 +442,7 @@ func (tl *Tasklist) RenameTag(src, dst string) {
 }
 
 func (tl *Tasklist) RunTimedTriggers() {
-	stmt, serr := tl.conn.Prepare("SELECT tasks.id, tasks.title_field, tasks.text_field, tasks.priority, tasks.trigger_at_field, tasks.sort, group_concat(columns.name||':'||columns.value, '\n') FROM tasks NATURAL JOIN columns WHERE tasks.trigger_at_field < ? AND tasks.priority = ? GROUP BY id")
+	stmt, serr := tl.conn.Prepare("SELECT tasks.id, tasks.title_field, tasks.text_field, tasks.priority, tasks.trigger_at_field, tasks.sort, group_concat(columns.name||':'||columns.value, '\v') FROM tasks NATURAL JOIN columns WHERE tasks.trigger_at_field < ? AND tasks.priority = ? GROUP BY id")
 	must(serr)
 	defer stmt.Finalize()
 
@@ -448,21 +452,19 @@ func (tl *Tasklist) RunTimedTriggers() {
 		entry, scanerr := StatementScan(stmt, true)
 		must(scanerr)
 
-		if entry.TriggerAt() == nil {
-			continue
-		}
+		if entry.TriggerAt() == nil { continue } // why was this retrieved?
 
-		if freq := entry.Freq(); freq > 0{
-			Log(INFO, "Triggering:", entry.Id(), entry.TriggerAt(), freq);
-			tl.Add(entry.NextEntry(tl.MakeRandomId()));
-		} else if _, ok := entry.Column("!trigger"); ok {
+		if triggerCode, ok := entry.ColumnOk("!trigger"); ok {
 			Log(INFO, "Triggering:", entry.Id(), entry.TriggerAt(), "with trigger function")
-			//TODO: eseguire funzione
-		} else {
-			Log(INFO, "Triggering:", entry.Id(), entry.TriggerAt())
+			tl.SetLuaCursor(entry)
+			tl.luaState.DoString(triggerCode)
 		}
 
-		Log(DEBUG, "   updating now")
+		freq := entry.Freq()
+		
+		Log(INFO, "Triggering:", entry.Id(), entry.TriggerAt(), freq);		
+
+		if freq > 0 { tl.Add(entry.NextEntry(tl.MakeRandomId())); }
 
 		tl.MustExec("UPDATE tasks SET priority = ? WHERE id = ?", NOW, entry.Id());
 	}
