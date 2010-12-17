@@ -81,6 +81,27 @@ func TimeParseTimezone(layout, input string, timezone int) (*time.Time, os.Error
 	return t, nil
 }
 
+type DateTimeFormat struct {
+	format string
+	shouldFixYear bool
+	hasTime bool
+}
+
+var DateTimeFormats []DateTimeFormat = []DateTimeFormat{
+	{ "2006-1-2 15:04:05", false, true },
+	{ "2006-1-2,15:04:05", false, true },
+	{ "2006-1-2 15:04", false, true },
+	{ "2006-1-2,15:04", false, true },
+	{ "2/1 15:04:05", true, true },
+	{ "2/1,15:04:05", true, true },
+	{ "2/1 15:04", true, true },
+	{ "2/1,15:04", true, true },
+	{ "2/1 15", true, true },
+	{ "2/1,15", true, true },
+	{ "2/1", true, false },
+	{ "2006-1-2", false, false },
+}
+
 func ParseDateTime(input string, timezone int) (datetime *time.Time, error os.Error) {
 	//Date formats:
 	// dd/mm
@@ -98,28 +119,16 @@ func ParseDateTime(input string, timezone int) (datetime *time.Time, error os.Er
 	if (input == "") {
 		return
 	}
-	
-	if (strings.Index(input, " ") != -1) || (strings.Index(input, ",") != -1){ // has time
-		if datetime, err = TimeParseTimezone("2006-1-2 15:04", input, timezone); err == nil { return }
-		if datetime, err = TimeParseTimezone("2006-1-2,15:04", input, timezone); err == nil { return }
 
-		if datetime, err = TimeParseTimezone("2006-1-2 15:04:05", input, timezone); err == nil { return }
-		if datetime, err = TimeParseTimezone("2006-1-2,15:04:05", input, timezone); err == nil { return }
-
-		if datetime, err = TimeParseTimezone("2/1 15:04:05", input, timezone); err == nil { FixYear(datetime, true); return }
-		if datetime, err = TimeParseTimezone("2/1,15:04:05", input, timezone); err == nil { FixYear(datetime, true); return }
-
-		if datetime, err = TimeParseTimezone("2/1 15:04", input, timezone); err == nil { FixYear(datetime, true); return }
-		if datetime, err = TimeParseTimezone("2/1,15:04", input, timezone); err == nil { FixYear(datetime, true); return }
-
-		if datetime, err = TimeParseTimezone("2/1 15", input, timezone); err == nil { FixYear(datetime, true); return }
-		if datetime, err = TimeParseTimezone("2/1,15", input, timezone); err == nil { FixYear(datetime, true); return }
-	} else { // doesn't have time
-		if datetime, err = TimeParseTimezone("2/1", input, timezone); err == nil { FixYear(datetime, false); return }
-
-		if datetime, err = TimeParseTimezone("2006-1-2", input, timezone); err == nil { FixYear(datetime, false); return }
+	for _, dateTimeFormat := range DateTimeFormats {
+		if datetime, err = TimeParseTimezone(dateTimeFormat.format, input, timezone); err == nil {
+			if dateTimeFormat.shouldFixYear {
+				FixYear(datetime, dateTimeFormat.hasTime)
+			}
+			return
+		}
 	}
-
+	
 	error = MakeParseError(fmt.Sprintf("Unparsable date: %s", input))
 	return
 }
