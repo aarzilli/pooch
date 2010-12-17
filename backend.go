@@ -24,6 +24,7 @@ type Tasklist struct {
 	filename string
 	conn *sqlite.Conn
 	luaState *lua51.State
+	luaFlags *LuaFlags
 	mutex *sync.Mutex
 	refs int
 	timestamp int64
@@ -94,7 +95,7 @@ func internalTasklistOpenOrCreate(filename string) *Tasklist {
 		}
 	}
 	
-	tasklist := &Tasklist{filename, conn, MakeLuaState(), &sync.Mutex{}, 1, time.Seconds()}
+	tasklist := &Tasklist{filename, conn, MakeLuaState(), &LuaFlags{}, &sync.Mutex{}, 1, time.Seconds()}
 	tasklist.RunTimedTriggers()
 	tasklist.MustExec("PRAGMA foreign_keys = ON;")
 	tasklist.MustExec("PRAGMA synchronous = OFF;") // makes inserts many many times faster
@@ -208,6 +209,15 @@ func (tasklist *Tasklist) Quote(in string) string {
 	var r string
 	stmt.Scan(&r)
 	return r
+}
+
+func (tl *Tasklist) CloneEntry(entry *Entry) *Entry {
+	cols := make(Columns)
+	for k, v := range entry.Columns() {
+		cols[k] = v
+	}
+	var triggerAt time.Time = *(entry.TriggerAt())
+	return MakeEntry(tl.MakeRandomId(), entry.Title(), entry.Text(), entry.Priority(), &triggerAt, entry.Sort(), cols)
 }
 
 func (tasklist *Tasklist) addColumns(e *Entry) {
@@ -454,19 +464,37 @@ func (tl *Tasklist) RunTimedTriggers() {
 
 		if entry.TriggerAt() == nil { continue } // why was this retrieved?
 
+		update := true
+		checkFreq := true
+
 		if triggerCode, ok := entry.ColumnOk("!trigger"); ok {
-			Log(INFO, "Triggering:", entry.Id(), entry.TriggerAt(), "with trigger function")
-			tl.SetLuaCursor(entry)
-			tl.luaState.DoString(triggerCode)
+			Logf(INFO, "Triggering: %s %s with trigger function\n", entry.Id(), entry.TriggerAt())
+			tl.DoString(triggerCode, entry)
+
+			if tl.luaFlags.cursorCloned {
+				newentry := GetEntryFromLua(tl.luaState, CURSOR)
+				tl.Add(newentry)
+				checkFreq = false
+			}
+
+			if tl.luaFlags.cursorEdited {
+				entry.SetPriority(NOW)
+				tl.Update(entry, false)
+				update = false
+			} 
 		}
 
-		freq := entry.Freq()
-		
-		Log(INFO, "Triggering:", entry.Id(), entry.TriggerAt(), freq);		
-
-		if freq > 0 { tl.Add(entry.NextEntry(tl.MakeRandomId())); }
-
-		tl.MustExec("UPDATE tasks SET priority = ? WHERE id = ?", NOW, entry.Id());
+		if checkFreq {
+			freq := entry.Freq()
+			
+			Logf(INFO, "Triggering: %v %v %v\n", entry.Id(), entry.TriggerAt(), freq);
+			
+			if freq > 0 { tl.Add(entry.NextEntry(tl.MakeRandomId())); }
+		}
+			
+		if update {
+			tl.MustExec("UPDATE tasks SET priority = ? WHERE id = ?", NOW, entry.Id());
+		}
 	}
 }
 
