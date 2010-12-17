@@ -44,22 +44,16 @@ func ParsePriority(s string) (p Priority, err os.Error) {
 	return INVALID, MakeParseError(fmt.Sprintf("Unknown priority: %s", s))
 }
 
-func ParseFrequency(s string) (freq Frequency, err os.Error) {
-	switch strings.ToLower(strings.TrimSpace(s)) {
-	case "daily": return Frequency(1), nil
-	case "weekly": return Frequency(7), nil
-	case "biweekly": return Frequency(14), nil
-	case "monthly": return Frequency(30), nil
-	case "yearly": return Frequency(365), nil
-	case "": return Frequency(0), nil
-	default:
-		i, err := strconv.Atoi(s)
-		if err == nil {
-			return Frequency(i), nil
-		}
+func ParseFrequency(freq string) int {
+	switch freq {
+	case "daily": return 1
+	case "weekly": return 7
+	case "biweekly": return 14
+	case "monthly": return 30
+	case "yearly": return 365
 	}
-
-	return Frequency(0), MakeParseError(fmt.Sprintf("Unparsable frequency: %s", s))
+	v, _ := strconv.Atoi(freq)
+	return v
 }
 
 func FixYear(datetime *time.Time, withTime bool) {
@@ -318,7 +312,7 @@ func SearchParse(input string, wantsDone, guessParse bool, extraWhereClauses []s
 	whereClause := ""
 	if whereClauses.Len() != 0 { whereClause = " WHERE " + strings.Join(([]string)(whereClauses), " AND ") }
 	
-	return fmt.Sprintf("SELECT tasks.id, tasks.title_field, tasks.text_field, tasks.priority, tasks.repeat_field, tasks.trigger_at_field, tasks.sort, group_concat(columns.name||':'||columns.value, '\n') FROM tasks NATURAL JOIN columns %s GROUP BY tasks.id ORDER BY priority, trigger_at_field ASC, sort DESC", whereClause), r
+	return fmt.Sprintf("SELECT tasks.id, tasks.title_field, tasks.text_field, tasks.priority, tasks.trigger_at_field, tasks.sort, group_concat(columns.name||':'||columns.value, '\n') FROM tasks NATURAL JOIN columns %s GROUP BY tasks.id ORDER BY priority, trigger_at_field ASC, sort DESC", whereClause), r
 }
 
 /*
@@ -342,7 +336,6 @@ func QuickParse(input string, query string, tl *Tasklist, timezone int) (*Entry,
 
 	priority := NOW
 	
-	var freq Frequency = 0
 	var triggerAt *time.Time = nil
 	cols := make(Columns)
 
@@ -389,6 +382,7 @@ func QuickParse(input string, query string, tl *Tasklist, timezone int) (*Entry,
 
 		default:
 			quickTagSplit := strings.Split(quickTag, "+", 2)
+			Logf(DEBUG, "Quicktag after split: %v\n", quickTagSplit)
 			triggerAt, _ = ParseDateTime(quickTagSplit[0], timezone)
 
 			if (triggerAt == nil) {
@@ -402,10 +396,11 @@ func QuickParse(input string, query string, tl *Tasklist, timezone int) (*Entry,
 				}
 			} else {
 				priority = TIMED
-				if (len(quickTagSplit) > 1) {
-					freq, _ = ParseFrequency(quickTagSplit[1])
+				if len(quickTagSplit) > 1 {
+					cols["freq"] = quickTagSplit[1]
+					Logf(DEBUG, "Found frequency, parsing [%v] -> [%v]\n", quickTagSplit[1], cols["freq"])
 				}
-				Logf(DEBUG, "Found quickTag:[%s] -- time: %v %v", quickTag, triggerAt, freq)
+				Logf(DEBUG, "Found quickTag:[%s] -- time: [%v] [%v]\n", quickTag, triggerAt, cols["freq"])
 			}
 		}
 	}
@@ -434,7 +429,7 @@ func QuickParse(input string, query string, tl *Tasklist, timezone int) (*Entry,
 
 	sort := SortFromTriggerAt(triggerAt)
 
-	return MakeEntry("", r, "", priority, freq, triggerAt, sort, cols), errors
+	return MakeEntry("", r, "", priority, triggerAt, sort, cols), errors
 }
 
 func TimeFormatTimezone(atime *time.Time, format string, timezone int) string {
@@ -487,9 +482,6 @@ func DemarshalEntry(umentry *UnmarshalEntry, timezone int) *Entry {
 	sort := umentry.Sort
 	if sort == "" { sort = SortFromTriggerAt(triggerAt) }
 
-	freq, err := ParseFrequency(umentry.Freq)
-	must(err)
-
 	cols := make(Columns)
 
 	foundcat := false
@@ -539,7 +531,6 @@ func DemarshalEntry(umentry *UnmarshalEntry, timezone int) *Entry {
 		umentry.Title,
 		umentry.Text,
 		umentry.Priority,
-		freq,
 		triggerAt,
 		sort,
 		cols)
@@ -554,14 +545,11 @@ func MarshalEntry(entry *Entry, timezone int) *UnmarshalEntry {
 		triggerAtString = z.Format(TRIGGER_AT_FORMAT)
 	}
 
-	freq := entry.Freq()
-
 	return MakeUnmarshalEntry(
 		entry.Id(),
 		entry.Title(),
 		entry.Text(),
 		entry.Priority(),
-		freq.String(),
 		triggerAtString,
 		entry.Sort(),
 		entry.ColString()) 
@@ -639,8 +627,6 @@ func (entry *Entry) Print() {
 	} else {
 		w.WriteString("When:\tN/A\n")
 	}
-	fr := entry.Freq()
-	w.WriteString(fmt.Sprintf("Recur:\t%s\n", fr.String()))
 	w.WriteString(fmt.Sprintf("Sort:\t%s\n", entry.Sort()))
 	for k, v := range entry.Columns() {
 		pv := v

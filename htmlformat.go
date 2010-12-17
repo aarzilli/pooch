@@ -136,7 +136,6 @@ var EntryListEntryEditorHTML ExecutableTemplate = MakeExecutableTemplate(`
 
 		  <p>When: <input type='text' id='edat_{id|html}' name='edat' size=10 disabled='yes'/>
           <script>calendar.set("edat_{id|html}")</script>
-		  &nbsp Repeat: <input type='text' id='edfreq' name='edfreq' size=10 disabled='yes'/>
 		  &nbsp; Sort by: <input type='text' id='edsort' name='edsort' size=10 disabled='yes'/>
           &nbsp; ID: {id|html}
           &nbsp; Timestamp: <img id='loading_{id|html}' style='display: none' src='loading.gif'/> <span id='ts_{id|html}'>-------</span></p>

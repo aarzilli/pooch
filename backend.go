@@ -73,7 +73,7 @@ func internalTasklistOpenOrCreate(filename string) *Tasklist {
 	must(err)
 
 	if !HasTable(conn, "settings") { // optimization, if tasks exists do not try to create anything
-		MustExec(conn, "CREATE TABLE IF NOT EXISTS tasks(id TEXT PRIMARY KEY, title_field TEXT, text_field TEXT, priority INTEGER, repeat_field INTEGER, trigger_at_field DATE, sort TEXT);")
+		MustExec(conn, "CREATE TABLE IF NOT EXISTS tasks(id TEXT PRIMARY KEY, title_field TEXT, text_field TEXT, priority INTEGER, trigger_at_field DATE, sort TEXT);")
 		MustExec(conn, "CREATE INDEX IF NOT EXISTS tasks_id ON tasks(id);")
 
 		if !HasTable(conn, "ridx") { // Workaround for non-accepted CREATE VIRTUAL TABLE IF NOT EXISTS
@@ -218,8 +218,7 @@ func (tasklist *Tasklist) Add(e *Entry) {
 
 	tasklist.WithTransaction(func() {
 		priority := e.Priority()
-		freq := e.Freq()
-		tasklist.MustExec("INSERT INTO tasks(id, title_field, text_field, priority, repeat_field, trigger_at_field, sort) VALUES (?, ?, ?, ?, ?, ?, ?)", e.Id(), e.Title(), e.Text(), priority.ToInteger(), freq.ToInteger(), triggerAtString, e.Sort())
+		tasklist.MustExec("INSERT INTO tasks(id, title_field, text_field, priority, trigger_at_field, sort) VALUES (?, ?, ?, ?, ?, ?)", e.Id(), e.Title(), e.Text(), priority.ToInteger(), triggerAtString, e.Sort())
 		tasklist.MustExec("INSERT INTO ridx(id, title_field, text_field) VALUES (?, ?, ?)", e.Id(), e.Title(), e.Text())
 		tasklist.addColumns(e);
 	})
@@ -246,10 +245,9 @@ func (tl *Tasklist) SaveSearch(name string, query string) {
 func (tasklist *Tasklist) Update(e *Entry, simpleUpdate bool) {
 	triggerAtString := FormatTriggerAtForAdd(e)
 	priority := e.Priority()
-	freq := e.Freq()
 
 	tasklist.WithTransaction(func() {
-		tasklist.MustExec("UPDATE tasks SET title_field = ?, text_field = ?, priority = ?, repeat_field = ?, trigger_at_field = ?, sort = ? WHERE id = ?", e.Title(), e.Text(), priority.ToInteger(), freq.ToInteger(), triggerAtString, e.Sort(), e.Id())
+		tasklist.MustExec("UPDATE tasks SET title_field = ?, text_field = ?, priority = ?, trigger_at_field = ?, sort = ? WHERE id = ?", e.Title(), e.Text(), priority.ToInteger(), triggerAtString, e.Sort(), e.Id())
 		if !simpleUpdate {
 			tasklist.MustExec("UPDATE ridx SET title_field = ?, text_field = ? WHERE id = ?", e.Title(), e.Text(), e.Id())
 			tasklist.MustExec("DELETE FROM columns WHERE id = ?", e.Id())
@@ -262,16 +260,14 @@ func (tasklist *Tasklist) Update(e *Entry, simpleUpdate bool) {
 
 func StatementScan(stmt *sqlite.Stmt, hasCols bool) (*Entry, os.Error) {
 	var priority_num int
-	var freq_num int
 	var trigger_str, id, title, text, sort, columns string
 	var scanerr os.Error
 	if hasCols {
-		scanerr = stmt.Scan(&id, &title, &text, &priority_num, &freq_num, &trigger_str, &sort, &columns)
+		scanerr = stmt.Scan(&id, &title, &text, &priority_num, &trigger_str, &sort, &columns)
 	} else {
-		scanerr = stmt.Scan(&id, &title, &text, &priority_num, &freq_num, &trigger_str, &sort)
+		scanerr = stmt.Scan(&id, &title, &text, &priority_num, &trigger_str, &sort)
 	}
 	triggerAt, _ := ParseDateTime(trigger_str, 0)
-	freq := Frequency(freq_num)
 	priority := Priority(priority_num)
 
 	if scanerr != nil {
@@ -291,11 +287,11 @@ func StatementScan(stmt *sqlite.Stmt, hasCols bool) (*Entry, os.Error) {
 
 	Logf(DEBUG, "Columns are: %v\n", cols)
 
-	return MakeEntry(id, title, text, priority, freq, triggerAt, sort, cols), nil
+	return MakeEntry(id, title, text, priority, triggerAt, sort, cols), nil
 }
 
 func (tl *Tasklist) Get(id string) *Entry {
-	stmt, serr := tl.conn.Prepare("SELECT tasks.id, tasks.title_field, tasks.text_field, tasks.priority, tasks.repeat_field, tasks.trigger_at_field, tasks.sort, group_concat(columns.name||':'||columns.value, '\n') FROM tasks NATURAL JOIN columns WHERE tasks.id = ? GROUP BY tasks.id")
+	stmt, serr := tl.conn.Prepare("SELECT tasks.id, tasks.title_field, tasks.text_field, tasks.priority, tasks.trigger_at_field, tasks.sort, group_concat(columns.name||':'||columns.value, '\n') FROM tasks NATURAL JOIN columns WHERE tasks.id = ? GROUP BY tasks.id")
 	must(serr)
 	defer stmt.Finalize()
 	must(stmt.Exec(id))
@@ -442,7 +438,7 @@ func (tl *Tasklist) RenameTag(src, dst string) {
 }
 
 func (tl *Tasklist) RunTimedTriggers() {
-	stmt, serr := tl.conn.Prepare("SELECT tasks.id, tasks.title_field, tasks.text_field, tasks.priority, tasks.repeat_field, tasks.trigger_at_field, tasks.sort, group_concat(columns.name||':'||columns.value, '\n') FROM tasks NATURAL JOIN columns WHERE tasks.trigger_at_field < ? AND tasks.priority = ? GROUP BY id")
+	stmt, serr := tl.conn.Prepare("SELECT tasks.id, tasks.title_field, tasks.text_field, tasks.priority, tasks.trigger_at_field, tasks.sort, group_concat(columns.name||':'||columns.value, '\n') FROM tasks NATURAL JOIN columns WHERE tasks.trigger_at_field < ? AND tasks.priority = ? GROUP BY id")
 	must(serr)
 	defer stmt.Finalize()
 
@@ -456,8 +452,8 @@ func (tl *Tasklist) RunTimedTriggers() {
 			continue
 		}
 
-		if entry.Freq() > 0 {
-			Log(INFO, "Triggering:", entry.Id(), entry.TriggerAt(), entry.Freq());
+		if freq := entry.Freq(); freq > 0{
+			Log(INFO, "Triggering:", entry.Id(), entry.TriggerAt(), freq);
 			tl.Add(entry.NextEntry(tl.MakeRandomId()));
 		} else if _, ok := entry.Column("!trigger"); ok {
 			Log(INFO, "Triggering:", entry.Id(), entry.TriggerAt(), "with trigger function")

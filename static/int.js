@@ -37,7 +37,6 @@ function save_editor(form) {
     obj.sort = form.elements['edsort'].value;
     obj.id = form.elements['edid'].value;
     obj.priority = parseInt(form.elements['edprio'].value);
-    obj.freq = form.elements['edfreq'].value;
     obj.cols = form.elements['edcols'].value;
     $("#loading_"+obj.id).get(0).style.display = "inline";
     
@@ -93,7 +92,6 @@ function change_editor_disabled(ed, disabledStatus) {
     ed.elements['edsort'].disabled = disabledStatus;
     ed.elements['edid'].disabled = disabledStatus;
     ed.elements['edprio'].disabled = disabledStatus;
-    ed.elements['edfreq'].disabled = disabledStatus;
     ed.elements['edcols'].disabled = disabledStatus;
     ed.elements['savebtn'].disabled = disabledStatus;
 }
@@ -111,7 +109,6 @@ function fill_editor(name) {
 	ed.elements['edsort'].value = v.Sort;
 	ed.elements['edid'].value = v.Id;
 	ed.elements['edprio'].value = v.Priority;
-	ed.elements['edfreq'].value = v.Freq;
 	ed.elements['edcols'].value = v.Cols;
 	
 	$("#ts_" + v.Id).html(timestamp);

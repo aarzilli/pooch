@@ -27,8 +27,6 @@ const (
 	INVALID
 )
 
-type Frequency int64
-
 func (p *Priority) String() string {
 	switch *p {
 	case STICKY:
@@ -51,8 +49,8 @@ func (p *Priority) ToInteger() int {
 	return int(*p)
 }
 
-func (freq *Frequency) String() string {
-	switch *freq {
+func FrequencyToString(freq int) string {
+	switch freq {
 	case 1:
 		return "daily"
 	case 7:
@@ -65,11 +63,7 @@ func (freq *Frequency) String() string {
 		return "yearly"
 	}
 
-	return fmt.Sprintf("%d", int64(*freq))
-}
-
-func (freq *Frequency) ToInteger() int {
-	return int(*freq)
+	return fmt.Sprintf("%d", int64(freq))
 }
 
 type UnmarshalEntry struct {
@@ -77,7 +71,6 @@ type UnmarshalEntry struct {
 	Title string
 	Text string
 	Priority Priority
-	Freq string
 	TriggerAt string
 	Sort string
 	Cols string
@@ -90,7 +83,6 @@ type Entry struct {
 	title string
 	text string
 	priority Priority
-	freq Frequency
 	triggerAt *time.Time
 	sort string
 	columns Columns
@@ -100,12 +92,12 @@ func must(err os.Error) {
 	if err != nil { panic(err) }
 }
 
-func MakeUnmarshalEntry(id string, title string, text string, priority Priority, freq string, triggerAt string, sort string, cols string) *UnmarshalEntry {
-	return &UnmarshalEntry{id, title, text, priority, freq, triggerAt, sort, cols}
+func MakeUnmarshalEntry(id string, title string, text string, priority Priority, triggerAt string, sort string, cols string) *UnmarshalEntry {
+	return &UnmarshalEntry{id, title, text, priority, triggerAt, sort, cols}
 }
 
-func MakeEntry(id string, title string, text string, priority Priority, freq Frequency, triggerAt *time.Time, sort string, columns Columns) *Entry {
-	return &Entry{id, title, text, priority, freq, triggerAt, sort, columns}
+func MakeEntry(id string, title string, text string, priority Priority, triggerAt *time.Time, sort string, columns Columns) *Entry {
+	return &Entry{id, title, text, priority, triggerAt, sort, columns}
 }
 
 func (e *Entry) Title() string { return e.title; }
@@ -114,7 +106,6 @@ func (e *Entry) Id() string { return e.id; }
 func (e *Entry) SetId(id string) { e.id = id; }
 func (e *Entry) Priority() Priority { return e.priority; }
 func (e *Entry) SetPriority(p Priority) { e.priority = p; }
-func (e *Entry) Freq() Frequency { return e.freq; }
 func (e *Entry) TriggerAt() *time.Time { return e.triggerAt; }
 func (e *Entry) SetTriggerAt(tat *time.Time) { e.triggerAt = tat; }
 func (e *Entry) SetSort(sort string) { e.sort = sort; }
@@ -122,11 +113,18 @@ func (e *Entry) Sort() string { return e.sort; }
 func (e *Entry) Columns() Columns { return e.columns; }
 func (e *Entry) Column(name string) (value string, ok bool) { value, ok = e.columns[name]; return; }
 
-func (entry *Entry) NextEntry(newId string) *Entry {
-	freq := entry.Freq()
-	newTriggerAt := time.SecondsToUTC(entry.TriggerAt().Seconds() + int64(freq.ToInteger() * 24 * 60 * 60))
+func (e *Entry) Freq() int {
+	freqStr, ok := e.Column("freq")
+	if !ok { return -1 }
+	freq := ParseFrequency(freqStr)
+	if freq > 0 { return freq }
+	return -1
+}
 
-	return MakeEntry(newId, entry.Title(), entry.Text(), entry.Priority(), entry.Freq(), newTriggerAt, entry.Sort(), entry.Columns())
+func (entry *Entry) NextEntry(newId string) *Entry {
+	newTriggerAt := time.SecondsToUTC(entry.TriggerAt().Seconds() + int64(entry.Freq() * 24 * 60 * 60))
+
+	return MakeEntry(newId, entry.Title(), entry.Text(), entry.Priority(), newTriggerAt, entry.Sort(), entry.Columns())
 }
 
 func (e *Entry) Before(time int64) bool {

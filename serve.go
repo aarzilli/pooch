@@ -293,10 +293,12 @@ func GetCalendarEvents(tl *Tasklist, query string, r *vector.Vector, start, end 
 	timezone := tl.GetTimezone()
 
 	for _, entry := range v {
+		if entry.Priority() != TIMED { continue }
+		
 		className := fmt.Sprintf("alt%d", entry.CatHash() % 6)
 
 		r.Push(ToCalendarEvent(entry, className, timezone))
-		if (entry.Freq() > 0) && (entry.Priority() == TIMED) {
+		if freq := entry.Freq(); freq > 0 {
 			for newEntry := entry.NextEntry(""); newEntry.Before(endSecs); newEntry = newEntry.NextEntry("") {
 				r.Push(ToCalendarEvent(newEntry, className, timezone))
 			}
