@@ -14,11 +14,13 @@ var SEARCHFUNCTION string = "searchfn"
 type LuaFlags struct {
 	cursorEdited bool // the original, introduced cursor, was modified
 	cursorCloned bool // the cursor was cloned, creating a new entry
+	persist bool // changes are persisted
 }
 
 func (tl *Tasklist) ResetLuaFlags() {
 	tl.luaFlags.cursorEdited = false
 	tl.luaFlags.cursorCloned = false
+	tl.luaFlags.persist = false
 }
 
 func (tl *Tasklist) SetEntryInLua(name string, entry *Entry) {
@@ -157,6 +159,12 @@ func LuaIntColumn(L *lua51.State) int {
 	}
 	
 	LuaError(L, "Incorrect number of arguments to column (only 1 or 2 accepted)")
+	return 0
+}
+
+func LuaIntPersist(L *lua51.State) int {
+	tl := GetTasklistFromLua(L)
+	tl.luaFlags.persist = true
 	return 0
 }
 
@@ -317,7 +325,8 @@ func MakeLuaState() *lua51.State {
 	L.Register("sortfield", LuaIntSortField)
 	
 	L.Register("column", LuaIntColumn)
-	
+
+	L.Register("persist", LuaIntPersist)
 	L.Register("clonecursor", LuaIntCloneCursor)
 
 	L.Register("utctime", LuaIntUTCTime)
