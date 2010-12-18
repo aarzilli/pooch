@@ -35,6 +35,12 @@ func (tl *Tasklist) SetTasklistInLua() {
 	tl.luaState.SetGlobal(TASKLIST)
 }
 
+func LuaError(L *lua51.State, error string) {
+	L.CheckStack(1)
+	L.PushString(error)
+	L.Error()
+}
+
 func GetTasklistFromLua(L *lua51.State) *Tasklist {
 	L.CheckStack(1)
 	L.GetGlobal(TASKLIST)
@@ -71,8 +77,7 @@ func LuaIntGetterSetterFunction(fname string, L *lua51.State, getter func(tl *Ta
 		return 0
 	}
 	
-	L.PushString(fmt.Sprintf("Incorrect number of argoments to %s (only 0 or 1 accepted)", fname))
-	L.Error()
+	LuaError(L, fmt.Sprintf("Incorrect number of argoments to %s (only 0 or 1 accepted)", fname))
 	return 0
 }
 
@@ -93,8 +98,7 @@ func LuaIntGetterSetterFunctionInt(fname string, L *lua51.State, getter func(tl 
 		return 0
 	}
 	
-	L.PushString(fmt.Sprintf("Incorrect number of argoments to %s (only 0 or 1 accepted)", fname))
-	L.Error()
+	LuaError(L, fmt.Sprintf("Incorrect number of argoments to %s (only 0 or 1 accepted)", fname))
 	return 0
 }
 
@@ -130,7 +134,7 @@ func LuaIntPriority(L *lua51.State) int {
 
 func LuaIntTriggerAt(L *lua51.State) int {
 	return LuaIntGetterSetterFunctionInt("triggerat", L,
-		func(tl *Tasklist, entry *Entry) int { return int(entry.TriggerAt().Seconds()) },
+		func(tl *Tasklist, entry *Entry) int { t := entry.TriggerAt(); if t != nil { return int(t.Seconds()) }; return 0 },
 		func(tl *Tasklist, entry *Entry, value int) { entry.SetTriggerAt(time.SecondsToUTC(int64(value))) })
 }
 
@@ -152,8 +156,7 @@ func LuaIntColumn(L *lua51.State) int {
 		return 0
 	}
 	
-	L.PushString("Incorrect number of arguments to column (only 1 or 2 accepted)")
-	L.Error()
+	LuaError(L, "Incorrect number of arguments to column (only 1 or 2 accepted)")
 	return 0
 }
 
@@ -174,6 +177,16 @@ func SetTableInt(L *lua51.State, name string, value int) {
 	L.SetTable(-3)
 }
 
+func GetTableInt(L *lua51.State, name string) int {
+	// Remember to check stack for 1 extra location
+	
+	L.PushString(name)
+	L.GetTable(-2)
+	r := L.ToInteger(-1)
+	L.Pop(1)
+	return r
+}
+
 func PushTime(L *lua51.State, t *time.Time) {
 	L.CheckStack(3)
 	L.CreateTable(0, 7)
@@ -189,8 +202,7 @@ func PushTime(L *lua51.State, t *time.Time) {
 
 func LuaIntUTCTime(L *lua51.State) int {
 	if L.GetTop() != 1 {
-		L.PushString("Wrong number of arguments to utctime")
-		L.Error()
+		LuaError(L, "Wrong number of arguments to utctime")
 		return 0
 	}
 	
@@ -202,8 +214,7 @@ func LuaIntUTCTime(L *lua51.State) int {
 
 func LuaIntLocalTime(L *lua51.State) int {
 	if L.GetTop() != 1 {
-		L.PushString("Wrong number of arguments to localtime")
-		L.Error()
+		LuaError(L, "Wrong number of arguments to localtime")
 		return 0
 	}
 
@@ -211,14 +222,40 @@ func LuaIntLocalTime(L *lua51.State) int {
 	timezone := tl.GetTimezone()
 	timestamp := L.ToInteger(1)
 	
-	t := time.SecondsToUTC(int64(timestamp) - (int64(timezone) * 60 * 60))
-	t.ZoneOffset = timezone * 60
+	t := time.SecondsToUTC(int64(timestamp) + (int64(timezone) * 60 * 60))
+	t.ZoneOffset = timezone * 60 * 60
 	
 	PushTime(L, t)
 	
 	return 1
 }
 
+func LuaIntTimestamp(L *lua51.State) int {
+	if L.GetTop() != 1 {
+		LuaError(L, "Wrong number of arguments to timestamp")
+		return 0
+	}
+
+	if !L.IsTable(-1) {
+		LuaError(L, "Argoment of timestamp is not a table")
+		return 0
+	}
+
+	L.CheckStack(1)
+
+	var t time.Time
+
+	t.Year = int64(GetTableInt(L, "year"))
+	t.Month = GetTableInt(L, "month")
+	t.Day = GetTableInt(L, "day")
+	t.Hour = GetTableInt(L, "hour")
+	t.Minute = GetTableInt(L, "minute")
+	t.Second = GetTableInt(L, "second")
+	t.ZoneOffset = GetTableInt(L, "offset")
+
+	L.PushInteger(int(t.Seconds()))
+	return 1
+}
 
 func (tl *Tasklist) DoString(code string, cursor *Entry) {
 	tl.mutex.Lock()
@@ -263,6 +300,7 @@ func MakeLuaState() *lua51.State {
 
 	L.Register("utctime", LuaIntUTCTime)
 	L.Register("localtime", LuaIntLocalTime)
+	L.Register("timestamp", LuaIntTimestamp)
 
 	return L
 }

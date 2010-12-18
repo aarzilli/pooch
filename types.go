@@ -5,6 +5,7 @@
 
 package main
 
+
 import (
 	"fmt"
 	"time"
@@ -132,6 +133,11 @@ func (e *Entry) Freq() int {
 	if freq > 0 { return freq }
 	return -1
 }
+
+/*
+ * Rules for timezones: add timezone to convert to local time
+ * subtract timezone to convert to utc
+ */
 
 func (entry *Entry) TriggerAtString(timezone int) string {
 	triggerAt := entry.TriggerAt()
