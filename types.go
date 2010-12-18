@@ -101,12 +101,13 @@ func MakeEntry(id string, title string, text string, priority Priority, triggerA
 }
 
 func (e *Entry) Title() string { return e.title; }
+func (e *Entry) SetTitle(title string) *Entry { e.title = title; return e }
 func (e *Entry) Text() string { return e.text; }
-func (e *Entry) SetText(text string)  *Entry { e.text = text; return e }
+func (e *Entry) SetText(text string) *Entry { e.text = text; return e }
 func (e *Entry) Id() string { return e.id; }
 func (e *Entry) SetId(id string) *Entry { e.id = id; return e}
 func (e *Entry) Priority() Priority { return e.priority; }
-func (e *Entry) SetPriority(p Priority) { e.priority = p; }
+func (e *Entry) SetPriority(p Priority) *Entry { e.priority = p; return e}
 func (e *Entry) TriggerAt() *time.Time { return e.triggerAt; }
 func (e *Entry) SetTriggerAt(tat *time.Time) { e.triggerAt = tat; }
 func (e *Entry) SetSort(sort string) { e.sort = sort; }
@@ -130,6 +131,18 @@ func (e *Entry) Freq() int {
 	freq := ParseFrequency(freqStr)
 	if freq > 0 { return freq }
 	return -1
+}
+
+func (entry *Entry) TriggerAtString(timezone int) string {
+	triggerAt := entry.TriggerAt()
+	triggerAtString := ""
+	if triggerAt != nil {
+		z := time.SecondsToUTC(triggerAt.Seconds() + (int64(timezone) * 60 * 60))
+		z.ZoneOffset = timezone * 60
+		triggerAtString = z.Format(TRIGGER_AT_FORMAT)
+	}
+
+	return triggerAtString
 }
 
 func (entry *Entry) NextEntry(newId string) *Entry {

@@ -563,13 +563,7 @@ func DemarshalEntry(umentry *UnmarshalEntry, timezone int) *Entry {
 }
 
 func MarshalEntry(entry *Entry, timezone int) *UnmarshalEntry {
-	triggerAt := entry.TriggerAt()
-	triggerAtString := ""
-	if triggerAt != nil {
-		z := time.SecondsToUTC(triggerAt.Seconds() + (int64(timezone) * 60 * 60))
-		z.ZoneOffset = timezone * 60
-		triggerAtString = z.Format(TRIGGER_AT_FORMAT)
-	}
+	triggerAtString := entry.TriggerAtString(timezone)
 
 	return MakeUnmarshalEntry(
 		entry.Id(),
