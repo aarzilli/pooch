@@ -237,15 +237,28 @@ func SearchParseSub(tl *Tasklist, input string, ored, removed *vector.StringVect
 func IsSavedQuery(input string) bool {
 	return (len(input) > 2) && (input[0:2] == "@%")
 }
+func SearchParse(input string, wantsDone, guessParse bool, extraWhereClauses []string, showCols map[string]bool, tl *Tasklist) (theselect, query, code string) {
+	code = ""
+	split := strings.Split(input, "@!", 2)
 
-func SearchParse(input string, wantsDone, guessParse bool, extraWhereClauses []string, showCols map[string]bool, tl *Tasklist) (theselect, query string) {
+	if len(split) > 1 {
+		input = split[0]
+		code = split[1]
+	}
+	
 	if IsSavedQuery(input) {
 		name := input[2:len(input)]
 		search := tl.GetSavedSearch(name)
 		Logf(DEBUG, "Retrieving saved query: %s [%s]\n", name, search)
-		return SearchParse(search, wantsDone, guessParse, extraWhereClauses, showCols, tl)
+		theselect, query = SearchParseInt(search, wantsDone, guessParse, extraWhereClauses, showCols, tl)
+		return
 	}
 
+	theselect, query = SearchParseInt(input, wantsDone, guessParse, extraWhereClauses, showCols, tl)
+	return
+}
+
+func SearchParseInt(input string, wantsDone, guessParse bool, extraWhereClauses []string, showCols map[string]bool, tl *Tasklist) (theselect, query string) {
 	lastEnd := 0
 	r := ""
 	
@@ -407,7 +420,7 @@ func QuickParse(input string, query string, tl *Tasklist, timezone int) (*Entry,
 	}
 
 	if tl != nil {
-		extraCats, _ := SearchParse(query, false, true, nil, make(map[string]bool), tl)
+		extraCats, _, _ := SearchParse(query, false, true, nil, make(map[string]bool), tl)
 
 		if extraCats != "" {
 			Logf(DEBUG, "Extra categories: %s\n", extraCats)

@@ -287,8 +287,8 @@ func CalendarServer(c http.ResponseWriter, req *http.Request) {
 }
 
 func GetCalendarEvents(tl *Tasklist, query string, r *vector.Vector, start, end string, endSecs int64) {
-	theselect, query := SearchParse(query, true, false, []string { "tasks.trigger_at_field IS NOT NULL", "tasks.trigger_at_field > " + tl.Quote(start), "tasks.trigger_at_field < " + tl.Quote(end) }, make(map[string]bool), tl)
-	v := tl.Retrieve(theselect, query)
+	theselect, query, code := SearchParse(query, true, false, []string { "tasks.trigger_at_field IS NOT NULL", "tasks.trigger_at_field > " + tl.Quote(start), "tasks.trigger_at_field < " + tl.Quote(end) }, make(map[string]bool), tl)
+	v := tl.Retrieve(theselect, query, code)
 
 	timezone := tl.GetTimezone()
 

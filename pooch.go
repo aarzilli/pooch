@@ -15,6 +15,7 @@ import (
 	"strconv"
 	"json"
 	"container/vector"
+	"io/ioutil"
 )
 
 //import _ "http/pprof"
@@ -109,7 +110,7 @@ func CmdQuickAdd(args []string) {
 
 func HelpQuickAdd() {
 	fmt.Fprintf(os.Stderr, "Usage: add <quickadd string>\n\n")
-	fmt.Fprintf(os.Stderr, "\tInterprets the quickadd string and adds it to the db")
+	fmt.Fprintf(os.Stderr, "\tInterprets the quickadd string and adds it to the db. Using a single - as the quickadd string makes the program read the quickadd string from stdin, in a special format that allows easier setting of columns")
 }
 
 func CmdQuickUpdate(args []string) {
@@ -132,16 +133,25 @@ func HelpQuickUpdate() {
 
 func CmdSearch(args []string) {
 	CheckArgsOpenDb(args, map[string]bool{ "t": true, "d": true, "j": true }, 0, 1000, "search", func(tl *Tasklist, args []string, flags map[string]bool) {
+		var input string
+		if (len(args) == 1) && (args[0] == "-") {
+			buf, err := ioutil.ReadAll(os.Stdin)
+			must(err)
+			input = string(buf)
+		} else {
+			input = strings.Join(args[0:], " ")
+		}
+		
 		timezone := tl.GetTimezone()
 		includeDone := flags["d"]; tsv := flags["t"]; js := flags["j"]
 
 		showCols := make(map[string]bool)
 		
-		theselect, query := SearchParse(strings.Join(args[0:], " "), includeDone, false, nil, showCols, tl)
+		theselect, query, code := SearchParse(input, includeDone, false, nil, showCols, tl)
 		
 		Logf(DEBUG, "Search statement [%s] with query [%s]\n", theselect, query)
 
-		entries := tl.Retrieve(theselect, query)
+		entries := tl.Retrieve(theselect, query, code)
 		switch {
 		case tsv: CmdListExTsv(entries, showCols, timezone)
 		case js: CmdListExJS(entries, timezone)
@@ -156,6 +166,7 @@ func HelpSearch() {
 	fmt.Fprintf(os.Stderr, "\t-t\tWrites output in tsv format\n")
 	fmt.Fprintf(os.Stderr, "\t-d\tIncludes done entries\n")
 	fmt.Fprintf(os.Stderr, "\t-j\tPrints JSON\n")
+	fmt.Fprintf(os.Stderr, "Using a single - as the search string will make the program read the search string from standard input")
 }
 
 func CmdSaveSearch(args []string) {

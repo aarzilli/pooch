@@ -4,10 +4,12 @@ import (
 	"lua51"
 	"unsafe"
 	"fmt"
+	"time"
 )
 
 var CURSOR string = "cursor"
 var TASKLIST string = "tasklist"
+var SEARCHFUNCTION string = "searchfn"
 
 type LuaFlags struct {
 	cursorEdited bool // the original, introduced cursor, was modified
@@ -74,6 +76,28 @@ func LuaIntGetterSetterFunction(fname string, L *lua51.State, getter func(tl *Ta
 	return 0
 }
 
+func LuaIntGetterSetterFunctionInt(fname string, L *lua51.State, getter func(tl *Tasklist, entry *Entry) int, setter func(tl *Tasklist, entry *Entry, value int)) int {
+	argNum := L.GetTop()
+
+	if argNum == 0 {
+		entry := GetEntryFromLua(L, CURSOR)
+		tl := GetTasklistFromLua(L)
+		L.PushInteger(getter(tl, entry))
+		return 1
+	} else if argNum == 1 {
+		value := L.ToInteger(1)
+		entry := GetEntryFromLua(L, CURSOR)
+		tl := GetTasklistFromLua(L)
+		setter(tl, entry, value)
+		if !tl.luaFlags.cursorCloned { tl.luaFlags.cursorEdited = true }
+		return 0
+	}
+	
+	L.PushString(fmt.Sprintf("Incorrect number of argoments to %s (only 0 or 1 accepted)", fname))
+	L.Error()
+	return 0
+}
+
 func LuaIntId(L *lua51.State) int {
 	return LuaIntGetterSetterFunction("id", L,
 		func(tl *Tasklist, entry *Entry) string { return entry.Id() },
@@ -105,9 +129,9 @@ func LuaIntPriority(L *lua51.State) int {
 }
 
 func LuaIntTriggerAt(L *lua51.State) int {
-	return LuaIntGetterSetterFunction("triggerat", L,
-		func(tl *Tasklist, entry *Entry) string { return entry.TriggerAtString(tl.GetTimezone()) },
-		func(tl *Tasklist, entry *Entry, value string) { ta, _ := ParseDateTime(value, tl.GetTimezone()); entry.SetTriggerAt(ta) })
+	return LuaIntGetterSetterFunctionInt("triggerat", L,
+		func(tl *Tasklist, entry *Entry) int { return int(entry.TriggerAt().Seconds()) },
+		func(tl *Tasklist, entry *Entry, value int) { entry.SetTriggerAt(time.SecondsToUTC(int64(value))) })
 }
 
 func LuaIntColumn(L *lua51.State) int {
@@ -142,6 +166,60 @@ func LuaIntCloneCursor(L *lua51.State) int {
 	return 0
 }
 
+func SetTableInt(L *lua51.State, name string, value int) {
+	// Remember to check stack for 2 extra locations
+	
+	L.PushString(name)
+	L.PushInteger(value)
+	L.SetTable(-3)
+}
+
+func PushTime(L *lua51.State, t *time.Time) {
+	L.CheckStack(3)
+	L.CreateTable(0, 7)
+
+	SetTableInt(L, "year", int(t.Year))
+	SetTableInt(L, "month", int(t.Month))
+	SetTableInt(L, "day", int(t.Day))
+	SetTableInt(L, "hour", int(t.Hour))
+	SetTableInt(L, "minute", int(t.Minute))
+	SetTableInt(L, "second", int(t.Second))
+	SetTableInt(L, "offset", int(t.ZoneOffset))
+}
+
+func LuaIntUTCTime(L *lua51.State) int {
+	if L.GetTop() != 1 {
+		L.PushString("Wrong number of arguments to utctime")
+		L.Error()
+		return 0
+	}
+	
+	timestamp := L.ToInteger(1)
+	PushTime(L, time.SecondsToUTC(int64(timestamp)))
+	
+	return 1
+}
+
+func LuaIntLocalTime(L *lua51.State) int {
+	if L.GetTop() != 1 {
+		L.PushString("Wrong number of arguments to localtime")
+		L.Error()
+		return 0
+	}
+
+	tl := GetTasklistFromLua(L)
+	timezone := tl.GetTimezone()
+	timestamp := L.ToInteger(1)
+	
+	t := time.SecondsToUTC(int64(timestamp) - (int64(timezone) * 60 * 60))
+	t.ZoneOffset = timezone * 60
+	
+	PushTime(L, t)
+	
+	return 1
+}
+
+
 func (tl *Tasklist) DoString(code string, cursor *Entry) {
 	tl.mutex.Lock()
 	defer tl.mutex.Unlock()
@@ -153,10 +231,25 @@ func (tl *Tasklist) DoString(code string, cursor *Entry) {
 	tl.luaState.DoString(code)
 }
 
+func (tl *Tasklist) CallLuaFunction(fname string, cursor *Entry) {
+	tl.mutex.Lock()
+	defer tl.mutex.Unlock()
+
+	tl.SetEntryInLua(CURSOR, cursor)
+	tl.SetTasklistInLua()
+	tl.ResetLuaFlags()
+
+	tl.luaState.CheckStack(1)
+	tl.luaState.GetGlobal(SEARCHFUNCTION)
+	tl.luaState.Call(0, 0)
+}
+
 func MakeLuaState() *lua51.State {
 	L := lua51.NewState()
 	L.OpenLibs()
 
+	L.CheckStack(1)
+	
 	L.Register("id", LuaIntId)
 	L.Register("title", LuaIntTitle)
 	L.Register("text", LuaIntText)
@@ -167,6 +260,9 @@ func MakeLuaState() *lua51.State {
 	L.Register("column", LuaIntColumn)
 	
 	L.Register("clonecursor", LuaIntCloneCursor)
+
+	L.Register("utctime", LuaIntUTCTime)
+	L.Register("localtime", LuaIntLocalTime)
 
 	return L
 }

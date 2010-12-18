@@ -322,17 +322,25 @@ func (tl *Tasklist) Get(id string) *Entry {
 	return entry
 }
 
-func GetListEx(stmt *sqlite.Stmt) []*Entry{
+func (tl *Tasklist) GetListEx(stmt *sqlite.Stmt, code string) []*Entry{
+	tl.luaState.DoString(fmt.Sprintf("function %s()\n%s\nend", SEARCHFUNCTION, code))
+	
 	v := []*Entry{}
 	for (stmt.Next()) {
 		entry, scanerr := StatementScan(stmt, true)
 		must(scanerr)
+
+		if code != "" {
+			tl.CallLuaFunction(SEARCHFUNCTION, entry)
+			//TODO filtrare se e` richiesto
+		}
+		
 		v = append(v, entry)
 	}
 	return v
 }
 
-func (tl *Tasklist) Retrieve(theselect, query string) []*Entry {
+func (tl *Tasklist) Retrieve(theselect, query, code string) []*Entry {
 	stmt, serr := tl.conn.Prepare(theselect)
 	must(serr)
 	defer stmt.Finalize()
@@ -344,7 +352,7 @@ func (tl *Tasklist) Retrieve(theselect, query string) []*Entry {
 	}
 	must(serr)
 
-	return GetListEx(stmt)
+	return tl.GetListEx(stmt, code)
 }
 
 func (tl *Tasklist) GetSavedSearches() []string {
