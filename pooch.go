@@ -313,11 +313,6 @@ func CmdMultiServe(args []string) {
 	CheckCondition(err != nil, "Couldn't open logfile %s: %s\n", logfile, err)
 	defer logfile.Close()
 	
-	/*
-	logfileBuffered := bufio.NewWriter(logfile)
-	defer logfileBuffered.Flush()
-
-	SetLogger(logfileBuffered)*/
 	SetLogger(logfile)
 	
 	MultiServe(args[0], args[1])
