@@ -257,6 +257,28 @@ func LuaIntTimestamp(L *lua51.State) int {
 	return 1
 }
 
+func LuaIntParseDateTime(L *lua51.State) int {
+	if L.GetTop() != 1 {
+		LuaError(L, "Wrong number of arguments to parsedatetime")
+		return 0
+	}
+
+	L.CheckStack(1)
+
+	input := L.ToString(-1)
+	tl := GetTasklistFromLua(L)
+
+	out, _ := ParseDateTime(input, tl.GetTimezone())
+
+	if out != nil {
+		L.PushInteger(int(out.Seconds()))
+	} else {
+		L.PushInteger(0)
+	}
+
+	return 1
+}
+
 func (tl *Tasklist) DoString(code string, cursor *Entry) {
 	tl.mutex.Lock()
 	defer tl.mutex.Unlock()
@@ -301,6 +323,7 @@ func MakeLuaState() *lua51.State {
 	L.Register("utctime", LuaIntUTCTime)
 	L.Register("localtime", LuaIntLocalTime)
 	L.Register("timestamp", LuaIntTimestamp)
+	L.Register("parsedatetime", LuaIntParseDateTime)
 
 	return L
 }
