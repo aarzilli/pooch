@@ -248,7 +248,7 @@ func (tasklist *Tasklist) Add(e *Entry) {
 }
 
 func (tasklist *Tasklist) LogError(error string) {
-	tasklist.MustExec("INSERT INTO errorlog(timestamp, message) VALUES(?, ?)", time.UTC(), error)
+	tasklist.MustExec("INSERT INTO errorlog(timestamp, message) VALUES(?, ?)", time.UTC().Seconds(), error)
 }
 
 func (tl *Tasklist) RemoveSaveSearch(name string) {
@@ -382,6 +382,23 @@ func (tl *Tasklist) Retrieve(theselect, query, code string) ([]*Entry, os.Error)
 	must(serr)
 
 	return tl.GetListEx(stmt, code)
+}
+
+func (tl *Tasklist) RetrieveErrors() []*ErrorEntry {
+	stmt, serr := tl.conn.Prepare("SELECT timestamp, message FROM errorlog ORDER BY timestamp DESC LIMIT 200")
+	must(serr)
+	defer stmt.Finalize()
+	must(stmt.Exec())
+
+	r := make([]*ErrorEntry, 0)
+	for stmt.Next() {
+		var timestamp int64
+		var message string
+		must(stmt.Scan(&timestamp, &message))
+		r = append(r, &ErrorEntry{time.SecondsToUTC(timestamp), message})
+	}
+
+	return r
 }
 
 func (tl *Tasklist) GetSavedSearches() []string {

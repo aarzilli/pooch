@@ -34,6 +34,7 @@ var commands map[string](func (args []string)) = map[string](func (args []string
 	"tsvup": CmdTsvUpdate,
 	"rename": CmdRename,
 	"rentag": CmdRenTag,
+	"errlog": CmdErrorLog,
 	
 	"multiserve": CmdMultiServe,
 }
@@ -52,6 +53,7 @@ var help_commands map[string](func ()) = map[string](func ()){
 	"tsvup": HelpTsvUpdate,
 	"rename": HelpRename,
 	"rentag": HelpRenTag,
+	"errlog": HelpErrorLog,
 	"compat": CompatHelp,
 	"multiserve": HelpMultiServe,
 }
@@ -377,6 +379,20 @@ func CmdRenTag(argv []string) {
 		dst_tag := argv[1]
 		tl.RenameTag(src_tag, dst_tag)
 	})
+}
+
+func CmdErrorLog(argv []string) {
+	CheckArgsOpenDb(argv, map[string]bool{}, 0, 0, "errlog", func (tl *Tasklist, args []string, flags map[string]bool) {
+		errors := tl.RetrieveErrors()
+		for _, error := range errors {
+			fmt.Printf("%s\t%s\n", error.TimeString(), error.Message)
+		}
+	})
+}
+
+func HelpErrorLog() {
+	fmt.Fprintf(os.Stderr, "usage: errlog\n")
+	fmt.Fprintf(os.Stderr, "\tShows error log\n")
 }
 
 func HelpRenTag() {

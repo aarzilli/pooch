@@ -218,6 +218,27 @@ func ShowSubcols(c http.ResponseWriter, query string, tl *Tasklist) {
 	}
 }
 
+func ErrorLogServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
+	css := tl.GetSetting("theme")
+	errors := tl.RetrieveErrors()
+
+	ErrorLogHeaderHTML(map[string]string{ "theme": css }, c)
+
+	for idx, error := range errors {
+		htmlClass := "entry"
+		if idx % 2 != 0 {
+			htmlClass += " oddentry"
+		}
+
+		ErrorLogEntryHTML(map[string]string{
+			"htmlClass": htmlClass,
+			"time": error.TimeString(),
+			"message": error.Message }, c)
+	}
+
+	ErrorLogEnderHTML(nil, c)
+}
+
 /*
  * Tasklist
  */
@@ -405,22 +426,27 @@ func SetupHandleFunc(wrapperTasklistServer func(TasklistServer)http.HandlerFunc,
 	http.HandleFunc("/", WrapperServer(StaticInMemoryServer))
 	http.HandleFunc("/static-hello.html", WrapperServer(HelloServer))
 
-	// List urls
+	// Entry point urls
+	http.HandleFunc("/list", WrapperServer(wrapperTasklistServer(ListServer)))
+	http.HandleFunc("/cal", WrapperServer(CalendarServer))
+	http.HandleFunc("/opts", WrapperServer(wrapperTasklistServer(OptionServer)))
+	http.HandleFunc("/errorlog", WrapperServer(wrapperTasklistServer(ErrorLogServer)))
+
+	// List ajax urls
 	http.HandleFunc("/change-priority", WrapperServer(wrapperTasklistWithIdServer(ChangePriorityServer)))
 	http.HandleFunc("/get", WrapperServer(wrapperTasklistWithIdServer(GetServer)))
-	http.HandleFunc("/list", WrapperServer(wrapperTasklistServer(ListServer)))
 	http.HandleFunc("/save", WrapperServer(wrapperTasklistServer(SaveServer)))
 	http.HandleFunc("/qadd", WrapperServer(wrapperTasklistServer(QaddServer)))
 	http.HandleFunc("/remove", WrapperServer(wrapperTasklistWithIdServer(RemoveServer)))
 	http.HandleFunc("/htmlget", WrapperServer(wrapperTasklistWithIdServer(HtmlGetServer)))
 	http.HandleFunc("/save-search", WrapperServer(wrapperTasklistServer(SaveSearchServer)))
 	http.HandleFunc("/remove-search", WrapperServer(wrapperTasklistServer(RemoveSearchServer)))
-	http.HandleFunc("/opts", WrapperServer(wrapperTasklistServer(OptionServer)))
-	http.HandleFunc("/rentag", WrapperServer(wrapperTasklistServer(RenTagServer)))
 
-	// Calendar urls
-	http.HandleFunc("/cal", WrapperServer(CalendarServer))
+	// Calendar ajax urls
 	http.HandleFunc("/calevents", WrapperServer(wrapperTasklistServer(CalendarEventServer)))
+
+	// Options support urls
+	http.HandleFunc("/rentag", WrapperServer(wrapperTasklistServer(RenTagServer)))
 }
 
 func Serve(port string) {

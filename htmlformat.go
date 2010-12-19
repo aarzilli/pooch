@@ -44,6 +44,7 @@ func MakeExecutableTemplate(t string) ExecutableTemplate {
 	return WrapTemplate(template.MustParse(t, formatters))
 }
 
+
 var ListHeaderHTML ExecutableTemplate = MakeExecutableTemplate(`
 <html>
 <head>
@@ -72,7 +73,7 @@ var ListHeaderHTML ExecutableTemplate = MakeExecutableTemplate(`
     <input type='button' style='float: right' value='save query' onClick='javascript:savesearch()'/>
   {.end}
   {.section error}
-    <div class='screrror'>Error while executing search: {@|html}</div>
+    <div class='screrror'>Error while executing search: {@|html} <a href='/errorlog'>Full error log</a></div>
   {.end}
   </form>
   <p>
@@ -95,6 +96,7 @@ var EntryListPriorityChangeHTML ExecutableTemplate = MakeExecutableTemplate(`
       {.end}
     </tr>
 `)
+
 
 var EntryListEntryHTML ExecutableTemplate = MakeExecutableTemplate(`
     {.section heading}
@@ -157,6 +159,29 @@ var EntryListEntryEditorHTML ExecutableTemplate = MakeExecutableTemplate(`
 var ListEnderHTML ExecutableTemplate = MakeExecutableTemplate(`
 </table></td>
 </tr></table></body></html>
+`)
+
+var ErrorLogHeaderHTML ExecutableTemplate = MakeExecutableTemplate(`
+<html>
+<head>
+  <title>Pooch: error log</title>
+  <link type='text/css' rel='stylesheet' href='{theme}'>
+</head>
+<body>
+  <table width='100%' id='maintable' style='border-collapse: collapse;'>
+`)
+
+var ErrorLogEntryHTML ExecutableTemplate = MakeExecutableTemplate(`
+  <tr class='{htmlClass}'>
+    <td class='etime'>{time}</td>
+    <td class='etitle'>{message|html}</td>
+  </tr>
+`)
+
+var ErrorLogEnderHTML ExecutableTemplate = MakeExecutableTemplate(`
+  </table>
+</body>
+</html>
 `)
 
 var SubcolEntryHTML ExecutableTemplate = MakeExecutableTemplate(`

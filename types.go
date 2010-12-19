@@ -89,6 +89,15 @@ type Entry struct {
 	columns Columns
 }
 
+type ErrorEntry struct {
+	Time *time.Time
+	Message string
+}
+
+func (ee *ErrorEntry) TimeString() string {
+	return ee.Time.Format("2006-01-02 15:04:05")
+}
+
 func must(err os.Error) {
 	if err != nil { panic(err) }
 }
