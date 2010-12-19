@@ -71,6 +71,9 @@ var ListHeaderHTML ExecutableTemplate = MakeExecutableTemplate(`
   {.or}
     <input type='button' style='float: right' value='save query' onClick='javascript:savesearch()'/>
   {.end}
+  {.section error}
+    <div class='screrror'>Error while executing search: {@|html}</div>
+  {.end}
   </form>
   <p>
   <table width='100%' style='border-collapse: collapse;'><tr>

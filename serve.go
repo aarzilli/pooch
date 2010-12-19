@@ -230,7 +230,7 @@ func ListServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	removeSearch := ""; if IsSavedQuery(query) { removeSearch = "remove-search" }
 	showCols := make(map[string]bool)
 
-	v := tl.Retrieve(SearchParse(query, includeDone, false, nil, showCols, tl))
+	v, err := tl.Retrieve(SearchParse(query, includeDone, false, nil, showCols, tl))
 
 	colNames := []string{}
 	for colName, _ := range showCols {
@@ -242,7 +242,8 @@ func ListServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 		"theme": css,
 		"timezone": fmt.Sprintf("%d", timezone),
 		"includeDone": includeDoneStr,
-		"removeSearch": removeSearch },
+		"removeSearch": removeSearch,
+		"error": err },
 		c)
 	ShowSubcols(c, query, tl)
 	SubcolsEnder(map[string]string{ }, c)
@@ -288,7 +289,7 @@ func CalendarServer(c http.ResponseWriter, req *http.Request) {
 
 func GetCalendarEvents(tl *Tasklist, query string, r *vector.Vector, start, end string, endSecs int64) {
 	theselect, query, code := SearchParse(query, true, false, []string { "tasks.trigger_at_field IS NOT NULL", "tasks.trigger_at_field > " + tl.Quote(start), "tasks.trigger_at_field < " + tl.Quote(end) }, make(map[string]bool), tl)
-	v := tl.Retrieve(theselect, query, code)
+	v, _ := tl.Retrieve(theselect, query, code)
 
 	timezone := tl.GetTimezone()
 

@@ -70,3 +70,9 @@ table {
     background-color: lightblue;
     color: black;
 }
+
+.screrror {
+    padding: 15px;
+    color: red;
+    font-weight: bold;
+}

@@ -151,7 +151,12 @@ func CmdSearch(args []string) {
 		
 		Logf(DEBUG, "Search statement [%s] with query [%s]\n", theselect, query)
 
-		entries := tl.Retrieve(theselect, query, code)
+		entries, err := tl.Retrieve(theselect, query, code)
+
+		if err != nil {
+			Logf(ERROR, "There was an error while executing the search query: %s\n", err.String())
+		}
+		
 		switch {
 		case tsv: CmdListExTsv(entries, showCols, timezone)
 		case js: CmdListExJS(entries, timezone)

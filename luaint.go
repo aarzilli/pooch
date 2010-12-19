@@ -5,22 +5,33 @@ import (
 	"unsafe"
 	"fmt"
 	"time"
+	"os"
 )
 
 var CURSOR string = "cursor"
 var TASKLIST string = "tasklist"
 var SEARCHFUNCTION string = "searchfn"
 
+type LuaIntError struct {
+	message string
+}
+
+func (le *LuaIntError) String() string {
+	return le.message
+}
+
 type LuaFlags struct {
 	cursorEdited bool // the original, introduced cursor, was modified
 	cursorCloned bool // the cursor was cloned, creating a new entry
 	persist bool // changes are persisted
+	filterOut bool // during search filters out the current result
 }
 
 func (tl *Tasklist) ResetLuaFlags() {
 	tl.luaFlags.cursorEdited = false
 	tl.luaFlags.cursorCloned = false
 	tl.luaFlags.persist = false
+	tl.luaFlags.filterOut = false
 }
 
 func (tl *Tasklist) SetEntryInLua(name string, entry *Entry) {
@@ -162,6 +173,18 @@ func LuaIntColumn(L *lua51.State) int {
 	return 0
 }
 
+func LuaIntFilterOut(L *lua51.State) int {
+	tl := GetTasklistFromLua(L)
+	tl.luaFlags.filterOut = true
+	return 0
+}
+
+func LuaIntFilterIn(L *lua51.State) int {
+	tl := GetTasklistFromLua(L)
+	tl.luaFlags.filterOut = false
+	return 0
+}
+
 func LuaIntPersist(L *lua51.State) int {
 	tl := GetTasklistFromLua(L)
 	tl.luaFlags.persist = true
@@ -287,7 +310,7 @@ func LuaIntParseDateTime(L *lua51.State) int {
 	return 1
 }
 
-func (tl *Tasklist) DoString(code string, cursor *Entry) {
+func (tl *Tasklist) DoString(code string, cursor *Entry) os.Error {
 	tl.mutex.Lock()
 	defer tl.mutex.Unlock()
 	
@@ -295,10 +318,16 @@ func (tl *Tasklist) DoString(code string, cursor *Entry) {
 	tl.SetTasklistInLua()
 	tl.ResetLuaFlags()
 	
-	tl.luaState.DoString(code)
+	if !tl.luaState.DoString(code) {
+		errorMessage := tl.luaState.ToString(-1)
+		tl.LogError(fmt.Sprintf("Error while executing lua code: %s", errorMessage))
+		return &LuaIntError{errorMessage}
+	}
+
+	return nil
 }
 
-func (tl *Tasklist) CallLuaFunction(fname string, cursor *Entry) {
+func (tl *Tasklist) CallLuaFunction(fname string, cursor *Entry) os.Error {
 	tl.mutex.Lock()
 	defer tl.mutex.Unlock()
 
@@ -307,8 +336,14 @@ func (tl *Tasklist) CallLuaFunction(fname string, cursor *Entry) {
 	tl.ResetLuaFlags()
 
 	tl.luaState.CheckStack(1)
-	tl.luaState.GetGlobal(SEARCHFUNCTION)
-	tl.luaState.Call(0, 0)
+	tl.luaState.GetGlobal(fname)
+	if lua51.PCall(tl.luaState, 0, 0, 0) != 0 {
+		errorMessage := tl.luaState.ToString(-1)
+		tl.LogError(fmt.Sprintf("Error while executing lua code: %s", errorMessage))
+		return &LuaIntError{errorMessage}
+	}
+
+	return nil
 }
 
 func MakeLuaState() *lua51.State {
@@ -326,6 +361,8 @@ func MakeLuaState() *lua51.State {
 	
 	L.Register("column", LuaIntColumn)
 
+	L.Register("filterout", LuaIntFilterOut)
+	L.Register("filterin", LuaIntFilterIn)
 	L.Register("persist", LuaIntPersist)
 	L.Register("clonecursor", LuaIntCloneCursor)
 

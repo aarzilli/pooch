@@ -75,7 +75,7 @@ func internalTasklistOpenOrCreate(filename string) *Tasklist {
 	conn, err := sqlite.Open(filename)
 	must(err)
 
-	if !HasTable(conn, "settings") { // optimization, if tasks exists do not try to create anything
+	if !HasTable(conn, "errorlog") { // optimization, if the last added table exists exists do not try to create anything
 		MustExec(conn, "CREATE TABLE IF NOT EXISTS tasks(id TEXT PRIMARY KEY, title_field TEXT, text_field TEXT, priority INTEGER, trigger_at_field DATE, sort TEXT);")
 		MustExec(conn, "CREATE INDEX IF NOT EXISTS tasks_id ON tasks(id);")
 
@@ -93,6 +93,8 @@ func internalTasklistOpenOrCreate(filename string) *Tasklist {
 			MustExec(conn, "INSERT INTO settings(name, value) VALUES (\"timezone\", \"0\");")
 			MustExec(conn, "INSERT INTO settings(name, value) VALUES (\"theme\", \"list.css\");")
 		}
+
+		MustExec(conn, "CREATE TABLE IF NOT EXISTS errorlog(timestamp TEXT, message TEXT);")
 	}
 	
 	tasklist := &Tasklist{filename, conn, MakeLuaState(), &LuaFlags{}, &sync.Mutex{}, 1, time.Seconds()}
@@ -245,6 +247,10 @@ func (tasklist *Tasklist) Add(e *Entry) {
 	Log(DEBUG, "Add finished!")
 }
 
+func (tasklist *Tasklist) LogError(error string) {
+	tasklist.MustExec("INSERT INTO errorlog(timestamp, message) VALUES(?, ?)", time.UTC(), error)
+}
+
 func (tl *Tasklist) RemoveSaveSearch(name string) {
 	tl.MustExec("DELETE FROM saved_searches WHERE name = ?", name)
 }
@@ -322,8 +328,20 @@ func (tl *Tasklist) Get(id string) *Entry {
 	return entry
 }
 
-func (tl *Tasklist) GetListEx(stmt *sqlite.Stmt, code string) []*Entry{
+func (tl *Tasklist) GetListEx(stmt *sqlite.Stmt, code string) ([]*Entry, os.Error) {
+	var err os.Error
+	
+	tl.luaState.CheckStack(1)
+	tl.luaState.PushNil()
+	tl.luaState.SetGlobal(SEARCHFUNCTION)
 	tl.luaState.DoString(fmt.Sprintf("function %s()\n%s\nend", SEARCHFUNCTION, code))
+	tl.luaState.GetGlobal(SEARCHFUNCTION)
+	if tl.luaState.IsNil(-1) {
+		tl.LogError("Syntax error in search function definition")
+		code = ""
+		err = &LuaIntError{"Syntax error in search function definition"}
+	}
+	tl.luaState.Pop(1)
 	
 	v := []*Entry{}
 	for (stmt.Next()) {
@@ -331,26 +349,27 @@ func (tl *Tasklist) GetListEx(stmt *sqlite.Stmt, code string) []*Entry{
 		must(scanerr)
 
 		if code != "" {
-			tl.CallLuaFunction(SEARCHFUNCTION, entry)
+			if cerr := tl.CallLuaFunction(SEARCHFUNCTION, entry); cerr != nil { err = cerr }
 			
 			if tl.luaFlags.persist {
 				if tl.luaFlags.cursorEdited {
-					tl.Update(entry)
+					tl.Update(entry, false)
 				}
 				if tl.luaFlags.cursorCloned {
 					newentry := GetEntryFromLua(tl.luaState, CURSOR)
 					tl.Add(newentry)
 				}
 			}
-			//TODO filtrare se e` richiesto
+
+			if tl.luaFlags.filterOut { continue }
 		}
 		
 		v = append(v, entry)
 	}
-	return v
+	return v, err
 }
 
-func (tl *Tasklist) Retrieve(theselect, query, code string) []*Entry {
+func (tl *Tasklist) Retrieve(theselect, query, code string) ([]*Entry, os.Error) {
 	stmt, serr := tl.conn.Prepare(theselect)
 	must(serr)
 	defer stmt.Finalize()

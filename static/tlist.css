@@ -115,3 +115,9 @@ table {
     font-weight: bolder;    
     font-size: xx-small;
 }
+
+.screrror {
+    padding: 15px;
+    color: red;
+    font-weight: bold;
+}
