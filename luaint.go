@@ -25,6 +25,7 @@ type LuaFlags struct {
 	cursorCloned bool // the cursor was cloned, creating a new entry
 	persist bool // changes are persisted
 	filterOut bool // during search filters out the current result
+	remove bool // removes the current entry
 }
 
 func (tl *Tasklist) ResetLuaFlags() {
@@ -32,6 +33,7 @@ func (tl *Tasklist) ResetLuaFlags() {
 	tl.luaFlags.cursorCloned = false
 	tl.luaFlags.persist = false
 	tl.luaFlags.filterOut = false
+	tl.luaFlags.remove = false
 }
 
 func (tl *Tasklist) SetEntryInLua(name string, entry *Entry) {
@@ -188,6 +190,12 @@ func LuaIntFilterIn(L *lua51.State) int {
 func LuaIntPersist(L *lua51.State) int {
 	tl := GetTasklistFromLua(L)
 	tl.luaFlags.persist = true
+	return 0
+}
+
+func LuaIntRemove(L *lua51.State) int {
+	tl := GetTasklistFromLua(L)
+	tl.luaFlags.remove = true
 	return 0
 }
 
@@ -364,6 +372,7 @@ func MakeLuaState() *lua51.State {
 	L.Register("filterout", LuaIntFilterOut)
 	L.Register("filterin", LuaIntFilterIn)
 	L.Register("persist", LuaIntPersist)
+	L.Register("remove", LuaIntRemove)
 	L.Register("clonecursor", LuaIntCloneCursor)
 
 	L.Register("utctime", LuaIntUTCTime)

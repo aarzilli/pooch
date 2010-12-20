@@ -350,9 +350,13 @@ func (tl *Tasklist) GetListEx(stmt *sqlite.Stmt, code string) ([]*Entry, os.Erro
 
 		if code != "" {
 			if cerr := tl.CallLuaFunction(SEARCHFUNCTION, entry); cerr != nil { err = cerr }
+
+			if tl.luaFlags.remove {
+				tl.Remove(entry.Id())
+			}
 			
 			if tl.luaFlags.persist {
-				if tl.luaFlags.cursorEdited {
+				if !tl.luaFlags.remove && tl.luaFlags.cursorEdited {
 					tl.Update(entry, false)
 				}
 				if tl.luaFlags.cursorCloned {
@@ -525,6 +529,11 @@ func (tl *Tasklist) RunTimedTriggers() {
 			Logf(INFO, "Triggering: %s %s with trigger function\n", entry.Id(), entry.TriggerAt())
 			tl.DoString(triggerCode, entry)
 
+			if tl.luaFlags.remove {
+				tl.Remove(entry.Id())
+				update = false
+			}
+
 			if tl.luaFlags.persist {
 				if tl.luaFlags.cursorCloned {
 					newentry := GetEntryFromLua(tl.luaState, CURSOR)
@@ -532,12 +541,13 @@ func (tl *Tasklist) RunTimedTriggers() {
 					checkFreq = false
 				}
 				
-				if tl.luaFlags.cursorEdited {
+				if !tl.luaFlags.remove && tl.luaFlags.cursorEdited {
 					entry.SetPriority(NOW)
 					tl.Update(entry, false)
 					update = false
 				}
 			}
+
 		}
 
 		if checkFreq {
