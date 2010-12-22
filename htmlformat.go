@@ -51,19 +51,18 @@ var ListHeaderHTML ExecutableTemplate = MakeExecutableTemplate(`
   <title>Pooch: {queryForTitle|html}</title>
   <link type='text/css' rel='stylesheet' href='{theme}'>
   <link type='text/css' rel='stylesheet' href='calendar.css'>
-  <script src='/shortcut.js'></script>
   <script src='/json.js'></script>
   <script src='/jquery.js'></script>
   <script src='/int.js'></script>
   <script src='/calendar.js'></script>
 </head>
-<body onload='javascript:setup()'>
+<body onkeypress='keytable(event)'>
   <div style='float: right'><p align='right'><small><a href='/opts'>options</a>&nbsp;<a href="/advanced.html">advanced operations</a></small><br/><small>Current timezone: {timezone|html}</small></div>
   <h2>{queryForTitle|html} <span style='font-size: small'>
     &nbsp;
     <span style='position: relative;'>
-      <a href='javascript:toggle("#searchpop")'>[change query]</a>
-      <div id='searchpop' style='display: none; position: absolute; top: 20px; z-index: 9000'>
+      <a href='javascript:toggle_searchpop()'>[change query]</a>
+      <div id='searchpop' class='popup' style='display: none; position: absolute; top: 20px; z-index: 9000'>
          <form method='get' action='/list'>
            <label for='query'>Query:</label>&nbsp;
            <textarea name='q' id='q' cols='50' rows='10'>{query|html}</textarea>
@@ -80,6 +79,17 @@ var ListHeaderHTML ExecutableTemplate = MakeExecutableTemplate(`
       </div>
     </span>
     &nbsp;
+    <span style='position: relative;'>
+      <a href='javascript:toggle_addpop()'>[add entry]</a>
+      <div id='addpop' class='popup' style='display: none; position: absolute; top: 20px; z-index: 9000'>
+        <form onsubmit='return add_entry("{query|html}")'>
+          <label for='text'>New entry:</label>&nbsp;
+          <input size='50' type='newentry' id='newentry' name='text'/>
+          <input type='button' value='add' onclick='javascript:add_entry("{query|html}")'/>
+        </form>
+      </div>
+    </span>
+    &nbsp;
     <a href='cal?q={query|url}'>[see as calendar]</a>
   </span></h2>
 
@@ -87,13 +97,6 @@ var ListHeaderHTML ExecutableTemplate = MakeExecutableTemplate(`
     <div class='screrror'>Error while executing search: {@|html} <a href='/errorlog'>Full error log</a></div>
   {.end}
 
-  <p><form onsubmit='return add_entry("{query|html}")'>
-  <label for='text'>New entry:</label>&nbsp;<input size='50' type='newentry' id='newentry' name='text'/><input type='button' value='add' onclick='javascript:add_entry("{query|html}")'/>
-  </form>
-
-  <p><form method='get' action='/list'>
-  </form>
-  <p>
   <table width='100%' style='border-collapse: collapse;'><tr>
   <td valign='top' style='width: 10%'><div style='padding-top: 30px'>
 `)

@@ -3,28 +3,44 @@
  Copyright 2010, Alessandro Arzilli
  */
 
-function setup() {
-    shortcut.add("Alt+s", function() { save_open_editor(false); });
-}
-
-function toggle_large_search() {
-    var singleLine = $('#q').get(0);
-    var multiLine = $('#largeq').get(0);
-    if (singleLine.style['display'] == 'none') {
-        singleLine.style['display'] = 'inline';
-        multiLine.style['display'] = 'none';
-    } else {
-        singleLine.style['display'] = 'none';
-        multiLine.style['display'] = 'inline';
-    }
-}
-
 function toggle(query) {
     var div = $(query).get(0);
     if (div.style['display'] == 'none') {
         div.style['display'] = 'block';
     } else {
         div.style['display'] = 'none';
+    }
+}
+
+function toggle_searchpop() {
+    toggle("#searchpop");
+    $("#q").get(0).focus();
+}
+
+function toggle_addpop() {
+    toggle("#addpop");
+    $("#newentry").get(0).focus();
+}
+
+function keytable(e) {
+    if (e.which == 0) {
+        $("#searchpop").get(0).style['display'] = 'none';
+        $("#addpop").get(0).style['display'] = 'none';
+    }
+    
+    if (document.activeElement.type != null) {
+        return true;
+    }
+
+    switch(e.which) {
+    case 97: // a key
+        toggle_addpop();
+        return false; 
+    case 115: // s key
+        toggle_searchpop();
+        return false;
+    default:
+        return true;
     }
 }
 
