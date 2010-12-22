@@ -7,6 +7,19 @@ function setup() {
     shortcut.add("Alt+s", function() { save_open_editor(false); });
 }
 
+function toggle_large_search() {
+    var singleLine = document.getElementById('q');
+    var multiLine = document.getElementById('largeq');
+    if (singleLine.style['display'] == 'none') {
+        singleLine.style['display'] = 'inline';
+        multiLine.style['display'] = 'none';
+    } else {
+        singleLine.style['display'] = 'none';
+        multiLine.style['display'] = 'inline';
+    }
+        
+}
+
 function remove_entry(name) {
   $.ajax({ url: "remove?id=" + encodeURIComponent(name), success: function(data, textStatus, req) {
 	if (data.match(/^removed/)) {

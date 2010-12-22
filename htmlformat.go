@@ -65,7 +65,15 @@ var ListHeaderHTML ExecutableTemplate = MakeExecutableTemplate(`
   </form>
 
   <p><form method='get' action='/list'>
-  <label for='query'>Query:</label>&nbsp;<input size='50' type='text' id='q' name='q' value='{query|html}'/> <input type='submit' value='search'/> &nbsp; <input type='checkbox' name='done' value='1' {includeDone|html}> include done
+  <label for='query'>Query:</label>&nbsp;
+  <input size='50' type='text' id='q' name='q' {queryInputStyle} value='{query|html}'/>
+  <textarea name='q' id='largeq' {textAreaStyle} cols='50' rows='10'>{query|html}
+  </textarea>
+  <input type='submit' value='search'/>
+  &nbsp;
+  <input type='checkbox' name='large' value='1' {largeSearch|html} onchange='javascript:toggle_large_search()'> large search box
+  &nbsp;
+  <input type='checkbox' name='done' value='1' {includeDone|html}> include done
   {.section removeSearch }
     <input type='button' style='float: right' value='edit query' onClick='javascript:editsearch()'/>
     <input type='button' style='float: right' value='remove query' onClick='javascript:removesearch()'/>

@@ -246,8 +246,10 @@ func ListServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	css := tl.GetSetting("theme")
 	timezone := tl.GetTimezone()
 	includeDone := req.FormValue("done") != ""
+	largeSearchBox := req.FormValue("large") != ""
 	query := req.FormValue("q")
 	includeDoneStr := ""; if includeDone { includeDoneStr = "checked" }
+	largeSearchBoxStr := ""; if largeSearchBox { largeSearchBoxStr = "checked" }
 	removeSearch := ""; if IsSavedQuery(query) { removeSearch = "remove-search" }
 	showCols := make(map[string]bool)
 
@@ -257,13 +259,25 @@ func ListServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	for colName, _ := range showCols {
 		colNames = append(colNames, colName)
 	}
+
+	var queryInputStyleStr, textAreaStyleStr string
+	if largeSearchBox {
+		queryInputStyleStr = "style='display: none'"
+		textAreaStyleStr = "style='display: inline'"
+	} else {
+		queryInputStyleStr = "style='display: inline'"
+		textAreaStyleStr = "style='display: none'"
+	}
 	
 	ListHeaderHTML(map[string]interface{}{
 		"query": query,
 		"theme": css,
 		"timezone": fmt.Sprintf("%d", timezone),
 		"includeDone": includeDoneStr,
+		"largeSearch": largeSearchBoxStr,
 		"removeSearch": removeSearch,
+		"queryInputStyle": queryInputStyleStr,
+		"textAreaStyle": textAreaStyleStr,
 		"error": err },
 		c)
 	ShowSubcols(c, query, tl)
