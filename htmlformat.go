@@ -48,7 +48,7 @@ func MakeExecutableTemplate(t string) ExecutableTemplate {
 var ListHeaderHTML ExecutableTemplate = MakeExecutableTemplate(`
 <html>
 <head>
-  <title>Pooch: {query|html}</title>
+  <title>Pooch: {queryForTitle|html}</title>
   <link type='text/css' rel='stylesheet' href='{theme}'>
   <link type='text/css' rel='stylesheet' href='calendar.css'>
   <script src='/shortcut.js'></script>
@@ -59,30 +59,39 @@ var ListHeaderHTML ExecutableTemplate = MakeExecutableTemplate(`
 </head>
 <body onload='javascript:setup()'>
   <div style='float: right'><p align='right'><small><a href='/opts'>options</a>&nbsp;<a href="/advanced.html">advanced operations</a></small><br/><small>Current timezone: {timezone|html}</small></div>
-  <h2>{query|html} <span style='font-size: small'><a href='cal?q={query|url}'>as calendar</a></span></h2>
+  <h2>{queryForTitle|html} <span style='font-size: small'>
+    &nbsp;
+    <span style='position: relative;'>
+      <a href='javascript:toggle("#searchpop")'>[change query]</a>
+      <div id='searchpop' style='display: none; position: absolute; top: 20px; z-index: 9000'>
+         <form method='get' action='/list'>
+           <label for='query'>Query:</label>&nbsp;
+           <textarea name='q' id='q' cols='50' rows='10'>{query|html}</textarea>
+           <input type='submit' value='search'>
+           &nbsp;
+           <input type='checkbox' name='done' value='1' {includeDone|html}> include done
+           {.section removeSearch }
+             <input type='button' style='float: right' value='edit query' onClick='javascript:editsearch()'/>
+             <input type='button' style='float: right' value='remove query' onClick='javascript:removesearch()'/>
+           {.or}
+             <input type='button' style='float: right' value='save query' onClick='javascript:savesearch()'/>
+           {.end}
+         </form>
+      </div>
+    </span>
+    &nbsp;
+    <a href='cal?q={query|url}'>[see as calendar]</a>
+  </span></h2>
+
+  {.section error}
+    <div class='screrror'>Error while executing search: {@|html} <a href='/errorlog'>Full error log</a></div>
+  {.end}
+
   <p><form onsubmit='return add_entry("{query|html}")'>
   <label for='text'>New entry:</label>&nbsp;<input size='50' type='newentry' id='newentry' name='text'/><input type='button' value='add' onclick='javascript:add_entry("{query|html}")'/>
   </form>
 
   <p><form method='get' action='/list'>
-  <label for='query'>Query:</label>&nbsp;
-  <input size='50' type='text' id='q' name='q' {queryInputStyle} value='{query|html}'/>
-  <textarea name='q' id='largeq' {textAreaStyle} cols='50' rows='10'>{query|html}
-  </textarea>
-  <input type='submit' value='search'/>
-  &nbsp;
-  <input type='checkbox' name='large' value='1' {largeSearch|html} onchange='javascript:toggle_large_search()'> large search box
-  &nbsp;
-  <input type='checkbox' name='done' value='1' {includeDone|html}> include done
-  {.section removeSearch }
-    <input type='button' style='float: right' value='edit query' onClick='javascript:editsearch()'/>
-    <input type='button' style='float: right' value='remove query' onClick='javascript:removesearch()'/>
-  {.or}
-    <input type='button' style='float: right' value='save query' onClick='javascript:savesearch()'/>
-  {.end}
-  {.section error}
-    <div class='screrror'>Error while executing search: {@|html} <a href='/errorlog'>Full error log</a></div>
-  {.end}
   </form>
   <p>
   <table width='100%' style='border-collapse: collapse;'><tr>

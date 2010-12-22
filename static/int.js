@@ -8,8 +8,8 @@ function setup() {
 }
 
 function toggle_large_search() {
-    var singleLine = document.getElementById('q');
-    var multiLine = document.getElementById('largeq');
+    var singleLine = $('#q').get(0);
+    var multiLine = $('#largeq').get(0);
     if (singleLine.style['display'] == 'none') {
         singleLine.style['display'] = 'inline';
         multiLine.style['display'] = 'none';
@@ -17,7 +17,15 @@ function toggle_large_search() {
         singleLine.style['display'] = 'none';
         multiLine.style['display'] = 'inline';
     }
-        
+}
+
+function toggle(query) {
+    var div = $(query).get(0);
+    if (div.style['display'] == 'none') {
+        div.style['display'] = 'block';
+    } else {
+        div.style['display'] = 'none';
+    }
 }
 
 function remove_entry(name) {

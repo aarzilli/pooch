@@ -27,6 +27,12 @@ body {
     font-size: 8pt;
 }
 
+#searchpop {
+    background-color: black;
+    padding: 8px;
+    border: thin solid white;
+}
+
 table {
     font-size: 8pt;
 }

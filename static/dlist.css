@@ -17,6 +17,11 @@ body {
     font-size: 8pt;
 }
 
+#searchpop {
+    background-color: #2D2828;
+    padding: 8px;
+}
+
 table {
     font-size: 8pt;
 }
