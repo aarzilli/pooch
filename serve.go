@@ -246,7 +246,7 @@ func ListServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	css := tl.GetSetting("theme")
 	timezone := tl.GetTimezone()
 	includeDone := req.FormValue("done") != ""
-	query := req.FormValue("q")
+	query := strings.Replace(req.FormValue("q"), "\r", "", -1)
 	includeDoneStr := ""; if includeDone { includeDoneStr = "checked" }
 	removeSearch := ""; if IsSavedQuery(query) { removeSearch = "remove-search" }
 	showCols := make(map[string]bool)
