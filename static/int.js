@@ -23,11 +23,20 @@ function toggle_addpop() {
 }
 
 function keytable(e) {
-    if (e.which == 0) {
+    switch (e.keyCode) {
+    case 27:
         $("#searchpop").get(0).style['display'] = 'none';
         $("#addpop").get(0).style['display'] = 'none';
+        break;
+    case 13:
+        if (e.altKey) {
+            if ($("#searchpop").get(0).style['display'] != 'none') {
+                $("#searchform").get(0).submit();
+            }
+        }
+        break;
     }
-    
+
     if (document.activeElement.type != null) {
         return true;
     }
@@ -115,6 +124,7 @@ function add_entry(query) {
 	    add_row(newid);
 	    
 	    $('#newentry').val("");
+        $("#addpop").get(0).style["display"] = "none";
 	  } else {
 	    alert("ADD FAILED: " + data);
 	  }

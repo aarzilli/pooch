@@ -260,7 +260,15 @@ func headerInfo(tl *Tasklist, pageName string, query string, includeDone bool, r
 	css := tl.GetSetting("theme")
 	timezone := tl.GetTimezone()
 	includeDoneStr := ""; if includeDone { includeDoneStr = "checked" }
-	removeSearch := ""; if IsSavedQuery(query) { removeSearch = "remove-search" }	
+	removeSearch := ""; if IsSavedQuery(query) { removeSearch = "remove-search" }
+	var otherPageName, otherPageLink string
+	if pageName == "/list" {
+		otherPageName = "/cal"
+		otherPageLink = "calendar"
+	} else {
+		otherPageName = "/list"
+		otherPageLink = "list"
+	}
 	
 	return map[string]interface{}{
 		"pageName": pageName,
@@ -271,6 +279,8 @@ func headerInfo(tl *Tasklist, pageName string, query string, includeDone bool, r
 		"includeDone": includeDoneStr,
 		"removeSearch": removeSearch,
 		"error": retrieveError,
+		"otherPageName": otherPageName,
+		"otherPageLink": otherPageLink,
 	};
 }
 

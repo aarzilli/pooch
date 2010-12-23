@@ -51,7 +51,7 @@ var CommonHeaderHTML ExecutableTemplate = MakeExecutableTemplate(`
     <span style='position: relative;'>
       <a href='javascript:toggle_searchpop()'>[change query]</a>
       <div id='searchpop' class='popup' style='display: none; position: absolute; top: 20px; z-index: 9000'>
-         <form method='get' action='{pageName}'>
+         <form id='searchform' method='get' action='{pageName}'>
            <label for='query'>Query:</label>&nbsp;
            <textarea name='q' id='q' cols='50' rows='10'>{query|html}</textarea>
            <input type='submit' value='search'>
@@ -63,6 +63,8 @@ var CommonHeaderHTML ExecutableTemplate = MakeExecutableTemplate(`
            {.or}
              <input type='button' style='float: right' value='save query' onClick='javascript:savesearch()'/>
            {.end}
+           <br/>
+           <small>(press alt-enter to search)</small>
          </form>
       </div>
     </span>
@@ -78,7 +80,7 @@ var CommonHeaderHTML ExecutableTemplate = MakeExecutableTemplate(`
       </div>
     </span>
     &nbsp;
-    <a href='cal?q={query|url}'>[see as calendar]</a>
+    <a href='{otherPageName}?q={query|url}'>[see as {otherPageLink}]</a>
   </span></h2>
 
   {.section error}
