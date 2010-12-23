@@ -18,7 +18,6 @@ import (
 	"io/ioutil"
 )
 
-var TRIGGER_AT_FORMAT string = "2006-01-02 15:04"
 var TRIGGER_AT_SHORT_FORMAT string = "02/01 15:04"
 
 type ParseError struct {
@@ -43,18 +42,6 @@ func ParsePriority(s string) (p Priority, err os.Error) {
 	case "done": return DONE, nil
 	}
 	return INVALID, MakeParseError(fmt.Sprintf("Unknown priority: %s", s))
-}
-
-func ParseFrequency(freq string) int {
-	switch freq {
-	case "daily": return 1
-	case "weekly": return 7
-	case "biweekly": return 14
-	case "monthly": return 30
-	case "yearly": return 365
-	}
-	v, _ := strconv.Atoi(freq)
-	return v
 }
 
 func FixYear(datetime *time.Time, withTime bool) {

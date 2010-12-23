@@ -12,9 +12,12 @@ import (
 	"container/vector"
 	"sort"
 	"strings"
+	"strconv"
 	"hash/crc32"
 	"os"
 )
+
+var TRIGGER_AT_FORMAT string = "2006-01-02 15:04"
 
 type Priority int;
 
@@ -133,6 +136,18 @@ func (e *Entry) MergeColumns(cols Columns) *Entry {
 		e.columns[k] = v
 	}
 	return e
+}
+
+func ParseFrequency(freq string) int {
+	switch freq {
+	case "daily": return 1
+	case "weekly": return 7
+	case "biweekly": return 14
+	case "monthly": return 30
+	case "yearly": return 365
+	}
+	v, _ := strconv.Atoi(freq)
+	return v
 }
 
 func (e *Entry) Freq() int {

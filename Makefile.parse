@@ -3,8 +3,8 @@ include $(GOROOT)/src/Make.inc
 TARG=parse
 
 GOFILES=\
-	dbg.go types.go parse.go\
-	parsemain.go
+	dbg.go types.go newparse.go\
+	newparse_test.go
 
 include $(GOROOT)/src/Make.cmd
 

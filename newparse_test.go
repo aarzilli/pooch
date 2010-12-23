@@ -180,10 +180,12 @@ func TestParseFull() {
 }
 
 func main() {
+	fmt.Printf("Testing tokenizer\n")
 	TestTokSpaces()
 	TestTokMisc()
 	TestTokOps()
 	TestTokRewind()
+	fmt.Printf("Testing parser proper\n")
 	TestParseSimpleExpr()
 	TestParseAnd()
 	TestParseFull()

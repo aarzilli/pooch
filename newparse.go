@@ -244,7 +244,6 @@ func (p *Parser) ParseBoolExclusion(r *SimpleExpr) bool {
 	return p.ParseSpeculative(func() bool {
 		if !p.ParseToken("-") { return false }
 		if !p.ParseSimpleExpression(r) { return false }
-		//TODO: an expression of the form "-#bla#bli#blo" should be correctly supported
 		return true
 	})
 }
