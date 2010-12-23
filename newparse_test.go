@@ -39,6 +39,11 @@ func TestTokMisc() {
 	mmt("#prova#prova+#prova@prova", []string{ "#", "prova", "#", "prova", "+", "#", "prova", "#", "prova" })
 }
 
+func TestTokTime() {
+	mmt("#10/2", []string{ "#", "10/2" })
+	mmt("#2010-01-21,10:30#l", []string{ "#", "2010-01-21,10:30", "#", "l" })
+}
+
 func TestTokOps() {
 	mmt(" = =~ <a <= !~ ! >", []string{
 		" ", "=",
@@ -83,7 +88,7 @@ func TestTokRewind() {
 
 func tse(in string, name string, op string, value string) {
 	t := NewTokenizer(in)
-	p := NewParser(t)
+	p := NewParser(t, 0)
 	expr := &SimpleExpr{}
 	
 	if !p.ParseSimpleExpression(expr) {
@@ -106,7 +111,7 @@ func TestParseSimpleExpr() {
 
 func tae(in string, expected []string) {
 	t := NewTokenizer(in)
-	p := NewParser(t)
+	p := NewParser(t, 0)
 
 	r := &AndExpr{}
 
@@ -121,6 +126,26 @@ func tae(in string, expected []string) {
 	}
 }
 
+func tae_wval(in string, expected []string, expVal []string, expExtra []string) {
+	t := NewTokenizer(in)
+	p := NewParser(t, 0)
+
+	r := &AndExpr{}
+
+	p.ParseAndExpr(r)
+
+	if len(r.subExpr) != len(expected) {
+		panic(fmt.Sprintf("Different number of returned values found [%v] expected [%v]", r.subExpr, expected))
+	}
+
+	for i, v := range expected {
+		mms(r.subExpr[i].name, v)
+		mms(r.subExpr[i].op, "=")
+		mms(r.subExpr[i].value, expVal[i])
+		mms(r.subExpr[i].extra, expExtra[i])
+	}
+}
+
 func TestParseAnd() {
 	tae("#blip", []string{ "blip" })
 	tae("#blip #blop", []string{ "blip", "blop" })
@@ -131,7 +156,7 @@ func TestParseAnd() {
 
 func tae2(in string, oredExpected [][]string, removedExpected []string, query string) {
 	t := NewTokenizer(in)
-	p := NewParser(t)
+	p := NewParser(t, 0)
 
 	r := p.Parse()
 
@@ -179,14 +204,27 @@ func TestParseFull() {
 		"")
 }
 
+func TestParseTimetag() {
+	tentwo_dt, _ := ParseDateTime("10/2", 0)
+	tentwo := tentwo_dt.Format(TRIGGER_AT_FORMAT)
+	tae_wval("#10/2 prova", []string{ "!when" }, []string{ tentwo }, []string{ "" })
+	tae_wval("#10/2+#2010-09-21", []string{ "!when", "!when" }, []string{ tentwo, "2010-09-21 00:00" }, []string{ "", "" })
+	tae_wval("#10/2+weekly #2010-09-21", []string{ "!when", "!when" }, []string{ tentwo, "2010-09-21 00:00" }, []string{ "weekly", "" })
+}
+
 func main() {
 	fmt.Printf("Testing tokenizer\n")
 	TestTokSpaces()
 	TestTokMisc()
 	TestTokOps()
 	TestTokRewind()
+	TestTokTime()
+
 	fmt.Printf("Testing parser proper\n")
 	TestParseSimpleExpr()
 	TestParseAnd()
 	TestParseFull()
+
+	fmt.Printf("Testing special tags\n")
+	TestParseTimetag()
 }

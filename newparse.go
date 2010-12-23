@@ -3,6 +3,7 @@ package main
 import (
 	"unicode"
 	"strings"
+	"strconv"
 //	"fmt"
 )
 
@@ -48,6 +49,10 @@ func isTagChar(ch int) bool {
 	if unicode.IsLetter(ch) { return true; }	
 	if unicode.IsDigit(ch) { return true; }
 	if ch == '-' { return true; }
+	if ch == '/' { return true; }
+	if ch == ',' { return true; }
+	if ch == '_' { return true; }
+	if ch == ':' { return true; }
 	return false;
 }
 
@@ -115,16 +120,20 @@ func (t *Tokenizer) RealNext() string {
 type Parser struct {
 	tkzer *Tokenizer
 	showCols []string
+	timezone int
 }
 
-func NewParser(tkzer *Tokenizer) *Parser {
-	return &Parser{tkzer, make([]string, 0)}
+func NewParser(tkzer *Tokenizer, timezone int) *Parser {
+	return &Parser{tkzer, make([]string, 0), timezone}
 }
 
 type SimpleExpr struct {
 	name string
 	op string  // if empty string this is a simple tag expression
 	value string
+	extra string
+	// if the name starts with a "!" this old an extra value which is:
+	// - freq for "!when"
 }
 
 func (se *SimpleExpr) String() string {
@@ -193,6 +202,40 @@ func (p *Parser) ParseOperationSubexpression(r *SimpleExpr) bool {
 	})
 }
 
+func (p *Parser) ParseFreqToken(pfreq *string) bool {
+	return p.ParseSpeculative(func()bool {
+		Logf(TRACE, "Attempting to parse frequency (after a timetag)\n")
+		*pfreq = p.tkzer.Next()
+		switch *pfreq {
+		case "daily": return true
+		case "weekly": return true
+		case "biweekly": return true
+		case "monthly": return true
+		case "yearly": return true
+		}
+		_, err := strconv.Atoi(*pfreq)
+		if err == nil { return true }
+		return false
+	})
+}
+
+func (p *Parser) AttemptTimeExpressionTransformation(r *SimpleExpr) bool {
+	parsed, err := ParseDateTime(r.name, p.timezone)
+	if err != nil { return false; }
+	r.name = "!when"
+	r.value = parsed.Format(TRIGGER_AT_FORMAT)
+	r.op = "="
+
+	if p.ParseToken("+") {
+		freq := ""
+		if p.ParseFreqToken(&freq) {
+			r.extra = freq
+		}
+	}
+	
+	return true
+}
+
 func (p *Parser) ParseSimpleExpression(r *SimpleExpr) bool {
 	return p.ParseSpeculative(func()bool {
 		if p.tkzer.Next() != "#" { return false }
@@ -206,17 +249,27 @@ func (p *Parser) ParseSimpleExpression(r *SimpleExpr) bool {
 
 		hadSpace := p.ParseToken(" ") // semi-optional space token
 		wasLastToken := p.ParseToken("")
-		startOfASimpleExpression := p.LookaheadToken("#")
+		startOfASimpleExpression := p.LookaheadToken("#") || p.LookaheadToken("+")
 
-		if !p.ParseOperationSubexpression(r) {
+		hasOpSubexpr := p.ParseOperationSubexpression(r)
+		
+		if !hasOpSubexpr {
 			Logf(TRACE, "Parse of operation subexpression failed\n")
 			// either there was a subexpression or this must end with 
 			if !hadSpace && !wasLastToken && !startOfASimpleExpression { return false }
 		}
 
 		r.name = tagName
-		if isShowCols {
-			p.showCols = append(p.showCols, tagName)
+		
+		isTimeExpression := false
+		if !hasOpSubexpr {
+			isTimeExpression = p.AttemptTimeExpressionTransformation(r)
+		} 
+
+		if !isTimeExpression {
+			if isShowCols {
+				p.showCols = append(p.showCols, tagName)
+			}
 		}
 
 		return true

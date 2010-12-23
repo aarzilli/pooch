@@ -19,6 +19,18 @@ import (
 
 var TRIGGER_AT_FORMAT string = "2006-01-02 15:04"
 
+type ParseError struct {
+	error string
+}
+
+func MakeParseError(error string) os.Error {
+	return &ParseError{error}
+}
+
+func (pe *ParseError) String() string {
+	return pe.error
+}
+
 type Priority int;
 
 const (
