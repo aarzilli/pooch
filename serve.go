@@ -190,6 +190,7 @@ func SaveServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 }
 
 func ShowSubcols(c http.ResponseWriter, query string, tl *Tasklist) {
+	SubcolsHeader(nil, c)
 	SubcolEntryHTML(map[string]string{"name": "index", "dst": ""}, c)
 
 	for _, v := range tl.GetSavedSearches() {
@@ -216,6 +217,8 @@ func ShowSubcols(c http.ResponseWriter, query string, tl *Tasklist) {
 			SubcolEntryHTML(map[string]string{"name": dst, "dst": dst}, c)
 		}
 	}
+
+	SubcolsEnder(map[string]string{ }, c)
 }
 
 func ErrorLogServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
@@ -239,25 +242,7 @@ func ErrorLogServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	ErrorLogEnderHTML(nil, c)
 }
 
-/*
- * Tasklist
- */
-func ListServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
-	css := tl.GetSetting("theme")
-	timezone := tl.GetTimezone()
-	includeDone := req.FormValue("done") != ""
-	query := strings.Replace(req.FormValue("q"), "\r", "", -1)
-	includeDoneStr := ""; if includeDone { includeDoneStr = "checked" }
-	removeSearch := ""; if IsSavedQuery(query) { removeSearch = "remove-search" }
-	showCols := make(map[string]bool)
-
-	v, err := tl.Retrieve(SearchParse(query, includeDone, false, nil, showCols, tl))
-
-	colNames := []string{}
-	for colName, _ := range showCols {
-		colNames = append(colNames, colName)
-	}
-
+func queryForTitle(query string) string {
 	split := strings.Split(query, "\n", 2)
 	queryForTitle := split[0]
 	if len(split) > 1 {
@@ -266,19 +251,50 @@ func ListServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 
 	if query == "" {
 		queryForTitle = "Index"
-	} 
+	}
+
+	return queryForTitle
+}
+
+func headerInfo(tl *Tasklist, pageName string, query string, includeDone bool, retrieveError os.Error) map[string]interface{} {
+	css := tl.GetSetting("theme")
+	timezone := tl.GetTimezone()
+	includeDoneStr := ""; if includeDone { includeDoneStr = "checked" }
+	removeSearch := ""; if IsSavedQuery(query) { removeSearch = "remove-search" }	
 	
-	ListHeaderHTML(map[string]interface{}{
+	return map[string]interface{}{
+		"pageName": pageName,
 		"query": query,
-		"queryForTitle": queryForTitle,
+		"queryForTitle": queryForTitle(query),
 		"theme": css,
 		"timezone": fmt.Sprintf("%d", timezone),
 		"includeDone": includeDoneStr,
 		"removeSearch": removeSearch,
-		"error": err },
-		c)
+		"error": retrieveError,
+	};
+}
+
+/*
+ * Tasklist
+ */
+func ListServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
+	includeDone := req.FormValue("done") != ""
+	query := strings.Replace(req.FormValue("q"), "\r", "", -1)
+	showCols := make(map[string]bool)
+	timezone := tl.GetTimezone()
+
+	v, err := tl.Retrieve(SearchParse(query, includeDone, false, nil, showCols, tl))
+
+	colNames := []string{}
+	for colName, _ := range showCols {
+		colNames = append(colNames, colName)
+	}
+
+	headerInfo := headerInfo(tl, "/list", query, includeDone, err)
+	
+	ListHeaderHTML(headerInfo, c)
+	CommonHeaderHTML(headerInfo, c)
 	ShowSubcols(c, query, tl)
-	SubcolsEnder(map[string]string{ }, c)
 	
 	var curp Priority = INVALID
 	for idx, entry := range v {
@@ -313,9 +329,12 @@ func ListServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	ListEnderHTML(nil, c)
 }
 
-func CalendarServer(c http.ResponseWriter, req *http.Request) {
-	query := req.FormValue("q")
+func CalendarServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
+	query := strings.Replace(req.FormValue("q"), "\r", "", -1)
+	includeDone := req.FormValue("done") != ""
+
 	CalendarHeaderHTML(map[string]string{ "query": query }, c)
+	CommonHeaderHTML(headerInfo(tl, "/cal", query, includeDone, nil), c)
 	CalendarHTML(map[string]string{ "query": query }, c)
 }
 
@@ -439,7 +458,7 @@ func SetupHandleFunc(wrapperTasklistServer func(TasklistServer)http.HandlerFunc,
 
 	// Entry point urls
 	http.HandleFunc("/list", WrapperServer(wrapperTasklistServer(ListServer)))
-	http.HandleFunc("/cal", WrapperServer(CalendarServer))
+	http.HandleFunc("/cal", WrapperServer(wrapperTasklistServer(CalendarServer)))
 	http.HandleFunc("/opts", WrapperServer(wrapperTasklistServer(OptionServer)))
 	http.HandleFunc("/errorlog", WrapperServer(wrapperTasklistServer(ErrorLogServer)))
 

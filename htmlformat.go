@@ -44,26 +44,14 @@ func MakeExecutableTemplate(t string) ExecutableTemplate {
 	return WrapTemplate(template.MustParse(t, formatters))
 }
 
-
-var ListHeaderHTML ExecutableTemplate = MakeExecutableTemplate(`
-<html>
-<head>
-  <title>Pooch: {queryForTitle|html}</title>
-  <link type='text/css' rel='stylesheet' href='{theme}'>
-  <link type='text/css' rel='stylesheet' href='calendar.css'>
-  <script src='/json.js'></script>
-  <script src='/jquery.js'></script>
-  <script src='/int.js'></script>
-  <script src='/calendar.js'></script>
-</head>
-<body onkeypress='keytable(event)'>
+var CommonHeaderHTML ExecutableTemplate = MakeExecutableTemplate(`
   <div style='float: right'><p align='right'><small><a href='/opts'>options</a>&nbsp;<a href="/advanced.html">advanced operations</a></small><br/><small>Current timezone: {timezone|html}</small></div>
   <h2>{queryForTitle|html} <span style='font-size: small'>
     &nbsp;
     <span style='position: relative;'>
       <a href='javascript:toggle_searchpop()'>[change query]</a>
       <div id='searchpop' class='popup' style='display: none; position: absolute; top: 20px; z-index: 9000'>
-         <form method='get' action='/list'>
+         <form method='get' action='{pageName}'>
            <label for='query'>Query:</label>&nbsp;
            <textarea name='q' id='q' cols='50' rows='10'>{query|html}</textarea>
            <input type='submit' value='search'>
@@ -96,7 +84,23 @@ var ListHeaderHTML ExecutableTemplate = MakeExecutableTemplate(`
   {.section error}
     <div class='screrror'>Error while executing search: {@|html} <a href='/errorlog'>Full error log</a></div>
   {.end}
+`)
 
+var ListHeaderHTML ExecutableTemplate = MakeExecutableTemplate(`
+<html>
+<head>
+  <title>Pooch: {queryForTitle|html}</title>
+  <link type='text/css' rel='stylesheet' href='{theme}'>
+  <link type='text/css' rel='stylesheet' href='calendar.css'>
+  <script src='/json.js'></script>
+  <script src='/jquery.js'></script>
+  <script src='/int.js'></script>
+  <script src='/calendar.js'></script>
+</head>
+<body onkeypress='keytable(event)'>
+`)
+
+var SubcolsHeader ExecutableTemplate = MakeExecutableTemplate(`
   <table width='100%' style='border-collapse: collapse;'><tr>
   <td valign='top' style='width: 10%'><div style='padding-top: 30px'>
 `)
@@ -213,28 +217,20 @@ var CalendarHeaderHTML ExecutableTemplate = MakeExecutableTemplate(`
 <head>
   <link rel='stylesheet' type='text/css' href='fullcalendar.css'/>
   <link rel='stylesheet' type='text/css' href='cal.css'/>
-  <script type='text/javascript' src='jquery.js'></script>
-  <script type='text/javascript' src='jquery-ui-custom.js'></script>
-  <script type='text/javascript' src='fullcalendar.js'></script>
-  <script type='text/javascript' src='cint.js'></script>
+  <script src='jquery.js'></script>
+  <script src='jquery-ui-custom.js'></script>
+  <script src='fullcalendar.js'></script>
+  <script src='int.js'></script>
+  <script src='cint.js'></script>
   <title>{query|html} calendar</title>
   <script>
      var query = "{query|html}";
   </script>
 </head>
-<body>
+<body onkeypress='keytable(event)'>
 `)
 
 var CalendarHTML ExecutableTemplate = MakeExecutableTemplate(`
-  <h2>{query|html} <span style='font-size: small'><a href='list?q={query|url}'>as list</a></span></h2>
-
-  <p><form onsubmit='return add_entry("{query|html}")'>
-  <label for='text'>New entry:</label>&nbsp;<input size='50' type='newentry' id='newentry' name='text'/><input type='button' value='add' onclick='javascript:add_entry("{query|html}")'/>
-  </form>
-
-  <p><form method='get' action='/cal'>
-  <label for='query'>Query:</label>&nbsp;<input size='50' type='text' id='q' name='q' value='{query|html}'/><input type='submit' value='search'/>
-
   <p>
   <div id='calendar'></div>
   <script>
