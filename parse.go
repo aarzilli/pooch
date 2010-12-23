@@ -34,10 +34,6 @@ func ParsePriority(s string) (p Priority, err os.Error) {
 	return INVALID, MakeParseError(fmt.Sprintf("Unknown priority: %s", s))
 }
 
-
-
-
-
 func ExtractQuickTag(input string) (string, int) {
 	for i, ch := range input {
 		if (ch == ' ') || (ch == '\t') || (ch == '\n') || (ch == '\r') {

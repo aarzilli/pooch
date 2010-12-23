@@ -121,16 +121,22 @@ type Parser struct {
 	tkzer *Tokenizer
 	showCols []string
 	timezone int
+	options map[string]string
 }
 
 func NewParser(tkzer *Tokenizer, timezone int) *Parser {
-	return &Parser{tkzer, make([]string, 0), timezone}
+	return &Parser{tkzer, make([]string, 0), timezone, make(map[string]string)}
 }
 
 type SimpleExpr struct {
 	name string
 	op string  // if empty string this is a simple tag expression
 	value string
+
+	priority Priority
+
+	ignore bool // if this is set the caller to ParseSimpleExpression should ignore the returned result (despite the fact that the parsing was successful)
+	
 	extra string
 	// if the name starts with a "!" this old an extra value which is:
 	// - freq for "!when"
@@ -219,9 +225,30 @@ func (p *Parser) ParseFreqToken(pfreq *string) bool {
 	})
 }
 
+func (p *Parser) AttemptPriorityExpressionTransformation(r *SimpleExpr) bool {
+	priority := INVALID
+
+	switch r.name {
+	case "later", "l": priority = LATER
+	case "n", "now": priority = NOW
+	case "d", "done": priority = DONE
+	case "$", "N", "Notes", "notes": priority = NOTES
+	case "$$", "StickyNotes", "sticky": priority = STICKY
+	}
+
+	if priority == INVALID { return false }
+	
+	r.name = "!priority"
+	r.priority = priority
+	r.value = "see priority"
+	r.op = "="
+	
+	return true
+}
+
 func (p *Parser) AttemptTimeExpressionTransformation(r *SimpleExpr) bool {
 	parsed, err := ParseDateTime(r.name, p.timezone)
-	if err != nil { return false; }
+	if err != nil { return false }
 	r.name = "!when"
 	r.value = parsed.Format(TRIGGER_AT_FORMAT)
 	r.op = "="
@@ -236,6 +263,12 @@ func (p *Parser) AttemptTimeExpressionTransformation(r *SimpleExpr) bool {
 	return true
 }
 
+func (p *Parser) AttemptSpecialTagTransformations(r *SimpleExpr) bool {
+	if p.AttemptPriorityExpressionTransformation(r) { return true; }
+	if p.AttemptTimeExpressionTransformation(r) { return true; }
+	return false;
+}
+
 func (p *Parser) ParseSimpleExpression(r *SimpleExpr) bool {
 	return p.ParseSpeculative(func()bool {
 		if p.tkzer.Next() != "#" { return false }
@@ -245,6 +278,11 @@ func (p *Parser) ParseSimpleExpression(r *SimpleExpr) bool {
 		isShowCols := false
 		if p.ParseToken("!") {
 			isShowCols = true
+		}
+
+		if p.ParseToken("?") {
+			isShowCols = true
+			r.ignore = true
 		}
 
 		hadSpace := p.ParseToken(" ") // semi-optional space token
@@ -261,12 +299,12 @@ func (p *Parser) ParseSimpleExpression(r *SimpleExpr) bool {
 
 		r.name = tagName
 		
-		isTimeExpression := false
-		if !hasOpSubexpr {
-			isTimeExpression = p.AttemptTimeExpressionTransformation(r)
-		} 
+		isSpecialTag := false
+		if !hasOpSubexpr && !isShowCols {
+			isSpecialTag = p.AttemptSpecialTagTransformations(r)
+		}
 
-		if !isTimeExpression {
+		if !isSpecialTag {
 			if isShowCols {
 				p.showCols = append(p.showCols, tagName)
 			}
@@ -284,7 +322,9 @@ func (p *Parser) ParseAndExpr(r *AndExpr) bool {
 			expr := &SimpleExpr{}
 			if !p.ParseSimpleExpression(expr) { break }
 			p.ParseToken(" ") // optional separation space (it is not parsed by ParseSimpleExpression when there is a value involved
-			r.subExpr = append(r.subExpr, expr)
+			if !expr.ignore {
+				r.subExpr = append(r.subExpr, expr)
+			}
 		}
 
 		if len(r.subExpr) == 0 { return false }
@@ -319,7 +359,9 @@ func (p *Parser) Parse() *BoolExpr {
 	for {
 		simpleSubExpr := &SimpleExpr{}
 		if p.ParseBoolExclusion(simpleSubExpr) {
-			r.removed = append(r.removed, simpleSubExpr)
+			if !simpleSubExpr.ignore {
+				r.removed = append(r.removed, simpleSubExpr)
+			}
 			continue
 		}
 

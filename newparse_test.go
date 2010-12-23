@@ -107,6 +107,7 @@ func TestParseSimpleExpr() {
 	tse("#blip > 0", "blip", ">", "0")
 	tse("#blip>0", "blip", ">", "0")
 	tse("#blip!>0", "blip", ">", "0")
+	tse("#blip?", "blip", "", "")
 }
 
 func tae(in string, expected []string) {
@@ -143,6 +144,31 @@ func tae_wval(in string, expected []string, expVal []string, expExtra []string) 
 		mms(r.subExpr[i].op, "=")
 		mms(r.subExpr[i].value, expVal[i])
 		mms(r.subExpr[i].extra, expExtra[i])
+	}
+}
+
+func tae_showcols(in string, expected []string, showCols []string) {
+	t := NewTokenizer(in)
+	p := NewParser(t, 0)
+
+	r := &AndExpr{}
+
+	p.ParseAndExpr(r)
+
+	if len(r.subExpr) != len(expected) {
+		panic(fmt.Sprintf("Different number of returned values found [%v] expected [%v]", r.subExpr, expected))
+	}
+
+	for i, v := range expected {
+		mms(r.subExpr[i].name, v)
+	}
+
+	if len(p.showCols) != len(showCols) {
+		panic(fmt.Sprintf("Different number of renturned values for showCols found [%v] expected [%v]", p.showCols, showCols))
+	}
+
+	for i, v := range showCols {
+		mms(p.showCols[i], v)
 	}
 }
 
@@ -204,12 +230,21 @@ func TestParseFull() {
 		"")
 }
 
+func TestParsePriority() {
+	tae("#l#prova", []string{ "!priority", "prova" })
+}
+
 func TestParseTimetag() {
 	tentwo_dt, _ := ParseDateTime("10/2", 0)
 	tentwo := tentwo_dt.Format(TRIGGER_AT_FORMAT)
 	tae_wval("#10/2 prova", []string{ "!when" }, []string{ tentwo }, []string{ "" })
 	tae_wval("#10/2+#2010-09-21", []string{ "!when", "!when" }, []string{ tentwo, "2010-09-21 00:00" }, []string{ "", "" })
 	tae_wval("#10/2+weekly #2010-09-21", []string{ "!when", "!when" }, []string{ tentwo, "2010-09-21 00:00" }, []string{ "weekly", "" })
+}
+
+func TestShowCols() {
+	tae_showcols("#blap!>10", []string{ "blap" }, []string{ "blap" })
+	tae_showcols("#blap!#blop?#blip", []string{ "blap", "blip" }, []string{ "blap", "blop" })
 }
 
 func main() {
@@ -226,5 +261,9 @@ func main() {
 	TestParseFull()
 
 	fmt.Printf("Testing special tags\n")
+	TestParsePriority()
 	TestParseTimetag()
+
+	fmt.Printf("Testing show cols\n")
+	TestShowCols()
 }
