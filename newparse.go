@@ -88,6 +88,10 @@ func RepeatedTokenizerTo(fn func(int)bool, translation string) TokenizerFunc {
 	}
 }
 
+func (t *Tokenizer) Rest() string {
+	return string(t.input[t.i:len(t.input)])
+}
+
 func (t *Tokenizer) Next() string {
 	if t.next < len(t.rewindBuffer) {
 		r := t.rewindBuffer[t.next]
@@ -122,10 +126,12 @@ type Parser struct {
 	showCols []string
 	timezone int
 	options map[string]string
+	savedSearch string
+	extra string
 }
 
 func NewParser(tkzer *Tokenizer, timezone int) *Parser {
-	return &Parser{tkzer, make([]string, 0), timezone, make(map[string]string)}
+	return &Parser{tkzer, make([]string, 0), timezone, make(map[string]string), "", ""}
 }
 
 type SimpleExpr struct {
@@ -282,8 +288,20 @@ func (p *Parser) AttemptSpecialTagTransformations(r *SimpleExpr) bool {
 func (p *Parser) ParseSimpleExpression(r *SimpleExpr) bool {
 	return p.ParseSpeculative(func()bool {
 		if p.tkzer.Next() != "#" { return false }
+
+		savedSearch := false
+		if p.ParseToken("%") {
+			savedSearch = true
+		}
+			
 		tagName := p.tkzer.Next()
 		if !isTagChar(([]int(tagName))[0]) { return false }
+
+		if savedSearch {
+			p.savedSearch = tagName
+			r.ignore = true
+			return true
+		}
 
 		isShowCols := false
 		if p.ParseToken("!") {
@@ -359,6 +377,14 @@ func (p *Parser) ParseBoolOr(r *AndExpr) bool {
 	})
 }
 
+func (p *Parser) ParseExtraSeparator() bool {
+	return p.ParseSpeculative(func() bool {
+		if !p.ParseToken("#") { return false }
+		if !p.ParseToken("!") { return false }
+		return true
+	})
+}
+
 func (p *Parser) Parse() *BoolExpr {
 	r := &BoolExpr{}
 
@@ -367,6 +393,11 @@ func (p *Parser) Parse() *BoolExpr {
 	query := make([]string, 0)
 
 	for {
+		if p.ParseExtraSeparator() {
+			p.extra = p.tkzer.Rest()
+			break
+		}
+		
 		simpleSubExpr := &SimpleExpr{}
 		if p.ParseBoolExclusion(simpleSubExpr) {
 			if !simpleSubExpr.ignore {

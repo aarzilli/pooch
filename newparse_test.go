@@ -254,6 +254,22 @@ func TestOptions() {
 	tae_options("#blap#:w/done", []string{ "blap" }, []string{ "w/done" })
 }
 
+func TestSavedSearch() {
+	p, r := tae_ex("#%salvata")
+	check_and_expr(r, []string{ }, nil, nil)
+	mms(p.savedSearch, "salvata")
+}
+
+func TestExtra() {
+	t := NewTokenizer("prova bi #blap#! questo e` tutto extra")
+	p := NewParser(t, 0)
+
+	r := p.Parse()
+
+	mms(r.query, "prova bi")
+	mms(p.extra, " questo e` tutto extra")
+}
+
 func main() {
 	fmt.Printf("Testing tokenizer\n")
 	TestTokSpaces()
@@ -272,4 +288,6 @@ func main() {
 	TestParseTimetag()
 	TestShowCols()
 	TestOptions()
+	TestSavedSearch()
+	TestExtra()
 }
