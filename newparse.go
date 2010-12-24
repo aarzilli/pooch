@@ -225,6 +225,15 @@ func (p *Parser) ParseFreqToken(pfreq *string) bool {
 	})
 }
 
+func (p *Parser) AttemptOptionTransformation(r *SimpleExpr) bool {
+	if r.name[0] != ':' { return false }
+
+	p.options[r.name[1:]] = r.name[1:]
+	r.ignore = true
+
+	return true
+}
+
 func (p *Parser) AttemptPriorityExpressionTransformation(r *SimpleExpr) bool {
 	priority := INVALID
 
@@ -264,6 +273,7 @@ func (p *Parser) AttemptTimeExpressionTransformation(r *SimpleExpr) bool {
 }
 
 func (p *Parser) AttemptSpecialTagTransformations(r *SimpleExpr) bool {
+	if p.AttemptOptionTransformation(r) { return true; }
 	if p.AttemptPriorityExpressionTransformation(r) { return true; }
 	if p.AttemptTimeExpressionTransformation(r) { return true; }
 	return false;

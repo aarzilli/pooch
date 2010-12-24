@@ -110,7 +110,8 @@ func TestParseSimpleExpr() {
 	tse("#blip?", "blip", "", "")
 }
 
-func tae(in string, expected []string) {
+
+func tae_ex(in string) (*Parser, *AndExpr) {
 	t := NewTokenizer(in)
 	p := NewParser(t, 0)
 
@@ -118,50 +119,37 @@ func tae(in string, expected []string) {
 
 	p.ParseAndExpr(r)
 
+	return p, r
+}
+
+func check_and_expr(r *AndExpr, expected []string, expVal []string, expExtra []string) {
 	if len(r.subExpr) != len(expected) {
 		panic(fmt.Sprintf("Different number of returned values found [%v] expected [%v]", r.subExpr, expected))
 	}
-
+	
 	for i, v := range expected {
 		mms(r.subExpr[i].name, v)
+		if (expVal != nil) {
+			mms(r.subExpr[i].op, "=")
+			mms(r.subExpr[i].value, expVal[i])
+		}
+		if (expExtra != nil) { mms(r.subExpr[i].extra, expExtra[i]) }
 	}
+}
+
+func tae(in string, expected []string) {
+	_, r := tae_ex(in)
+	check_and_expr(r, expected, nil, nil)
 }
 
 func tae_wval(in string, expected []string, expVal []string, expExtra []string) {
-	t := NewTokenizer(in)
-	p := NewParser(t, 0)
-
-	r := &AndExpr{}
-
-	p.ParseAndExpr(r)
-
-	if len(r.subExpr) != len(expected) {
-		panic(fmt.Sprintf("Different number of returned values found [%v] expected [%v]", r.subExpr, expected))
-	}
-
-	for i, v := range expected {
-		mms(r.subExpr[i].name, v)
-		mms(r.subExpr[i].op, "=")
-		mms(r.subExpr[i].value, expVal[i])
-		mms(r.subExpr[i].extra, expExtra[i])
-	}
+	_, r := tae_ex(in)
+	check_and_expr(r, expected, expVal, expExtra)
 }
 
 func tae_showcols(in string, expected []string, showCols []string) {
-	t := NewTokenizer(in)
-	p := NewParser(t, 0)
-
-	r := &AndExpr{}
-
-	p.ParseAndExpr(r)
-
-	if len(r.subExpr) != len(expected) {
-		panic(fmt.Sprintf("Different number of returned values found [%v] expected [%v]", r.subExpr, expected))
-	}
-
-	for i, v := range expected {
-		mms(r.subExpr[i].name, v)
-	}
+	p, r := tae_ex(in)
+	check_and_expr(r, expected, nil, nil)
 
 	if len(p.showCols) != len(showCols) {
 		panic(fmt.Sprintf("Different number of renturned values for showCols found [%v] expected [%v]", p.showCols, showCols))
@@ -169,6 +157,21 @@ func tae_showcols(in string, expected []string, showCols []string) {
 
 	for i, v := range showCols {
 		mms(p.showCols[i], v)
+	}
+}
+
+func tae_options(in string, expected []string, options []string) {
+	p, r := tae_ex(in)
+	check_and_expr(r, expected, nil, nil)
+
+	if len(p.options) != len(options) {
+		panic(fmt.Sprintf("Different number of options returned [%v] expected [%v]", p.options, options))
+	}
+
+	for _, option := range options {
+		if _, ok := p.options[option]; !ok {
+			panic(fmt.Sprintf("Expected option [%v] not found in [%v]\n", option, p.options))
+		}
 	}
 }
 
@@ -247,6 +250,10 @@ func TestShowCols() {
 	tae_showcols("#blap!#blop?#blip", []string{ "blap", "blip" }, []string{ "blap", "blop" })
 }
 
+func TestOptions() {
+	tae_options("#blap#:w/done", []string{ "blap" }, []string{ "w/done" })
+}
+
 func main() {
 	fmt.Printf("Testing tokenizer\n")
 	TestTokSpaces()
@@ -263,7 +270,6 @@ func main() {
 	fmt.Printf("Testing special tags\n")
 	TestParsePriority()
 	TestParseTimetag()
-
-	fmt.Printf("Testing show cols\n")
 	TestShowCols()
+	TestOptions()
 }
