@@ -144,7 +144,7 @@ func LuaIntSortField(L *lua51.State) int {
 func LuaIntPriority(L *lua51.State) int {
 	return LuaIntGetterSetterFunction("priority", L,
 		func(tl *Tasklist, entry *Entry) string { pr := entry.Priority(); return pr.String() },
-		func(tl *Tasklist, entry *Entry, value string) { pr, _ := ParsePriority(value); entry.SetPriority(pr) })
+		func(tl *Tasklist, entry *Entry, value string) { pr := ParsePriority(value); entry.SetPriority(pr) })
 }
 
 func LuaIntTriggerAt(L *lua51.State) int {

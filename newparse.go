@@ -4,6 +4,7 @@ import (
 	"unicode"
 	"strings"
 	"strconv"
+	"time"
 //	"fmt"
 )
 
@@ -70,9 +71,13 @@ func StrTokenizerTo(match string, translation string) TokenizerFunc {
 	}
 }
 
+func isQuickTagStart(ch int) bool {
+	return ch == '#' || ch == '@'
+}
+
 func ExtraSeparatorTokenizer(t *Tokenizer) (string, int) {
 	if t.i+1 >= len(t.input) { return "", 0 }
-	if (t.input[t.i] != '#') && (t.input[t.i] != '@') { return "", 0 }
+	if !isQuickTagStart(t.input[t.i]) { return "", 0 }
 	if t.input[t.i+1] != '!' { return "", 0 }
 
 	extra := string(t.input[t.i+2:])
@@ -157,8 +162,9 @@ func NewParser(tkzer *Tokenizer, timezone int) *Parser {
 type SimpleExpr struct {
 	name string
 	op string  // if empty string this is a simple tag expression
+	
 	value string
-
+	valueAsTime *time.Time
 	priority Priority
 
 	ignore bool // if this is set the caller to ParseSimpleExpression should ignore the returned result (despite the fact that the parsing was successful)
@@ -260,16 +266,22 @@ func (p *Parser) AttemptOptionTransformation(r *SimpleExpr) bool {
 	return true
 }
 
-func (p *Parser) AttemptPriorityExpressionTransformation(r *SimpleExpr) bool {
+func ParsePriority(prstr string) Priority {
 	priority := INVALID
-
-	switch r.name {
+	
+	switch prstr {
 	case "later", "l": priority = LATER
 	case "n", "now": priority = NOW
 	case "d", "done": priority = DONE
 	case "$", "N", "Notes", "notes": priority = NOTES
 	case "$$", "StickyNotes", "sticky": priority = STICKY
 	}
+
+	return priority
+}
+
+func (p *Parser) AttemptPriorityExpressionTransformation(r *SimpleExpr) bool {
+	priority := ParsePriority(r.name)
 
 	if priority == INVALID { return false }
 	
@@ -285,6 +297,7 @@ func (p *Parser) AttemptTimeExpressionTransformation(r *SimpleExpr) bool {
 	parsed, err := ParseDateTime(r.name, p.timezone)
 	if err != nil { return false }
 	r.name = "!when"
+	r.valueAsTime = parsed
 	r.value = parsed.Format(TRIGGER_AT_FORMAT)
 	r.op = "="
 
@@ -405,7 +418,7 @@ func (p *Parser) ParseExtraSeparator() bool {
 	})
 }
 
-func (p *Parser) ParseNew() *AndExpr {
+func (p *Parser) ParseNew() (string, *AndExpr) {
 	r := &AndExpr{}
 	query := make([]string, 0)
 
@@ -422,7 +435,9 @@ LOOP: for {
 		}
 	}
 
-	return r
+	title := strings.Join([]string(query), " ")
+
+	return title, r
 }
 
 func (p *Parser) Parse() *BoolExpr {
@@ -455,5 +470,54 @@ LOOP: for {
 	r.query = strings.Join([]string(query), " ")
 
 	return r
+}
+
+func SortFromTriggerAt(triggerAt *time.Time) string {
+	if triggerAt != nil {
+		return triggerAt.Format("2006-01-02")
+	}
+	
+	return time.UTC().Format("2006-01-02")
+}
+
+func ParseNew(tl *Tasklist, entryText, queryText string) *Entry {
+	t := NewTokenizer(entryText)
+	p := NewParser(t, 0)
+
+	title, exprs := p.ParseNew()
+
+	// the following is ignored, we try to always succeed
+	//if p.savedSearch != "" { return nil, MakeParseError("Saved search (@%) expression not allowed in new entry") }
+
+	var triggerAt *time.Time = nil
+	priority := NOW
+	cols := make(Columns)
+	id := ""
+
+	catFound := false
+	
+	for _, expr := range exprs.subExpr {
+		switch expr.name {
+		case "!when": triggerAt = expr.valueAsTime
+		case "!priority": priority = expr.priority
+		case "id": id = expr.value
+		default:
+			if expr.op == "" {
+				cols[expr.name] = ""
+				catFound = true
+			} else if expr.op == "=" {
+				cols[expr.name] = expr.value
+			}
+		}
+	}
+
+	//TODO: parsare queryText, estrarre colonne se possibile (aggiornare catFound)
+	//TODO: parsare p.extra (aggiornare catFound)
+
+	if id == "" { id = tl.MakeRandomId() }
+	if !catFound { cols["uncat"] = "" }
+	sort := SortFromTriggerAt(triggerAt)
+
+	return MakeEntry(id, title, "", priority, triggerAt, sort, cols)
 }
 

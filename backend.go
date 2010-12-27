@@ -504,8 +504,8 @@ func (tl *Tasklist) GetSubcols(theselect string) []string {
 }
 
 func (tl *Tasklist) RenameTag(src, dst string) {
-	if isQuickTagStart(src[0]) { src = src[1:len(src)] }
-	if isQuickTagStart(dst[0]) { dst = dst[1:len(dst)] }
+	if isQuickTagStart(int(src[0])) { src = src[1:len(src)] }
+	if isQuickTagStart(int(dst[0])) { dst = dst[1:len(dst)] }
 	tl.MustExec("UPDATE columns SET name = ? WHERE name = ?", dst, src)
 }
 

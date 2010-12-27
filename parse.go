@@ -53,9 +53,6 @@ func SortFromTriggerAt(triggerAt *time.Time) string {
 }
 
 
-func isQuickTagStart(ch uint8) bool {
-	return ch == '#' || ch == '@'
-}
 
 func Strtok(input, chars string) []string {
 	r := make([]string, 0)
