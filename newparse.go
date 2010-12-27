@@ -15,10 +15,12 @@ type Tokenizer struct {
 	rewindBuffer []string
 	next int
 	toktable []TokenizerFunc
+	parser *Parser
 }
 
 var standardTokTable []TokenizerFunc = []TokenizerFunc{
 	RepeatedTokenizerTo(unicode.IsSpace, " "),
+	ExtraSeparatorTokenizer,
 	StrTokenizer("+"),
 	StrTokenizer("-"),
 	StrTokenizer("#"),
@@ -38,7 +40,7 @@ var standardTokTable []TokenizerFunc = []TokenizerFunc{
 }	
 
 func NewTokenizer(input string) *Tokenizer {
-	return &Tokenizer{ []int(input), 0, make([]string, 0), 0, standardTokTable }
+	return &Tokenizer{ []int(input), 0, make([]string, 0), 0, standardTokTable, nil }
 }
 
 func anyChar(ch int) bool {
@@ -66,6 +68,18 @@ func StrTokenizerTo(match string, translation string) TokenizerFunc {
 		}
 		return "", 0
 	}
+}
+
+func ExtraSeparatorTokenizer(t *Tokenizer) (string, int) {
+	if t.i+1 >= len(t.input) { return "", 0 }
+	if (t.input[t.i] != '#') && (t.input[t.i] != '@') { return "", 0 }
+	if t.input[t.i+1] != '!' { return "", 0 }
+
+	extra := string(t.input[t.i+2:])
+
+	t.PushExtra(extra)
+
+	return "", len(extra)+2
 }
 
 func StrTokenizer(match string) TokenizerFunc {
@@ -121,6 +135,10 @@ func (t *Tokenizer) RealNext() string {
 	return ""
 }
 
+func (t *Tokenizer) PushExtra(extra string) {
+	t.parser.extra = extra
+}
+
 type Parser struct {
 	tkzer *Tokenizer
 	showCols []string
@@ -131,7 +149,9 @@ type Parser struct {
 }
 
 func NewParser(tkzer *Tokenizer, timezone int) *Parser {
-	return &Parser{tkzer, make([]string, 0), timezone, make(map[string]string), "", ""}
+	p := &Parser{tkzer, make([]string, 0), timezone, make(map[string]string), "", ""}
+	tkzer.parser = p
+	return p
 }
 
 type SimpleExpr struct {
@@ -385,6 +405,26 @@ func (p *Parser) ParseExtraSeparator() bool {
 	})
 }
 
+func (p *Parser) ParseNew() *AndExpr {
+	r := &AndExpr{}
+	query := make([]string, 0)
+
+LOOP: for {
+		switch {
+		case p.ParseToken(""):
+			break LOOP
+		case p.ParseAndExpr(r):
+			//nothing
+		case p.ParseToken(" "):
+			//nothing
+		default:
+			query = append(query, p.tkzer.Next())			
+		}
+	}
+
+	return r
+}
+
 func (p *Parser) Parse() *BoolExpr {
 	r := &BoolExpr{}
 
@@ -392,31 +432,28 @@ func (p *Parser) Parse() *BoolExpr {
 	r.removed = make([]*SimpleExpr, 0)
 	query := make([]string, 0)
 
-	for {
-		if p.ParseExtraSeparator() {
-			p.extra = p.tkzer.Rest()
-			break
-		}
-		
+LOOP: for {
 		simpleSubExpr := &SimpleExpr{}
-		if p.ParseBoolExclusion(simpleSubExpr) {
+		andSubExpr := &AndExpr{}
+		
+		switch {
+		case p.ParseToken(""):
+			break LOOP
+		case p.ParseBoolExclusion(simpleSubExpr):
 			if !simpleSubExpr.ignore {
 				r.removed = append(r.removed, simpleSubExpr)
 			}
-			continue
-		}
-
-		andSubExpr := &AndExpr{}
-		if p.ParseBoolOr(andSubExpr) {
+		case p.ParseBoolOr(andSubExpr):
 			r.ored = append(r.ored, andSubExpr)
-			continue
+		case p.ParseToken(" "):
+			//nothing
+		default:
+			query = append(query, p.tkzer.Next())
 		}
-
-		if p.ParseToken("") { break }
-		if !p.ParseToken(" ") { query = append(query, p.tkzer.Next()) } // either reads a space as the next token or saves it
 	}
 
 	r.query = strings.Join([]string(query), " ")
 
 	return r
 }
+
