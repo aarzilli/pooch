@@ -1,148 +1,12 @@
 package main
 
 import (
-	"unicode"
 	"strings"
 	"strconv"
 	"time"
-//	"fmt"
+	"regexp"
+	"fmt"
 )
-
-type TokenizerFunc func(t *Tokenizer) (string, int);
-
-type Tokenizer struct {
-	input []int
-	i int
-	rewindBuffer []string
-	next int
-	toktable []TokenizerFunc
-	parser *Parser
-}
-
-var standardTokTable []TokenizerFunc = []TokenizerFunc{
-	RepeatedTokenizerTo(unicode.IsSpace, " "),
-	ExtraSeparatorTokenizer,
-	StrTokenizer("+"),
-	StrTokenizer("-"),
-	StrTokenizer("#"),
-	StrTokenizerTo("@", "#"),
-	StrTokenizer("%"),
-	StrTokenizer("?"),
-	StrTokenizer("=~"),
-	StrTokenizer(">="),
-	StrTokenizer("<="),
-	StrTokenizer("!~"),
-	StrTokenizer("!="),
-	StrTokenizer("!"),
-	StrTokenizer("<"),
-	StrTokenizer(">"),
-	RepeatedTokenizer(isTagChar),
-	RepeatedTokenizer(anyChar),
-}	
-
-func NewTokenizer(input string) *Tokenizer {
-	return &Tokenizer{ []int(input), 0, make([]string, 0), 0, standardTokTable, nil }
-}
-
-func anyChar(ch int) bool {
-	return !unicode.IsSpace(ch)
-}
-
-func isTagChar(ch int) bool {
-	if unicode.IsLetter(ch) { return true; }	
-	if unicode.IsDigit(ch) { return true; }
-	if ch == '-' { return true; }
-	if ch == '/' { return true; }
-	if ch == ',' { return true; }
-	if ch == '_' { return true; }
-	if ch == ':' { return true; }
-	return false;
-}
-
-func StrTokenizerTo(match string, translation string) TokenizerFunc {
-	umatch := []int(match)
-	return func(t *Tokenizer) (string, int) {
-		var j int
-		for j = 0; (j < len(match)) && (t.i+j < len(t.input)) && (t.input[t.i+j] == umatch[j]); j++ { }
-		if j >= len(match) {
-			return translation, j
-		}
-		return "", 0
-	}
-}
-
-func isQuickTagStart(ch int) bool {
-	return ch == '#' || ch == '@'
-}
-
-func ExtraSeparatorTokenizer(t *Tokenizer) (string, int) {
-	if t.i+1 >= len(t.input) { return "", 0 }
-	if !isQuickTagStart(t.input[t.i]) { return "", 0 }
-	if t.input[t.i+1] != '!' { return "", 0 }
-
-	extra := string(t.input[t.i+2:])
-
-	t.PushExtra(extra)
-
-	return "", len(extra)+2
-}
-
-func StrTokenizer(match string) TokenizerFunc {
-	return StrTokenizerTo(match, match)
-}
-
-func RepeatedTokenizer(fn func(int)bool) TokenizerFunc {
-	return func(t *Tokenizer) (string, int) {
-		var j int
-		for j = 0; (t.i+j < len(t.input)) && fn(t.input[t.i+j]); j++ { }
-		return string(t.input[t.i:t.i+j]), j
-	}
-}
-
-func RepeatedTokenizerTo(fn func(int)bool, translation string) TokenizerFunc {	
-	return func(t *Tokenizer) (string, int) {
-		var j int
-		for j = 0; (t.i+j < len(t.input)) && fn(t.input[t.i+j]); j++ { }
-		return translation, j
-	}
-}
-
-func (t *Tokenizer) Rest() string {
-	return string(t.input[t.i:len(t.input)])
-}
-
-func (t *Tokenizer) Next() string {
-	if t.next < len(t.rewindBuffer) {
-		r := t.rewindBuffer[t.next]
-		t.next++
-		return r
-	}
-
-	r := t.RealNext()
-	t.rewindBuffer = append(t.rewindBuffer, r)
-	t.next++
-	return r
-}
-
-func (t *Tokenizer) RealNext() string {
-	if t.i >= len(t.input) { return "" }
-
-	for _, fn := range t.toktable {
-		if r, skip := fn(t); skip > 0 {
-			//fmt.Printf("Matched [%s] Skipping: %d\n", r, skip);
-			t.i += skip
-			return r
-		}
-	}
-
-	panic("Can not tokenize string")
-
-	return ""
-}
-
-func (t *Tokenizer) PushExtra(extra string) {
-	t.parser.extra = extra
-}
 
 type Parser struct {
 	tkzer *Tokenizer
@@ -472,52 +336,75 @@ LOOP: for {
 	return r
 }
 
-func SortFromTriggerAt(triggerAt *time.Time) string {
-	if triggerAt != nil {
-		return triggerAt.Format("2006-01-02")
-	}
-	
-	return time.UTC().Format("2006-01-02")
+var startMultilineRE *regexp.Regexp = regexp.MustCompile("^[ \t\n\r]*{$")
+var numberRE *regexp.Regexp = regexp.MustCompile("^[0-9.]+$")
+
+
+func isNumber(tk string) (n float, ok bool) {
+	if !numberRE.MatchString(tk) { return -1, false }
+	n, err := strconv.Atof(tk)
+	if err != nil { return -1, false }
+	return n, true
 }
 
-func ParseNew(tl *Tasklist, entryText, queryText string) *Entry {
-	t := NewTokenizer(entryText)
-	p := NewParser(t, 0)
+func normalizeValue(value string, timezone int) string {
+	Logf(DEBUG, "Normalizing: [%s]\n", value)
+	if t, _ := ParseDateTime(value, timezone); t != nil {
+		value = t.Format(TRIGGER_AT_FORMAT)
+	} else if n, ok := isNumber(value); ok {
+		value = fmt.Sprintf("%0.6f", n)
+	}
 
-	title, exprs := p.ParseNew()
+	return value
+}
 
-	// the following is ignored, we try to always succeed
-	//if p.savedSearch != "" { return nil, MakeParseError("Saved search (@%) expression not allowed in new entry") }
-
-	var triggerAt *time.Time = nil
-	priority := NOW
+func ParseCols(colStr string, timezone int) (Columns, bool) {
 	cols := make(Columns)
-	id := ""
 
-	catFound := false
+	multilineKey := ""
+	multilineValue := ""
 	
-	for _, expr := range exprs.subExpr {
-		switch expr.name {
-		case "!when": triggerAt = expr.valueAsTime
-		case "!priority": priority = expr.priority
-		case "id": id = expr.value
-		default:
-			if expr.op == "" {
-				cols[expr.name] = ""
-				catFound = true
-			} else if expr.op == "=" {
-				cols[expr.name] = expr.value
+	foundcat := false
+	for _, v := range strings.Split(colStr, "\n", -1) {
+		if multilineKey != "" {
+			if v == "}" {
+				cols[multilineKey] = multilineValue
+				Logf(DEBUG, "Adding [%s] -> multiline\n", multilineKey)
+				multilineKey, multilineValue  = "", ""
+			} else {
+				multilineValue += v + "\n"
+			}
+		} else {
+			vs := strings.Split(v, ":", 2)
+			
+			if len(vs) == 0 { continue }
+			
+			if len(vs) == 1 {
+				// it's a category
+				x := strings.TrimSpace(v)
+				Logf(DEBUG, "Adding [%s]\n", x)
+				if x != "" {
+					cols[x] = ""
+					foundcat = true
+				}
+			} else {
+				// it (may) be a column
+				key := strings.TrimSpace(vs[0])
+				value := strings.TrimSpace(vs[1])
+
+				if key == "" { continue }
+				
+				if startMultilineRE.MatchString(value) {
+					multilineKey = key
+				} else {
+					value = normalizeValue(value, timezone)
+					Logf(DEBUG, "Adding [%s] -> [%s]\n", key, value)
+					cols[key] = value
+					if value == "" { foundcat = true }
+				}
 			}
 		}
 	}
 
-	//TODO: parsare queryText, estrarre colonne se possibile (aggiornare catFound)
-	//TODO: parsare p.extra (aggiornare catFound)
-
-	if id == "" { id = tl.MakeRandomId() }
-	if !catFound { cols["uncat"] = "" }
-	sort := SortFromTriggerAt(triggerAt)
-
-	return MakeEntry(id, title, "", priority, triggerAt, sort, cols)
+	return cols, foundcat
 }
-

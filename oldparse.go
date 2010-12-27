@@ -383,77 +383,8 @@ func TimeString(triggerAt *time.Time, sort string, timezone int) string {
 	return ""
 }
 
-var numberRE *regexp.Regexp = regexp.MustCompile("^[0-9.]+$")
-var startMultilineRE *regexp.Regexp = regexp.MustCompile("^[ \t\n\r]*{$")
 
-func isNumber(tk string) (n float, ok bool) {
-	if !numberRE.MatchString(tk) { return -1, false }
-	n, err := strconv.Atof(tk)
-	if err != nil { return -1, false }
-	return n, true
-}
 
-func normalizeValue(value string, timezone int) string {
-	Logf(DEBUG, "Normalizing: [%s]\n", value)
-	if t, _ := ParseDateTime(value, timezone); t != nil {
-		value = t.Format(TRIGGER_AT_FORMAT)
-	} else if n, ok := isNumber(value); ok {
-		value = fmt.Sprintf("%0.6f", n)
-	}
-
-	return value
-}
-
-func ParseCols(colStr string, timezone int) (Columns, bool) {
-	cols := make(Columns)
-
-	multilineKey := ""
-	multilineValue := ""
-	
-	foundcat := false
-	for _, v := range strings.Split(colStr, "\n", -1) {
-		if multilineKey != "" {
-			if v == "}" {
-				cols[multilineKey] = multilineValue
-				Logf(DEBUG, "Adding [%s] -> multiline\n", multilineKey)
-				multilineKey, multilineValue  = "", ""
-			} else {
-				multilineValue += v + "\n"
-			}
-		} else {
-			vs := strings.Split(v, ":", 2)
-			
-			if len(vs) == 0 { continue }
-			
-			if len(vs) == 1 {
-				// it's a category
-				x := strings.TrimSpace(v)
-				Logf(DEBUG, "Adding [%s]\n", x)
-				if x != "" {
-					cols[x] = ""
-					foundcat = true
-				}
-			} else {
-				// it (may) be a column
-				key := strings.TrimSpace(vs[0])
-				value := strings.TrimSpace(vs[1])
-
-				if key == "" { continue }
-				
-				if startMultilineRE.MatchString(value) {
-					multilineKey = key
-				} else {
-					value = normalizeValue(value, timezone)
-					Logf(DEBUG, "Adding [%s] -> [%s]\n", key, value)
-					cols[key] = value
-					if value == "" { foundcat = true }
-				}
-			}
-		}
-	}
-
-	return cols, foundcat
-}
 
 func DemarshalEntry(umentry *UnmarshalEntry, timezone int) *Entry {
 	triggerAt, err := ParseDateTime(umentry.TriggerAt, timezone)
