@@ -45,11 +45,10 @@ func TestTokTime() {
 }
 
 func TestTokOps() {
-	mmt(" = <a <= !~ ! >", []string{
+	mmt(" = <a <= ! >", []string{
 		" ", "=",
 		" ", "<", "a",
 		" ", "<=",
-		" ", "!~",
 		" ", "!",
 		" ", ">", 
 	})

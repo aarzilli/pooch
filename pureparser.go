@@ -115,15 +115,6 @@ func ParseFreqToken(text string) bool {
 	return false
 }
 
-func (p *Parser) AttemptOptionTransformation(r *SimpleExpr) bool {
-	if r.name[0] != ':' { return false }
-
-	p.options[r.name[1:]] = r.name[1:]
-	r.ignore = true
-
-	return true
-}
-
 func ParsePriority(prstr string) Priority {
 	priority := INVALID
 	
@@ -175,10 +166,17 @@ func (p *Parser) AttemptTimeExpressionTransformation(r *SimpleExpr) bool {
 }
 
 func (p *Parser) AttemptSpecialTagTransformations(r *SimpleExpr) bool {
-	if p.AttemptOptionTransformation(r) { return true; }
 	if p.AttemptPriorityExpressionTransformation(r) { return true; }
 	if p.AttemptTimeExpressionTransformation(r) { return true; }
 	return false;
+}
+
+func (p *Parser) ParseOption(r *SimpleExpr) bool {
+	return p.ParseSpeculative(func()bool {
+		if p.tkzer.Next() != "#:" { return false }
+		r.name = p.tkzer.Next()
+		return true
+	})
 }
 
 func (p *Parser) ParseSavedSearch(r *SimpleExpr) bool {
@@ -206,17 +204,8 @@ func (p *Parser) ParseSimpleExpression(r *SimpleExpr) bool {
 			r.ignore = true
 		}
 
-		hadSpace := p.ParseToken(" ") // semi-optional space token
-		wasLastToken := p.ParseToken("")
-		startOfASimpleExpression := p.LookaheadToken("#") || p.LookaheadToken("+")
-
+		p.ParseToken(" ") // semi-optional space token
 		hasOpSubexpr := p.ParseOperationSubexpression(r)
-		
-		if !hasOpSubexpr {
-			Logf(TRACE, "Parse of operation subexpression failed\n")
-			// either there was a subexpression or this must end with 
-			if !hadSpace && !wasLastToken && !startOfASimpleExpression { return false }
-		}
 
 		r.name = tagName
 		
@@ -258,6 +247,8 @@ LOOP: for {
 			//nothing
 		case p.ParseSavedSearch(simple):
 			p.savedSearch = simple.name
+		case p.ParseOption(simple):
+			p.options[simple.name] = ""
 		case p.ParseExclusion(simple):
 			if !simple.ignore {
 				r.exclude.subExpr = append(r.exclude.subExpr, simple)

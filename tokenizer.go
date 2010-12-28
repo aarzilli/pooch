@@ -19,20 +19,33 @@ type Tokenizer struct {
 var standardTokTable []TokenizerFunc = []TokenizerFunc{
 	RepeatedTokenizerTo(unicode.IsSpace, " "),
 	ExtraSeparatorTokenizer,
+
 	StrTokenizer("-"),
+
+	// saved search tag
 	StrTokenizer("#%"),
-	StrTokenizerTo("@%", "#!"),
+	StrTokenizerTo("@%", "#%"),
+
+	StrTokenizer("#:"),
+	StrTokenizerTo("@:", "#:"),
+
+	// tag
 	StrTokenizer("#"),
 	StrTokenizerTo("@", "#"),
-	StrTokenizer("?"),
+
+	// operators
 	StrTokenizer("="),
 	StrTokenizer(">="),
 	StrTokenizer("<="),
-	StrTokenizer("!~"),
 	StrTokenizer("!="),
-	StrTokenizer("!"),
 	StrTokenizer("<"),
 	StrTokenizer(">"),
+
+	// terminators
+	StrTokenizer("!"),
+	StrTokenizer("?"),
+
+	// anything else
 	RepeatedTokenizer(isTagChar),
 	RepeatedTokenizer(anyChar),
 }	
