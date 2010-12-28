@@ -19,11 +19,11 @@ type Tokenizer struct {
 var standardTokTable []TokenizerFunc = []TokenizerFunc{
 	RepeatedTokenizerTo(unicode.IsSpace, " "),
 	ExtraSeparatorTokenizer,
-	StrTokenizer("+"),
 	StrTokenizer("-"),
+	StrTokenizer("#%"),
+	StrTokenizerTo("@%", "#!"),
 	StrTokenizer("#"),
 	StrTokenizerTo("@", "#"),
-	StrTokenizer("%"),
 	StrTokenizer("?"),
 	StrTokenizer("="),
 	StrTokenizer(">="),
@@ -46,14 +46,15 @@ func anyChar(ch int) bool {
 }
 
 func isTagChar(ch int) bool {
-	if unicode.IsLetter(ch) { return true; }	
-	if unicode.IsDigit(ch) { return true; }
-	if ch == '-' { return true; }
-	if ch == '/' { return true; }
-	if ch == ',' { return true; }
-	if ch == '_' { return true; }
-	if ch == ':' { return true; }
-	return false;
+	if unicode.IsLetter(ch) { return true }
+	if unicode.IsDigit(ch) { return true }
+	if ch == '+' { return true }
+	if ch == '-' { return true }
+	if ch == '/' { return true }
+	if ch == ',' { return true }
+	if ch == '_' { return true }
+	if ch == ':' { return true }
+	return false
 }
 
 func StrTokenizerTo(match string, translation string) TokenizerFunc {
@@ -76,6 +77,8 @@ func ExtraSeparatorTokenizer(t *Tokenizer) (string, int) {
 	if t.i+1 >= len(t.input) { return "", 0 }
 	if !isQuickTagStart(t.input[t.i]) { return "", 0 }
 	if t.input[t.i+1] != '!' { return "", 0 }
+
+	//TODO: parse the other separator too
 
 	extra := string(t.input[t.i+2:])
 

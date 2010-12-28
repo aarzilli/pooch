@@ -6,6 +6,13 @@ import (
 
 // part of the parser that interfaces with the backend
 
+
+func ParseEx(tl *Tasklist, text string) (*ParseResult, *Parser) {
+	t := NewTokenizer(text)
+	p := NewParser(t, tl.GetTimezone())
+	return p.ParseEx(), p
+}
+
 func SortFromTriggerAt(triggerAt *time.Time) string {
 	if triggerAt != nil {
 		return triggerAt.Format("2006-01-02")
@@ -14,20 +21,10 @@ func SortFromTriggerAt(triggerAt *time.Time) string {
 	return time.UTC().Format("2006-01-02")
 }
 
-func ParseSearchEx(tl *Tasklist, queryText string) *BoolExpr {
-	t := NewTokenizer(queryText)
-	p := NewParser(t, tl.GetTimezone())
-	return p.Parse()
-}
-
-func ExtractColumnsFromSearch(search *BoolExpr) Columns {
-	if len(search.ored) != 1 { return nil }
-
-	andExpr := search.ored[0]
-	
+func ExtractColumnsFromSearch(search *ParseResult) Columns {
 	cols := make(Columns)
 
-	for _, expr := range andExpr.subExpr {
+	for _, expr := range search.include.subExpr {
 		if expr.name[0] == '!' { continue }
 		switch expr.op {
 		case "=":
@@ -43,10 +40,7 @@ func ExtractColumnsFromSearch(search *BoolExpr) Columns {
 }
 
 func ParseNew(tl *Tasklist, entryText, queryText string) *Entry {
-	t := NewTokenizer(entryText)
-	p := NewParser(t, tl.GetTimezone())
-
-	title, exprs := p.ParseNew()
+	parsed, p := ParseEx(tl, entryText)
 
 	// the following is ignored, we try to always succeed
 	//if p.savedSearch != "" { return nil, MakeParseError("Saved search (@%) expression not allowed in new entry") }
@@ -58,10 +52,10 @@ func ParseNew(tl *Tasklist, entryText, queryText string) *Entry {
 
 	catFound := false
 	
-	for _, expr := range exprs.subExpr {
+	for _, expr := range parsed.include.subExpr {
 		switch expr.name {
-		case "!when": triggerAt = expr.valueAsTime
-		case "!priority": priority = expr.priority
+		case ":when": triggerAt = expr.valueAsTime
+		case ":priority": priority = expr.priority
 		case "id": id = expr.value
 		default:
 			if expr.op == "" {
@@ -74,8 +68,8 @@ func ParseNew(tl *Tasklist, entryText, queryText string) *Entry {
 	}
 
 	// extraction of columns from search expression
-	searchExpr := ParseSearchEx(tl, queryText)
-	searchCols := ExtractColumnsFromSearch(searchExpr)
+	searchParsed, _ := ParseEx(tl, queryText)
+	searchCols := ExtractColumnsFromSearch(searchParsed)
 	if searchCols != nil {
 		for k, v := range searchCols {
 			cols[k] = v;
@@ -94,6 +88,6 @@ func ParseNew(tl *Tasklist, entryText, queryText string) *Entry {
 
 	if triggerAt != nil { priority = TIMED }
 
-	return MakeEntry(id, title, "", priority, triggerAt, sort, cols)
+	return MakeEntry(id, parsed.text, "", priority, triggerAt, sort, cols)
 }
 

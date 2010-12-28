@@ -34,8 +34,8 @@ type SimpleExpr struct {
 	ignore bool // if this is set the caller to ParseSimpleExpression should ignore the returned result (despite the fact that the parsing was successful)
 	
 	extra string
-	// if the name starts with a "!" this old an extra value which is:
-	// - freq for "!when"
+	// if the name starts with a ":" this old an extra value which is:
+	// - freq for ":when"
 }
 
 func (se *SimpleExpr) String() string {
@@ -46,10 +46,10 @@ type AndExpr struct {
 	subExpr []*SimpleExpr
 }
 
-type BoolExpr struct {
-	ored []*AndExpr
-	removed []*SimpleExpr
-	query string
+type ParseResult struct {
+	text string
+	include AndExpr
+	exclude AndExpr
 }
 
 func (p *Parser) ParseSpeculative(fn func()bool) bool {
@@ -83,8 +83,6 @@ var OPERATORS map[string]bool = map[string]bool{
 	"<=": true,
 	">=": true,
 	"!=": true,
-	"!~": true,
-	"=~": true,
 }
 
 func (p *Parser) ParseOperationSubexpression(r *SimpleExpr) bool {
@@ -104,21 +102,17 @@ func (p *Parser) ParseOperationSubexpression(r *SimpleExpr) bool {
 	})
 }
 
-func (p *Parser) ParseFreqToken(pfreq *string) bool {
-	return p.ParseSpeculative(func()bool {
-		Logf(TRACE, "Attempting to parse frequency (after a timetag)\n")
-		*pfreq = p.tkzer.Next()
-		switch *pfreq {
-		case "daily": return true
-		case "weekly": return true
-		case "biweekly": return true
-		case "monthly": return true
-		case "yearly": return true
-		}
-		_, err := strconv.Atoi(*pfreq)
-		if err == nil { return true }
-		return false
-	})
+func ParseFreqToken(text string) bool {
+	switch text {
+	case "daily": return true
+	case "weekly": return true
+	case "biweekly": return true
+	case "monthly": return true
+	case "yearly": return true
+	}
+	_, err := strconv.Atoi(text)
+	if err == nil { return true }
+	return false
 }
 
 func (p *Parser) AttemptOptionTransformation(r *SimpleExpr) bool {
@@ -149,7 +143,7 @@ func (p *Parser) AttemptPriorityExpressionTransformation(r *SimpleExpr) bool {
 
 	if priority == INVALID { return false }
 	
-	r.name = "!priority"
+	r.name = ":priority"
 	r.priority = priority
 	r.value = "see priority"
 	r.op = "="
@@ -158,19 +152,24 @@ func (p *Parser) AttemptPriorityExpressionTransformation(r *SimpleExpr) bool {
 }
 
 func (p *Parser) AttemptTimeExpressionTransformation(r *SimpleExpr) bool {
-	parsed, err := ParseDateTime(r.name, p.timezone)
+	split := strings.Split(r.name, "+", 2)
+
+	parsed, err := ParseDateTime(split[0], p.timezone)
 	if err != nil { return false }
-	r.name = "!when"
+
+	freq := ""
+	if len(split) > 1 {
+		freq = split[1]
+		if !ParseFreqToken(freq) {
+			return false
+		}
+	}
+	
+	r.name = ":when"
 	r.valueAsTime = parsed
 	r.value = parsed.Format(TRIGGER_AT_FORMAT)
 	r.op = "="
-
-	if p.ParseToken("+") {
-		freq := ""
-		if p.ParseFreqToken(&freq) {
-			r.extra = freq
-		}
-	}
+	r.extra = freq
 	
 	return true
 }
@@ -182,23 +181,20 @@ func (p *Parser) AttemptSpecialTagTransformations(r *SimpleExpr) bool {
 	return false;
 }
 
+func (p *Parser) ParseSavedSearch(r *SimpleExpr) bool {
+	return p.ParseSpeculative(func()bool {
+		if p.tkzer.Next() != "#%" { return false }
+		r.name = p.tkzer.Next()
+		return true
+	})
+}
+
 func (p *Parser) ParseSimpleExpression(r *SimpleExpr) bool {
 	return p.ParseSpeculative(func()bool {
 		if p.tkzer.Next() != "#" { return false }
 
-		savedSearch := false
-		if p.ParseToken("%") {
-			savedSearch = true
-		}
-			
 		tagName := p.tkzer.Next()
 		if !isTagChar(([]int(tagName))[0]) { return false }
-
-		if savedSearch {
-			p.savedSearch = tagName
-			r.ignore = true
-			return true
-		}
 
 		isShowCols := false
 		if p.ParseToken("!") {
@@ -239,34 +235,7 @@ func (p *Parser) ParseSimpleExpression(r *SimpleExpr) bool {
 	})
 }
 
-func (p *Parser) ParseAndExpr(r *AndExpr, shouldReset bool) bool {
-	return p.ParseSpeculative(func() bool {
-		if shouldReset { r.subExpr = make([]*SimpleExpr, 0) }
-		added := 0
-
-LOOP:
-		for {
-			expr := &SimpleExpr{}
-			switch {
-			case p.ParseToken(" "):
-				//nothing
-			case p.ParseSimpleExpression(expr):
-				added++
-				if !expr.ignore {
-					r.subExpr = append(r.subExpr, expr)
-				}
-			default:
-				break LOOP
-			}
-		}
-
-		if added == 0 { return false }
-
-		return true
-	})
-}
-
-func (p *Parser) ParseBoolExclusion(r *SimpleExpr) bool {
+func (p *Parser) ParseExclusion(r *SimpleExpr) bool {
 	return p.ParseSpeculative(func() bool {
 		if !p.ParseToken("-") { return false }
 		if !p.ParseSimpleExpression(r) { return false }
@@ -274,80 +243,41 @@ func (p *Parser) ParseBoolExclusion(r *SimpleExpr) bool {
 	})
 }
 
-func (p *Parser) ParseBoolOr(r *AndExpr) bool {
-	return p.ParseSpeculative(func() bool {
-		p.ParseToken("+")
-		if !p.ParseAndExpr(r, true) { return false }
-		return true
-	})
-}
-
-func (p *Parser) ParseExtraSeparator() bool {
-	return p.ParseSpeculative(func() bool {
-		if !p.ParseToken("#") { return false }
-		if !p.ParseToken("!") { return false }
-		return true
-	})
-}
-
-func (p *Parser) ParseNew() (string, *AndExpr) {
-	r := &AndExpr{}
+func (p *Parser) ParseEx() *ParseResult {
+	r := &ParseResult{}
 	query := make([]string, 0)
-	r.subExpr = make([]*SimpleExpr, 0)
+	r.include.subExpr = make([]*SimpleExpr, 0)
+	r.exclude.subExpr = make([]*SimpleExpr, 0)
 
 LOOP: for {
+		simple := &SimpleExpr{}
 		switch {
 		case p.ParseToken(""):
 			break LOOP
-		case p.ParseAndExpr(r, false):
-			//nothing
 		case p.ParseToken(" "):
 			//nothing
+		case p.ParseSavedSearch(simple):
+			p.savedSearch = simple.name
+		case p.ParseExclusion(simple):
+			if !simple.ignore {
+				r.exclude.subExpr = append(r.exclude.subExpr, simple)
+			}
+		case p.ParseSimpleExpression(simple):
+			if !simple.ignore {
+				r.include.subExpr = append(r.include.subExpr, simple)
+			}
 		default:
 			query = append(query, p.tkzer.Next())			
 		}
 	}
 
-	title := strings.Join([]string(query), " ")
+	r.text = strings.Join([]string(query), " ")
 	
-	return title, r
-}
-
-func (p *Parser) Parse() *BoolExpr {
-	r := &BoolExpr{}
-
-	r.ored = make([]*AndExpr, 0)
-	r.removed = make([]*SimpleExpr, 0)
-	query := make([]string, 0)
-
-LOOP: for {
-		simpleSubExpr := &SimpleExpr{}
-		andSubExpr := &AndExpr{}
-		
-		switch {
-		case p.ParseToken(""):
-			break LOOP
-		case p.ParseBoolExclusion(simpleSubExpr):
-			if !simpleSubExpr.ignore {
-				r.removed = append(r.removed, simpleSubExpr)
-			}
-		case p.ParseBoolOr(andSubExpr):
-			r.ored = append(r.ored, andSubExpr)
-		case p.ParseToken(" "):
-			//nothing
-		default:
-			query = append(query, p.tkzer.Next())
-		}
-	}
-
-	r.query = strings.Join([]string(query), " ")
-
 	return r
 }
 
 var startMultilineRE *regexp.Regexp = regexp.MustCompile("^[ \t\n\r]*{$")
 var numberRE *regexp.Regexp = regexp.MustCompile("^[0-9.]+$")
-
 
 func isNumber(tk string) (n float, ok bool) {
 	if !numberRE.MatchString(tk) { return -1, false }

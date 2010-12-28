@@ -36,7 +36,7 @@ func TestTokMisc() {
 	mmt("#prova^^^bau", []string{ "#", "prova", "^^^bau" })
 	mmt("#prova +#prova", []string{ "#", "prova", " ", "+", "#", "prova" })
 	mmt("#blip#blop", []string{ "#", "blip", "#", "blop" })
-	mmt("#prova#prova+#prova@prova", []string{ "#", "prova", "#", "prova", "+", "#", "prova", "#", "prova" })
+	mmt("#prova#prova+#prova@prova", []string{ "#", "prova", "#", "prova+", "#", "prova", "#", "prova" })
 }
 
 func TestTokTime() {
@@ -110,13 +110,11 @@ func TestParseSimpleExpr() {
 }
 
 
-func tae_ex(in string) (*Parser, *AndExpr) {
+func tae_ex(in string) (*Parser, *ParseResult) {
 	t := NewTokenizer(in)
 	p := NewParser(t, 0)
 
-	r := &AndExpr{}
-
-	p.ParseAndExpr(r, true)
+	r := p.ParseEx()
 
 	return p, r
 }
@@ -138,17 +136,17 @@ func check_and_expr(r *AndExpr, expected []string, expVal []string, expExtra []s
 
 func tae(in string, expected []string) {
 	_, r := tae_ex(in)
-	check_and_expr(r, expected, nil, nil)
+	check_and_expr(&(r.include), expected, nil, nil)
 }
 
 func tae_wval(in string, expected []string, expVal []string, expExtra []string) {
 	_, r := tae_ex(in)
-	check_and_expr(r, expected, expVal, expExtra)
+	check_and_expr(&(r.include), expected, expVal, expExtra)
 }
 
 func tae_showcols(in string, expected []string, showCols []string) {
 	p, r := tae_ex(in)
-	check_and_expr(r, expected, nil, nil)
+	check_and_expr(&(r.include), expected, nil, nil)
 
 	if len(p.showCols) != len(showCols) {
 		panic(fmt.Sprintf("Different number of renturned values for showCols found [%v] expected [%v]", p.showCols, showCols))
@@ -161,7 +159,7 @@ func tae_showcols(in string, expected []string, showCols []string) {
 
 func tae_options(in string, expected []string, options []string) {
 	p, r := tae_ex(in)
-	check_and_expr(r, expected, nil, nil)
+	check_and_expr(&(r.include), expected, nil, nil)
 
 	if len(p.options) != len(options) {
 		panic(fmt.Sprintf("Different number of options returned [%v] expected [%v]", p.options, options))
@@ -182,66 +180,58 @@ func TestParseAnd() {
 	tae("#blip>20#blop", []string{ "blip", "blop" })
 }
 
-func tae2(in string, oredExpected [][]string, removedExpected []string, query string) {
+func tae2(in string, includeExpected []string, excludeExpected []string, query string) {
 	t := NewTokenizer(in)
 	p := NewParser(t, 0)
 
-	r := p.Parse()
+	r := p.ParseEx()
 
-	if len(r.ored) != len(oredExpected) {
-		panic(fmt.Sprintf("Different number of ored terms [%v] expected [%v]", r.ored, oredExpected))
+	if len(r.include.subExpr) != len(includeExpected) {
+		panic(fmt.Sprintf("Different number of ored terms [%v] expected [%v]", r.include, includeExpected))
 	}
 
-	for i, v := range oredExpected {
-		if len(v) != len(r.ored[i].subExpr) {
-			panic(fmt.Sprintf("Different number of ored subterms [%v] expected [%v]", r.ored[i].subExpr, v))
-		}
-		
-		for j, w := range v {
-			mms(r.ored[i].subExpr[j].name, w, "matching name of normal expression")
-		}
+	for i, v := range includeExpected {
+		mms(r.include.subExpr[i].name, v, "matching name of normal expression")
 	}
 
-	if len(r.removed) != len(removedExpected) {
-		panic(fmt.Sprintf("Different number of removed [%v] expected [%v]", r.removed, removedExpected))
+	if len(r.exclude.subExpr) != len(excludeExpected) {
+		panic(fmt.Sprintf("Different number of removed [%v] expected [%v]", r.exclude, excludeExpected))
 	}
 
-	for i, v := range removedExpected {
-		mms(r.removed[i].name, v, "matching name of excluded expression")
+	for i, v := range excludeExpected {
+		mms(r.exclude.subExpr[i].name, v, "matching name of excluded expression")
 	}
 
-	mms(strings.Trim(r.query, " "), strings.Trim(query, " "), "matching query")
+	mms(strings.Trim(r.text, " "), strings.Trim(query, " "), "matching query")
 }
 
 func TestParseFull() {
 	tae2("blip #blip#blop",
-		[][]string{ []string{ "blip", "blop" } },
+		[]string{ "blip", "blop" },
 		[]string{},
 		"blip")
+	
 	tae2("blip #blip#blop blap",
-		[][]string{ []string{ "blip", "blop" } },
+		[]string{ "blip", "blop" },
 		[]string{},
 		"blip blap")
+	
 	tae2("blip #blip#blop blap -#balp",
-		[][]string{ []string{ "blip", "blop" } },
+		[]string{ "blip", "blop" },
 		[]string{ "balp" },
 		"blip blap")
-	tae2("#blip#blap +#blop#blup",
-		[][]string{ []string{ "blip", "blap" }, []string{ "blop", "blup" } },
-		[]string{},
-		"")
 }
 
 func TestParsePriority() {
-	tae("#l#prova", []string{ "!priority", "prova" })
+	tae("#l#prova", []string{ ":priority", "prova" })
 }
 
 func TestParseTimetag() {
 	tentwo_dt, _ := ParseDateTime("10/2", 0)
 	tentwo := tentwo_dt.Format(TRIGGER_AT_FORMAT)
-	tae_wval("#10/2 prova", []string{ "!when" }, []string{ tentwo }, []string{ "" })
-	tae_wval("#10/2+#2010-09-21", []string{ "!when", "!when" }, []string{ tentwo, "2010-09-21 00:00" }, []string{ "", "" })
-	tae_wval("#10/2+weekly #2010-09-21", []string{ "!when", "!when" }, []string{ tentwo, "2010-09-21 00:00" }, []string{ "weekly", "" })
+	tae_wval("#10/2 prova", []string{ ":when" }, []string{ tentwo }, []string{ "" })
+	tae_wval("#10/2 #2010-09-21", []string{ ":when", ":when" }, []string{ tentwo, "2010-09-21 00:00" }, []string{ "", "" })
+	tae_wval("#10/2+weekly #2010-09-21", []string{ ":when", ":when" }, []string{ tentwo, "2010-09-21 00:00" }, []string{ "weekly", "" })
 }
 
 func TestShowCols() {
@@ -255,7 +245,7 @@ func TestOptions() {
 
 func TestSavedSearch() {
 	p, r := tae_ex("#%salvata")
-	check_and_expr(r, []string{ }, nil, nil)
+	check_and_expr(&(r.include), []string{ }, nil, nil)
 	mms(p.savedSearch, "salvata", "")
 }
 
@@ -263,9 +253,9 @@ func TestExtra() {
 	t := NewTokenizer("prova bi #blap#! questo e` tutto extra")
 	p := NewParser(t, 0)
 
-	r := p.Parse()
+	r := p.ParseEx()
 
-	mms(r.query, "prova bi", "")
+	mms(r.text, "prova bi", "")
 	mms(p.extra, " questo e` tutto extra", "")
 }
 
@@ -340,10 +330,6 @@ func TestSpecialEntry(tl *Tasklist) {
 }
 
 func TestEntryWithSearch(tl *Tasklist) {
-	tpn(tl, "prova prova", "prova #blap +#blop",
-		MakeEntry("", "prova prova", "", NOW, nil, "",
-		map[string]string{"uncat": ""}))
-
 	tpn(tl, "prova prova", "prova #blap",
 		MakeEntry("", "prova prova", "", NOW, nil, "",
 		map[string]string{"blap": ""}))
@@ -382,5 +368,4 @@ func main() {
 	TestColEntry(tl)
 	TestSpecialEntry(tl)
 	TestEntryWithSearch(tl)
-	
 }
