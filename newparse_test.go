@@ -339,6 +339,20 @@ func TestSpecialEntry(tl *Tasklist) {
 		map[string]string{"blap": ""}))
 }
 
+func TestEntryWithSearch(tl *Tasklist) {
+	tpn(tl, "prova prova", "prova #blap +#blop",
+		MakeEntry("", "prova prova", "", NOW, nil, "",
+		map[string]string{"uncat": ""}))
+
+	tpn(tl, "prova prova", "prova #blap",
+		MakeEntry("", "prova prova", "", NOW, nil, "",
+		map[string]string{"blap": ""}))
+	
+	tpn(tl, "prova prova", "prova #blap#blop",
+		MakeEntry("", "prova prova", "", NOW, nil, "",
+		map[string]string{"blap": "", "blop": ""}))
+}
+
 func main() {
 	tl := OpenOrCreate("/tmp/testing.pooch")
 	defer tl.Close()
@@ -367,8 +381,6 @@ func main() {
 	TestSimpleEntry(tl)
 	TestColEntry(tl)
 	TestSpecialEntry(tl)
+	TestEntryWithSearch(tl)
 	
-	//TODO: testare
-	// - espressione semplice con search query complessa (niente viene assegnato)
-	// - espressione semplice con search query semplice (categorie estratte)
 }
