@@ -337,7 +337,8 @@ func ParseCols(colStr string, timezone int) (Columns, bool) {
 				if startMultilineRE.MatchString(value) {
 					multilineKey = key
 				} else {
-					value = normalizeValue(value, timezone)
+					// I don't really need this at the moment
+					//value = normalizeValue(value, timezone)
 					Logf(DEBUG, "Adding [%s] -> [%s]\n", key, value)
 					cols[key] = value
 					if value == "" { foundcat = true }
