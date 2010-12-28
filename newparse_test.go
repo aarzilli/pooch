@@ -253,14 +253,22 @@ func TestEscaping() {
 	mms(r.text, "blip @ blap # blop", "")
 }
 
-func TestExtra() {
-	t := NewTokenizer("prova bi #blap#+ questo e` tutto extra")
+func textra(input string, normal string, extra string, command string) {
+	t := NewTokenizer(input)
 	p := NewParser(t, 0)
 
 	r := p.ParseEx()
 
-	mms(r.text, "prova bi", "")
-	mms(p.extra, " questo e` tutto extra", "")
+	mms(r.text, normal, "")
+	mms(p.extra, extra, "")
+	mms(p.command, command, "")
+}
+
+func TestExtra() {
+	textra("prova bi #blap#+ questo e` tutto extra", "prova bi", " questo e` tutto extra", "")
+	textra("prova bi #blap#+", "prova bi", "", "")
+	textra("prova bi #blap#+ questo e` tutto extra #! questo e` un comando", "prova bi", " questo e` tutto extra ", " questo e` un comando")
+	textra("prova bi #+ questo e` tutto extra #", "prova bi", " questo e` tutto extra #", "")
 }
 
 func mme(a, b *Entry) {

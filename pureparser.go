@@ -13,12 +13,14 @@ type Parser struct {
 	showCols []string
 	timezone int
 	options map[string]string
+	
 	savedSearch string
-	extra string
+	extra string // text after the #+ separator
+	command string // text after the #! separator
 }
 
 func NewParser(tkzer *Tokenizer, timezone int) *Parser {
-	p := &Parser{tkzer, make([]string, 0), timezone, make(map[string]string), "", ""}
+	p := &Parser{tkzer, make([]string, 0), timezone, make(map[string]string), "", "", ""}
 	tkzer.parser = p
 	return p
 }

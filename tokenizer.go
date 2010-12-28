@@ -90,18 +90,36 @@ func isQuickTagStart(ch int) bool {
 	return ch == '#' || ch == '@'
 }
 
+func ConsumeRealExtra(t *Tokenizer) string {
+	var j int
+	for j = t.i+2; j < len(t.input); j++ {
+		if !isQuickTagStart(t.input[j]) { continue }
+		if j+1 >= len(t.input) { continue }
+		if t.input[j+1] != '!' { continue }
+
+		// found @! or #! decrement j to spit out the quick tag start and exit the loop
+		break
+	}
+
+	return string(t.input[t.i+2:j])
+}
+
 func ExtraSeparatorTokenizer(t *Tokenizer) (string, int) {
 	if t.i+1 >= len(t.input) { return "", 0 }
 	if !isQuickTagStart(t.input[t.i]) { return "", 0 }
-	if t.input[t.i+1] != '+' { return "", 0 }
 
-	//TODO: parse the other separator too
+	switch t.input[t.i+1] {
+	case '+':
+		extra := ConsumeRealExtra(t)
+		t.PushExtra(extra)
+		return " ", len(extra)+2
+	case '!':
+		command := string(t.input[t.i+2:])
+		t.PushCommand(command)
+		return "", len(command)+2
+	}
 
-	extra := string(t.input[t.i+2:])
-
-	t.PushExtra(extra)
-
-	return "", len(extra)+2
+	return "", 0
 }
 
 func StrTokenizer(match string) TokenizerFunc {
@@ -159,4 +177,8 @@ func (t *Tokenizer) RealNext() string {
 
 func (t *Tokenizer) PushExtra(extra string) {
 	t.parser.extra = extra
+}
+
+func (t *Tokenizer) PushCommand(command string) {
+	t.parser.command = command
 }
