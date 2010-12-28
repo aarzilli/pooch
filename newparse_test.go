@@ -11,6 +11,12 @@ func mms(a string, b string, explanation string) {
 	}
 }
 
+func mms_large(a string, b string, explanation string) {
+	if a != b {
+		panic(fmt.Sprintf("\nFAILED MATCHING:\n\n%s\n\nTO EXPECTED STRING:\n\n%s\n\ncontext: %s\n", a, b, explanation))
+	}
+}
+
 func mmt(a string, b []string) {
 	uptohere := make([]string, 0)
 	defer func() {
@@ -351,6 +357,24 @@ func TestEntryWithSearch(tl *Tasklist) {
 		map[string]string{"blap": "", "blop": ""}))
 }
 
+func tis(tl *Tasklist, input string, expectedOutput string) {
+	parsed, parser := ParseEx(tl, input)
+	output := parser.IntoSelect(tl, parsed)
+	mms_large(output, "SELECT tasks.id, title_field, text_field, priority, trigger_at_field, sort, group_concat(columns.name||':'||columns.value, '\v')\nFROM tasks NATURAL JOIN columns" + expectedOutput + "\nGROUP BY tasks.id\nORDER BY priority, trigger_at_field ASC, sort DESC", "")
+}
+
+func TestNoQuerySelect(tl *Tasklist) {
+	tis(tl, "", "")
+	tis(tl, "#bib", "\nWHERE\n   id IN (SELECT id FROM columns WHERE name = 'bib')")
+	
+	//TODO:
+	// - priority
+	// - when
+	// - priority + singola clausola
+	// - clausole multiple
+	// - when + clausole multiple
+}
+
 func main() {
 	tl := OpenOrCreate("/tmp/testing.pooch")
 	defer tl.Close()
@@ -381,4 +405,7 @@ func main() {
 	TestColEntry(tl)
 	TestSpecialEntry(tl)
 	TestEntryWithSearch(tl)
+
+	fmt.Printf("Testing compile into select\n")
+	TestNoQuerySelect(tl)
 }
