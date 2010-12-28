@@ -258,7 +258,10 @@ LOOP: for {
 				r.include.subExpr = append(r.include.subExpr, simple)
 			}
 		default:
-			query = append(query, p.tkzer.Next())			
+			next := p.tkzer.Next()
+			if next == "@@" { next = "@" }
+			if next == "##" { next = "#" }
+			query = append(query, next)
 		}
 	}
 

@@ -248,6 +248,11 @@ func TestSavedSearch() {
 	mms(p.savedSearch, "salvata", "")
 }
 
+func TestEscaping() {
+	_, r  := tae_ex("blip @@ blap ## blop")
+	mms(r.text, "blip @ blap # blop", "")
+}
+
 func TestExtra() {
 	t := NewTokenizer("prova bi #blap#! questo e` tutto extra")
 	p := NewParser(t, 0)
@@ -360,6 +365,7 @@ func main() {
 	TestShowCols()
 	TestOptions()
 	TestSavedSearch()
+	TestEscaping()
 	TestExtra()
 
 	fmt.Printf("Testing new entry creation\n")
