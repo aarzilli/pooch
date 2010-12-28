@@ -254,7 +254,7 @@ func TestEscaping() {
 }
 
 func TestExtra() {
-	t := NewTokenizer("prova bi #blap#! questo e` tutto extra")
+	t := NewTokenizer("prova bi #blap#+ questo e` tutto extra")
 	p := NewParser(t, 0)
 
 	r := p.ParseEx()
@@ -305,11 +305,11 @@ func TestSimpleEntry(tl *Tasklist) {
 }
 
 func TestColEntry(tl *Tasklist) {
-	tpn(tl, "prova prova #!\nblip: blop\nblap:\n", "",
+	tpn(tl, "prova prova #+\nblip: blop\nblap:\n", "",
 		MakeEntry("", "prova prova", "", NOW, nil, "",
 		map[string]string{"blap": "", "blip": "blop"}))
 
-	tpn(tl, "prova prova #!\nblip: blop\n", "",
+	tpn(tl, "prova prova #+\nblip: blop\n", "",
 		MakeEntry("", "prova prova", "", NOW, nil, "",
 		map[string]string{"uncat": "", "blip": "blop"}))
 }

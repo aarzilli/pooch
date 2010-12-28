@@ -93,7 +93,7 @@ func isQuickTagStart(ch int) bool {
 func ExtraSeparatorTokenizer(t *Tokenizer) (string, int) {
 	if t.i+1 >= len(t.input) { return "", 0 }
 	if !isQuickTagStart(t.input[t.i]) { return "", 0 }
-	if t.input[t.i+1] != '!' { return "", 0 }
+	if t.input[t.i+1] != '+' { return "", 0 }
 
 	//TODO: parse the other separator too
 
