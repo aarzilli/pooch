@@ -31,15 +31,13 @@ type SimpleExpr struct {
 	valueAsTime *time.Time
 	priority Priority
 
-	ignore bool // if this is set the caller to ParseSimpleExpression should ignore the returned result (despite the fact that the parsing was successful)
-	
 	extra string
 	// if the name starts with a ":" this old an extra value which is:
 	// - freq for ":when"
 }
 
 func (se *SimpleExpr) String() string {
-	return "#<" + se.name + ">" + "<" + se.op + se.value + ">" + "ignore=" + fmt.Sprintf("%v", se.ignore);
+	return "#<" + se.name + ">" + "<" + se.op + se.value + ">";
 }
 
 type AndExpr struct {
@@ -129,48 +127,6 @@ func ParsePriority(prstr string) Priority {
 	return priority
 }
 
-func (p *Parser) AttemptPriorityExpressionTransformation(r *SimpleExpr) bool {
-	priority := ParsePriority(r.name)
-
-	if priority == INVALID { return false }
-	
-	r.name = ":priority"
-	r.priority = priority
-	r.value = "see priority"
-	r.op = "="
-	
-	return true
-}
-
-func (p *Parser) AttemptTimeExpressionTransformation(r *SimpleExpr) bool {
-	split := strings.Split(r.name, "+", 2)
-
-	parsed, err := ParseDateTime(split[0], p.timezone)
-	if err != nil { return false }
-
-	freq := ""
-	if len(split) > 1 {
-		freq = split[1]
-		if !ParseFreqToken(freq) {
-			return false
-		}
-	}
-	
-	r.name = ":when"
-	r.valueAsTime = parsed
-	r.value = parsed.Format(TRIGGER_AT_FORMAT)
-	r.op = "="
-	r.extra = freq
-	
-	return true
-}
-
-func (p *Parser) AttemptSpecialTagTransformations(r *SimpleExpr) bool {
-	if p.AttemptPriorityExpressionTransformation(r) { return true; }
-	if p.AttemptTimeExpressionTransformation(r) { return true; }
-	return false;
-}
-
 func (p *Parser) ParseOption(r *SimpleExpr) bool {
 	return p.ParseSpeculative(func()bool {
 		if p.tkzer.Next() != "#:" { return false }
@@ -187,6 +143,67 @@ func (p *Parser) ParseSavedSearch(r *SimpleExpr) bool {
 	})
 }
 
+func (p *Parser) ParseColumnRequest() bool {
+	return p.ParseSpeculative(func()bool {
+		if p.tkzer.Next() != "#" { return false }
+
+		colName := p.tkzer.Next()
+		if !isTagChar(([]int(colName))[0]) { return false }
+
+		if p.tkzer.Next() != "?" { return false }
+		p.showCols = append(p.showCols, colName)
+		
+		return true
+	})
+}
+
+func (p *Parser) ParsePriorityExpression(r *SimpleExpr) bool {
+	return p.ParseSpeculative(func()bool {
+		if p.tkzer.Next() != "#" { return false }
+		tag := p.tkzer.Next()
+		
+		priority := ParsePriority(tag)
+		
+		if priority == INVALID { return false }
+		
+		r.name = ":priority"
+		r.priority = priority
+		r.value = "see priority"
+		r.op = "="
+		
+		return true
+	})
+}
+
+func (p *Parser) ParseTimeExpression(r *SimpleExpr) bool {
+	return p.ParseSpeculative(func()bool {
+		if p.tkzer.Next() != "#" { return false }
+
+		timeExpr := p.tkzer.Next()
+		
+		split := strings.Split(timeExpr, "+", 2)
+		
+		parsed, err := ParseDateTime(split[0], p.timezone)
+		if err != nil { return false }
+
+		freq := ""
+		if len(split) > 1 {
+			freq = split[1]
+			if !ParseFreqToken(freq) {
+				return false
+			}
+		}
+	
+		r.name = ":when"
+		r.valueAsTime = parsed
+		r.value = parsed.Format(TRIGGER_AT_FORMAT)
+		r.op = "="
+		r.extra = freq
+		
+		return true
+	})
+}
+
 func (p *Parser) ParseSimpleExpression(r *SimpleExpr) bool {
 	return p.ParseSpeculative(func()bool {
 		if p.tkzer.Next() != "#" { return false }
@@ -199,25 +216,13 @@ func (p *Parser) ParseSimpleExpression(r *SimpleExpr) bool {
 			isShowCols = true
 		}
 
-		if p.ParseToken("?") {
-			isShowCols = true
-			r.ignore = true
-		}
-
 		p.ParseToken(" ") // semi-optional space token
-		hasOpSubexpr := p.ParseOperationSubexpression(r)
+		p.ParseOperationSubexpression(r)
 
 		r.name = tagName
 		
-		isSpecialTag := false
-		if !hasOpSubexpr && !isShowCols {
-			isSpecialTag = p.AttemptSpecialTagTransformations(r)
-		}
-
-		if !isSpecialTag {
-			if isShowCols {
-				p.showCols = append(p.showCols, tagName)
-			}
+		if isShowCols {
+			p.showCols = append(p.showCols, tagName)
 		}
 
 		return true
@@ -244,19 +249,21 @@ LOOP: for {
 		case p.ParseToken(""):
 			break LOOP
 		case p.ParseToken(" "):
-			//nothing
+			// nothing to do
 		case p.ParseSavedSearch(simple):
 			p.savedSearch = simple.name
 		case p.ParseOption(simple):
 			p.options[simple.name] = ""
+		case p.ParseColumnRequest():
+			// nothing to do
 		case p.ParseExclusion(simple):
-			if !simple.ignore {
-				r.exclude.subExpr = append(r.exclude.subExpr, simple)
-			}
+			r.exclude.subExpr = append(r.exclude.subExpr, simple)
+		case p.ParsePriorityExpression(simple):
+			r.include.subExpr = append(r.include.subExpr, simple)
+		case p.ParseTimeExpression(simple):
+			r.include.subExpr = append(r.include.subExpr, simple)
 		case p.ParseSimpleExpression(simple):
-			if !simple.ignore {
-				r.include.subExpr = append(r.include.subExpr, simple)
-			}
+			r.include.subExpr = append(r.include.subExpr, simple)
 		default:
 			next := p.tkzer.Next()
 			if next == "@@" { next = "@" }
