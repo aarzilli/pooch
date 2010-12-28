@@ -5,9 +5,9 @@ import (
 	"strings"
 )
 
-func mms(a string, b string) {
+func mms(a string, b string, explanation string) {
 	if a != b {
-		panic(fmt.Sprintf("Failed matching [%s] to [%s]\n", a, b))
+		panic(fmt.Sprintf("Failed matching [%s] to [%s] %s\n", a, b, explanation))
 	}
 }
 
@@ -22,9 +22,9 @@ func mmt(a string, b []string) {
 	for _, v := range b {
 		x := t.Next()
 		uptohere = append(uptohere, x)
-		mms(x, v)
+		mms(x, v, "")
 	}
-	mms(t.Next(), "")
+	mms(t.Next(), "", "")
 }
 
 func TestTokSpaces() {
@@ -45,9 +45,8 @@ func TestTokTime() {
 }
 
 func TestTokOps() {
-	mmt(" = =~ <a <= !~ ! >", []string{
+	mmt(" = <a <= !~ ! >", []string{
 		" ", "=",
-		" ", "=~",
 		" ", "<", "a",
 		" ", "<=",
 		" ", "!~",
@@ -59,31 +58,31 @@ func TestTokOps() {
 func TestTokRewind() {
 	t := NewTokenizer("bli bla bolp blap")
 	
-	mms(t.Next(), "bli")
-	mms(t.Next(), " ")
+	mms(t.Next(), "bli", "")
+	mms(t.Next(), " ", "")
 	
 	pos := t.next
 	
-	mms(t.Next(), "bla")
-	mms(t.Next(), " ")
+	mms(t.Next(), "bla", "")
+	mms(t.Next(), " ", "")
 	
 	t.next = pos
 
-	mms(t.Next(), "bla")
-	mms(t.Next(), " ")
-	mms(t.Next(), "bolp")
-	mms(t.Next(), " ")
-	mms(t.Next(), "blap")
-	mms(t.Next(), "")
+	mms(t.Next(), "bla", "")
+	mms(t.Next(), " ", "")
+	mms(t.Next(), "bolp", "")
+	mms(t.Next(), " ", "")
+	mms(t.Next(), "blap", "")
+	mms(t.Next(), "", "")
 
 	t.next = pos
 
-	mms(t.Next(), "bla")
-	mms(t.Next(), " ")
-	mms(t.Next(), "bolp")
-	mms(t.Next(), " ")
-	mms(t.Next(), "blap")
-	mms(t.Next(), "")
+	mms(t.Next(), "bla", "")
+	mms(t.Next(), " ", "")
+	mms(t.Next(), "bolp", "")
+	mms(t.Next(), " ", "")
+	mms(t.Next(), "blap", "")
+	mms(t.Next(), "", "")
 }
 
 func tse(in string, name string, op string, value string) {
@@ -95,9 +94,9 @@ func tse(in string, name string, op string, value string) {
 		panic("Couldn't parse expression: [" + in + "]")
 	}
 
-	mms(expr.name, name)
-	mms(expr.op, op)
-	mms(expr.value, value)
+	mms(expr.name, name, " matching name")
+	mms(expr.op, op, " matching operation")
+	mms(expr.value, value, " matching value")
 }
 
 func TestParseSimpleExpr() {
@@ -117,7 +116,7 @@ func tae_ex(in string) (*Parser, *AndExpr) {
 
 	r := &AndExpr{}
 
-	p.ParseAndExpr(r)
+	p.ParseAndExpr(r, true)
 
 	return p, r
 }
@@ -128,12 +127,12 @@ func check_and_expr(r *AndExpr, expected []string, expVal []string, expExtra []s
 	}
 	
 	for i, v := range expected {
-		mms(r.subExpr[i].name, v)
+		mms(r.subExpr[i].name, v, "matching name")
 		if (expVal != nil) {
-			mms(r.subExpr[i].op, "=")
-			mms(r.subExpr[i].value, expVal[i])
+			mms(r.subExpr[i].op, "=", "matching operator")
+			mms(r.subExpr[i].value, expVal[i], "matching value")
 		}
-		if (expExtra != nil) { mms(r.subExpr[i].extra, expExtra[i]) }
+		if (expExtra != nil) { mms(r.subExpr[i].extra, expExtra[i], "matching extra content") }
 	}
 }
 
@@ -156,7 +155,7 @@ func tae_showcols(in string, expected []string, showCols []string) {
 	}
 
 	for i, v := range showCols {
-		mms(p.showCols[i], v)
+		mms(p.showCols[i], v, "matching shown columns")
 	}
 }
 
@@ -199,7 +198,7 @@ func tae2(in string, oredExpected [][]string, removedExpected []string, query st
 		}
 		
 		for j, w := range v {
-			mms(r.ored[i].subExpr[j].name, w)
+			mms(r.ored[i].subExpr[j].name, w, "matching name of normal expression")
 		}
 	}
 
@@ -208,10 +207,10 @@ func tae2(in string, oredExpected [][]string, removedExpected []string, query st
 	}
 
 	for i, v := range removedExpected {
-		mms(r.removed[i].name, v)
+		mms(r.removed[i].name, v, "matching name of excluded expression")
 	}
 
-	mms(strings.Trim(r.query, " "), strings.Trim(query, " "))
+	mms(strings.Trim(r.query, " "), strings.Trim(query, " "), "matching query")
 }
 
 func TestParseFull() {
@@ -257,7 +256,7 @@ func TestOptions() {
 func TestSavedSearch() {
 	p, r := tae_ex("#%salvata")
 	check_and_expr(r, []string{ }, nil, nil)
-	mms(p.savedSearch, "salvata")
+	mms(p.savedSearch, "salvata", "")
 }
 
 func TestExtra() {
@@ -266,11 +265,84 @@ func TestExtra() {
 
 	r := p.Parse()
 
-	mms(r.query, "prova bi")
-	mms(p.extra, " questo e` tutto extra")
+	mms(r.query, "prova bi", "")
+	mms(p.extra, " questo e` tutto extra", "")
+}
+
+func mme(a, b *Entry) {
+	if b.id != "" { mms(a.id, b.id, "matching entry id") }
+	mms(a.title, b.title, "matching entry title")
+	mms(a.text, b.text, "matching entry text")
+	if a.priority != b.priority {
+		panic(fmt.Sprintf("Cannot match priority %d to %d\n", a.priority, b.priority))
+	}
+	if (a.triggerAt != nil) != (b.triggerAt != nil) {
+		panic(fmt.Sprintf("Different values for triggerAt (nilness: %v %v)\n", (a.triggerAt == nil), (b.triggerAt == nil)))
+	}
+	if a.triggerAt != nil {
+		mms(a.triggerAt.Format(TRIGGER_AT_FORMAT), b.triggerAt.Format(TRIGGER_AT_FORMAT), "matching triggerAt")
+	}
+	if b.sort != "" { mms(a.sort, b.sort, "matching entry sort") }
+	if len(a.columns) != len(b.columns) {
+		panic(fmt.Sprintf("Different number of columns %v and %v\n", a.columns, b.columns))
+	}
+	for k, v := range a.columns {
+		v2, ok := b.columns[k]
+		if !ok {
+			panic(fmt.Sprintf("Column mismatch on key %s (missing) on %v and %v\n", k, a.columns, b.columns))
+		}
+		mms(v, v2, fmt.Sprintf("value mismatch on key %s on %v and %v", k, a.columns, b.columns))
+	}
+}
+
+func tpn(tl *Tasklist, entryText string, queryText string, entry *Entry) {
+	mme(ParseNew(tl, entryText, queryText), entry)
+}
+
+func TestSimpleEntry(tl *Tasklist) {
+	tpn(tl, "prova prova @blap", "",
+		MakeEntry("", "prova prova", "", NOW, nil, "",
+		map[string]string{"blap": ""}))
+	
+	tpn(tl, "prova prova @blip = blop anta", "",
+		MakeEntry("", "prova prova anta", "", NOW, nil, "",
+		map[string]string{"uncat": "", "blip": "blop"}))
+
+}
+
+func TestColEntry(tl *Tasklist) {
+	tpn(tl, "prova prova #!\nblip: blop\nblap:\n", "",
+		MakeEntry("", "prova prova", "", NOW, nil, "",
+		map[string]string{"blap": "", "blip": "blop"}))
+
+	tpn(tl, "prova prova #!\nblip: blop\n", "",
+		MakeEntry("", "prova prova", "", NOW, nil, "",
+		map[string]string{"uncat": "", "blip": "blop"}))
+}
+
+func TestSpecialEntry(tl *Tasklist) {
+	tpn(tl, "prova prova #id=ciao", "",
+		MakeEntry("ciao", "prova prova", "", NOW, nil, "",
+		map[string]string{"uncat": ""}))
+
+	tpn(tl, "#l prova prova", "",
+		MakeEntry("", "prova prova", "", LATER, nil, "",
+		map[string]string{"uncat": ""}))
+
+	tpn(tl, "#blap#l prova prova", "",
+		MakeEntry("", "prova prova", "", LATER, nil, "",
+		map[string]string{"blap": ""}))
+
+	t, _ := ParseDateTime("2010-10-01", 0)
+	tpn(tl, "#2010-10-01 #blap prova prova", "",
+		MakeEntry("", "prova prova", "", TIMED, t, "",
+		map[string]string{"blap": ""}))
 }
 
 func main() {
+	tl := OpenOrCreate("/tmp/testing.pooch")
+	defer tl.Close()
+
 	fmt.Printf("Testing tokenizer\n")
 	TestTokSpaces()
 	TestTokMisc()
@@ -290,4 +362,13 @@ func main() {
 	TestOptions()
 	TestSavedSearch()
 	TestExtra()
+
+	fmt.Printf("Testing new entry creation\n")
+	TestSimpleEntry(tl)
+	TestColEntry(tl)
+	TestSpecialEntry(tl)
+	
+	//TODO: testare
+	// - espressione semplice con search query complessa (niente viene assegnato)
+	// - espressione semplice con search query semplice (categorie estratte)
 }

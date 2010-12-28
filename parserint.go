@@ -83,7 +83,6 @@ func ParseNew(tl *Tasklist, entryText, queryText string) *Entry {
 		}
 	}
 
-
 	// extra field parsing
 	extraCols, extraCatFound := ParseCols(p.extra, p.timezone)
 	if extraCatFound { catFound = true }
@@ -92,6 +91,8 @@ func ParseNew(tl *Tasklist, entryText, queryText string) *Entry {
 	if id == "" { id = tl.MakeRandomId() }
 	if !catFound { cols["uncat"] = "" }
 	sort := SortFromTriggerAt(triggerAt)
+
+	if triggerAt != nil { priority = TIMED }
 
 	return MakeEntry(id, title, "", priority, triggerAt, sort, cols)
 }

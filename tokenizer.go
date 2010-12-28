@@ -25,7 +25,7 @@ var standardTokTable []TokenizerFunc = []TokenizerFunc{
 	StrTokenizerTo("@", "#"),
 	StrTokenizer("%"),
 	StrTokenizer("?"),
-	StrTokenizer("=~"),
+	StrTokenizer("="),
 	StrTokenizer(">="),
 	StrTokenizer("<="),
 	StrTokenizer("!~"),

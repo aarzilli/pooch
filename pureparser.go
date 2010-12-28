@@ -39,7 +39,7 @@ type SimpleExpr struct {
 }
 
 func (se *SimpleExpr) String() string {
-	return "#<" + se.name + ">" + "<" + se.op + se.value + ">";
+	return "#<" + se.name + ">" + "<" + se.op + se.value + ">" + "ignore=" + fmt.Sprintf("%v", se.ignore);
 }
 
 type AndExpr struct {
@@ -239,20 +239,28 @@ func (p *Parser) ParseSimpleExpression(r *SimpleExpr) bool {
 	})
 }
 
-func (p *Parser) ParseAndExpr(r *AndExpr) bool {
+func (p *Parser) ParseAndExpr(r *AndExpr, shouldReset bool) bool {
 	return p.ParseSpeculative(func() bool {
-		r.subExpr = make([]*SimpleExpr, 0)
+		if shouldReset { r.subExpr = make([]*SimpleExpr, 0) }
+		added := 0
 
+LOOP:
 		for {
 			expr := &SimpleExpr{}
-			if !p.ParseSimpleExpression(expr) { break }
-			p.ParseToken(" ") // optional separation space (it is not parsed by ParseSimpleExpression when there is a value involved
-			if !expr.ignore {
-				r.subExpr = append(r.subExpr, expr)
+			switch {
+			case p.ParseToken(" "):
+				//nothing
+			case p.ParseSimpleExpression(expr):
+				added++
+				if !expr.ignore {
+					r.subExpr = append(r.subExpr, expr)
+				}
+			default:
+				break LOOP
 			}
 		}
 
-		if len(r.subExpr) == 0 { return false }
+		if added == 0 { return false }
 
 		return true
 	})
@@ -269,7 +277,7 @@ func (p *Parser) ParseBoolExclusion(r *SimpleExpr) bool {
 func (p *Parser) ParseBoolOr(r *AndExpr) bool {
 	return p.ParseSpeculative(func() bool {
 		p.ParseToken("+")
-		if !p.ParseAndExpr(r) { return false }
+		if !p.ParseAndExpr(r, true) { return false }
 		return true
 	})
 }
@@ -285,12 +293,13 @@ func (p *Parser) ParseExtraSeparator() bool {
 func (p *Parser) ParseNew() (string, *AndExpr) {
 	r := &AndExpr{}
 	query := make([]string, 0)
+	r.subExpr = make([]*SimpleExpr, 0)
 
 LOOP: for {
 		switch {
 		case p.ParseToken(""):
 			break LOOP
-		case p.ParseAndExpr(r):
+		case p.ParseAndExpr(r, false):
 			//nothing
 		case p.ParseToken(" "):
 			//nothing
@@ -300,7 +309,7 @@ LOOP: for {
 	}
 
 	title := strings.Join([]string(query), " ")
-
+	
 	return title, r
 }
 
