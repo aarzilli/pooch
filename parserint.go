@@ -153,15 +153,17 @@ func (expr *SimpleExpr) IntoSelect(tl *Tasklist, depth string) string {
 	return fmt.Sprintf("%s%s", depth, expr.IntoClauseEx(tl))
 }
 
-func (expr *SimpleExpr) IntoClause(tl *Tasklist, depth string) string {
+func (expr *SimpleExpr) IntoClause(tl *Tasklist, depth string, negate bool) string {
 	if expr.name[0] == ':' {
 		return fmt.Sprintf("%s%s", depth, expr.IntoClauseEx(tl))
 	}
-	
-	return fmt.Sprintf("%sid IN (%s)", depth, expr.IntoClauseEx(tl))
+
+	s := "IN"
+	if negate { s = "NOT IN" }
+	return fmt.Sprintf("%sid %s (%s)", depth, s, expr.IntoClauseEx(tl))
 }
 
-func (expr *AndExpr) IntoClauses(tl *Tasklist, depth string) []string {
+func (expr *AndExpr) IntoClauses(tl *Tasklist, parser *Parser, depth string, negate bool) []string {
 	r := make([]string, 0)
 	
 	count := len(expr.subExpr)
@@ -169,10 +171,13 @@ func (expr *AndExpr) IntoClauses(tl *Tasklist, depth string) []string {
 	nextdepth := "   " + depth
 	nnextdepth := "   " + nextdepth
 
+	hasPriorityClause := false
+
 	// scanning for :priority and :when fields
 	for _, subExpr := range expr.subExpr {
 		if subExpr.name[0] != ':' { continue }
-		r = append(r, subExpr.IntoClause(tl, nextdepth))
+		if subExpr.name == ":priority" { hasPriorityClause = true }
+		r = append(r, subExpr.IntoClause(tl, nextdepth, negate))
 		count--
 	}
 
@@ -182,32 +187,46 @@ func (expr *AndExpr) IntoClauses(tl *Tasklist, depth string) []string {
 	for _, subExpr := range expr.subExpr {
 		if subExpr.name[0] == ':' { continue }
 		if count == 1 {
-			r = append(r, subExpr.IntoClause(tl, nextdepth))
+			r = append(r, subExpr.IntoClause(tl, nextdepth, negate))
 		} else {
 			colExprs = append(colExprs, subExpr.IntoSelect(tl, nnextdepth))
 		}
 	}
 
 	if len(colExprs) > 0 {
-		r = append(r, nextdepth + "id IN (\n" + strings.Join(colExprs, "\n"+nextdepth+"INTERSECT\n") + ")")
+		s := "id IN (\n"
+		if negate { s = "id NOT IN (\n" }
+		r = append(r, nextdepth + s + strings.Join(colExprs, "\n"+nextdepth+"INTERSECT\n") + ")")
+	}
+
+	if !hasPriorityClause && !negate {
+		if _, ok := parser.options["w/done"]; !ok {
+			r = append(r, nextdepth + "priority <> 5")
+		}
 	}
 
 	return r
 }
 
 func (parser *Parser) IntoSelect(tl *Tasklist, pr *ParseResult) string {
-	where := pr.include.IntoClauses(tl, "")
-	whereStr := ""
+	if parser.savedSearch != "" {
+		parseResult, newParser := ParseEx(tl, tl.GetSavedSearch(parser.savedSearch))
+		return newParser.IntoSelect(tl, parseResult)
+	}
+	
+	where := pr.include.IntoClauses(tl, parser, "", false)
+	whereNot := pr.exclude.IntoClauses(tl, parser, "", true)
 
+	for _, v := range whereNot { where = append(where, v) }
+
+	whereStr := ""
+	
 	if len(where) > 0 {
-		whereStr = "\nWHERE\n"+strings.Join(where, "\nAND\n")
+		whereStr = "\nWHERE\n" + strings.Join(where, "\nAND\n")
 	}
 
 	return "SELECT tasks.id, title_field, text_field, priority, trigger_at_field, sort, group_concat(columns.name||':'||columns.value, '\v')\nFROM tasks NATURAL JOIN columns" + whereStr + "\nGROUP BY tasks.id\nORDER BY priority, trigger_at_field ASC, sort DESC"
 	
 	//TODO:
 	// - do the query
-	// - do the exclusions
-	// - do the options
-	// - do the saved searchx
 }

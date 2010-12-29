@@ -368,18 +368,34 @@ func tis(tl *Tasklist, input string, expectedOutput string) {
 }
 
 func TestNoQuerySelect(tl *Tasklist) {
-	tis(tl, "", "")
+	tis(tl, "", "\nWHERE\n   priority <> 5")
 	
-	tis(tl, "#bib", "\nWHERE\n   id IN (SELECT id FROM columns WHERE name = 'bib')")
+	tis(tl, "#bib", "\nWHERE\n   id IN (SELECT id FROM columns WHERE name = 'bib')\nAND\n   priority <> 5")
 	
 	tis(tl, "#l", "\nWHERE\n   priority = 2")
-	tis(tl, "#2010-10-2", "\nWHERE\n   trigger_at_field = '2010-10-02 00:00'")
+	tis(tl, "#2010-10-2", "\nWHERE\n   trigger_at_field = '2010-10-02 00:00'\nAND\n   priority <> 5")
 	
 	tis(tl, "#bib#l", "\nWHERE\n   priority = 2\nAND\n   id IN (SELECT id FROM columns WHERE name = 'bib')")
 
-	tis(tl, "#bib#bab#bob", "\nWHERE\n   id IN (\n      SELECT id FROM columns WHERE name = 'bib'\n   INTERSECT\n      SELECT id FROM columns WHERE name = 'bab'\n   INTERSECT\n      SELECT id FROM columns WHERE name = 'bob')")
+	tis(tl, "#bib#bab#bob", "\nWHERE\n   id IN (\n      SELECT id FROM columns WHERE name = 'bib'\n   INTERSECT\n      SELECT id FROM columns WHERE name = 'bab'\n   INTERSECT\n      SELECT id FROM columns WHERE name = 'bob')\nAND\n   priority <> 5")
 
-	tis(tl, "#bib#bab#2010-10-02", "\nWHERE\n   trigger_at_field = '2010-10-02 00:00'\nAND\n   id IN (\n      SELECT id FROM columns WHERE name = 'bib'\n   INTERSECT\n      SELECT id FROM columns WHERE name = 'bab')")
+	tis(tl, "#bib#bab#2010-10-02", "\nWHERE\n   trigger_at_field = '2010-10-02 00:00'\nAND\n   id IN (\n      SELECT id FROM columns WHERE name = 'bib'\n   INTERSECT\n      SELECT id FROM columns WHERE name = 'bab')\nAND\n   priority <> 5")
+}
+
+func TestExclusionSelect(tl *Tasklist) {
+	tis(tl, "-#bib", "\nWHERE\n   priority <> 5\nAND\n   id NOT IN (SELECT id FROM columns WHERE name = 'bib')")
+
+	tis(tl, "#bib -#bab", "\nWHERE\n   id IN (SELECT id FROM columns WHERE name = 'bib')\nAND\n   priority <> 5\nAND\n   id NOT IN (SELECT id FROM columns WHERE name = 'bab')")
+
+	tis(tl, "#bib -#bab -#bob", "\nWHERE\n   id IN (SELECT id FROM columns WHERE name = 'bib')\nAND\n   priority <> 5\nAND\n   id NOT IN (\n      SELECT id FROM columns WHERE name = 'bab'\n   INTERSECT\n      SELECT id FROM columns WHERE name = 'bob')")
+}
+
+func TestOptionsSelect(tl *Tasklist) {
+	tis(tl, "#bib#:w/done", "\nWHERE\n   id IN (SELECT id FROM columns WHERE name = 'bib')")
+}
+
+func TestSavedSearchSelect(tl *Tasklist) {
+	tis(tl, "#%idontexist", "\nWHERE\n   priority <> 5")
 }
 
 func main() {
@@ -415,4 +431,7 @@ func main() {
 
 	fmt.Printf("Testing compile into select\n")
 	TestNoQuerySelect(tl)
+	TestExclusionSelect(tl)
+	TestOptionsSelect(tl)
+	TestSavedSearchSelect(tl)
 }
