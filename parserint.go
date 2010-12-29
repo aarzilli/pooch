@@ -189,7 +189,7 @@ func (expr *AndExpr) IntoClauses(tl *Tasklist, depth string) []string {
 	}
 
 	if len(colExprs) > 0 {
-		r = append(r, nextdepth + "id IN (\n" + strings.Join(colExprs, "\n"+nextdepth+"INTERSECT\n") + "\n")
+		r = append(r, nextdepth + "id IN (\n" + strings.Join(colExprs, "\n"+nextdepth+"INTERSECT\n") + ")")
 	}
 
 	return r

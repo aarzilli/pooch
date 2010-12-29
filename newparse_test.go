@@ -361,18 +361,25 @@ func tis(tl *Tasklist, input string, expectedOutput string) {
 	parsed, parser := ParseEx(tl, input)
 	output := parser.IntoSelect(tl, parsed)
 	mms_large(output, "SELECT tasks.id, title_field, text_field, priority, trigger_at_field, sort, group_concat(columns.name||':'||columns.value, '\v')\nFROM tasks NATURAL JOIN columns" + expectedOutput + "\nGROUP BY tasks.id\nORDER BY priority, trigger_at_field ASC, sort DESC", "")
+	stmt, err := tl.conn.Prepare("EXPLAIN " + output)
+	must(err)
+	defer stmt.Finalize()
+	must(stmt.Exec())
 }
 
 func TestNoQuerySelect(tl *Tasklist) {
 	tis(tl, "", "")
+	
 	tis(tl, "#bib", "\nWHERE\n   id IN (SELECT id FROM columns WHERE name = 'bib')")
 	
-	//TODO:
-	// - priority
-	// - when
-	// - priority + singola clausola
-	// - clausole multiple
-	// - when + clausole multiple
+	tis(tl, "#l", "\nWHERE\n   priority = 2")
+	tis(tl, "#2010-10-2", "\nWHERE\n   trigger_at_field = '2010-10-02 00:00'")
+	
+	tis(tl, "#bib#l", "\nWHERE\n   priority = 2\nAND\n   id IN (SELECT id FROM columns WHERE name = 'bib')")
+
+	tis(tl, "#bib#bab#bob", "\nWHERE\n   id IN (\n      SELECT id FROM columns WHERE name = 'bib'\n   INTERSECT\n      SELECT id FROM columns WHERE name = 'bab'\n   INTERSECT\n      SELECT id FROM columns WHERE name = 'bob')")
+
+	tis(tl, "#bib#bab#2010-10-02", "\nWHERE\n   trigger_at_field = '2010-10-02 00:00'\nAND\n   id IN (\n      SELECT id FROM columns WHERE name = 'bib'\n   INTERSECT\n      SELECT id FROM columns WHERE name = 'bab')")
 }
 
 func main() {
