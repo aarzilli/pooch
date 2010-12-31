@@ -358,8 +358,7 @@ func TestEntryWithSearch(tl *Tasklist) {
 }
 
 func tis(tl *Tasklist, input string, expectedOutput string) {
-	parsed, parser := ParseEx(tl, input)
-	output := parser.IntoSelect(tl, parsed)
+	output, _ := tl.ParseSearch(input)
 	mms_large(output, "SELECT tasks.id, title_field, text_field, priority, trigger_at_field, sort, group_concat(columns.name||':'||columns.value, '\v')\nFROM tasks NATURAL JOIN columns" + expectedOutput + "\nGROUP BY tasks.id\nORDER BY priority, trigger_at_field ASC, sort DESC", "")
 	stmt, err := tl.conn.Prepare("EXPLAIN " + output)
 	must(err)
@@ -434,6 +433,10 @@ func TestSearch(tl *Tasklist) {
 	tsearch(tl, "prova #blo", []string{ "10" })
 }
 
+func TestLuaSelect(tl *Tasklist) {
+	tl.ParseSearch("prova #+ idq('pippo')")
+}
+
 func main() {
 	tl := OpenOrCreate("/tmp/testing.pooch")
 	defer tl.Close()
@@ -476,4 +479,7 @@ func main() {
 
 	fmt.Printf("Testing actual search into backend\n")
 	TestSearch(tl)
+
+	fmt.Printf("Testing lua interface (for query creation)\n")
+	TestLuaSelect(tl)
 }

@@ -4,6 +4,7 @@ import (
 	"time"
 	"fmt"
 	"strings"
+	"lua51"
 )
 
 // part of the parser that interfaces with the backend
@@ -208,6 +209,46 @@ func (expr *AndExpr) IntoClauses(tl *Tasklist, parser *Parser, depth string, neg
 	return r
 }
 
+func (parser *Parser) GetLuaClause(tl *Tasklist, pr *ParseResult) string {
+	if parser.extra == "" { return "" }
+	
+	tl.mutex.Lock()
+	defer tl.mutex.Unlock()
+
+	tl.SetTasklistInLua()
+	tl.ResetLuaFlags()
+
+	if tl.luaState.LoadString("return " + parser.extra) != 0 {
+		errorMessage := tl.luaState.ToString(-1)
+		tl.LogError(fmt.Sprintf("Error while loading lua code: %s", errorMessage))
+		return ""
+	}
+
+	fmt.Printf("CHECKPOINT 1\n")
+
+	if lua51.PCall(tl.luaState, 0, 1, 0) != 0 {
+		errorMessage := tl.luaState.ToString(-1)
+		tl.LogError(fmt.Sprintf("Error while executing lua code: %s", errorMessage))
+		return ""
+	}
+
+	fmt.Printf("CHECKPOINT 2: %d\n", tl.luaState.GetTop())
+
+	tl.luaState.CheckStack(1)
+
+	if tl.luaState.GetTop() < 1 { fmt.Printf("no output\n"); return "" }
+	switch {
+	case tl.luaState.IsString(-1):
+		//TODO compile string
+		fmt.Printf("Got a string!: %s\n", tl.luaState.ToString(-1))
+	case tl.luaState.IsTable(-1):
+		//TODO compile table
+		fmt.Printf("Got a table!\n")
+	}
+
+	return ""
+}
+
 func (parser *Parser) IntoSelect(tl *Tasklist, pr *ParseResult) string {
 	if parser.savedSearch != "" {
 		parseResult, newParser := ParseEx(tl, tl.GetSavedSearch(parser.savedSearch))
@@ -222,6 +263,11 @@ func (parser *Parser) IntoSelect(tl *Tasklist, pr *ParseResult) string {
 	}
 
 	for _, v := range whereNot { where = append(where, v) }
+
+	extraClause := parser.GetLuaClause(tl, pr)
+	if extraClause != "" {
+		where = append(where, extraClause)
+	}
 
 	whereStr := ""
 	

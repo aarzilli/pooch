@@ -14,7 +14,7 @@ function whenq(operator, value)
 	    value = value }
 end
 
-function idq()
+function idq(value)
    return { query = "id_query";
 	    value = value }
 end

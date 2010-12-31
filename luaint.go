@@ -318,11 +318,8 @@ func LuaIntParseDateTime(L *lua51.State) int {
 	return 1
 }
 
-func (tl *Tasklist) DoString(code string, cursor *Entry) os.Error {
-	tl.mutex.Lock()
-	defer tl.mutex.Unlock()
-	
-	tl.SetEntryInLua(CURSOR, cursor)
+func (tl *Tasklist) DoStringNoLock(code string, cursor *Entry) os.Error {
+	if cursor != nil { tl.SetEntryInLua(CURSOR, cursor) }
 	tl.SetTasklistInLua()
 	tl.ResetLuaFlags()
 	
@@ -333,6 +330,12 @@ func (tl *Tasklist) DoString(code string, cursor *Entry) os.Error {
 	}
 
 	return nil
+}
+
+func (tl *Tasklist) DoString(code string, cursor *Entry) os.Error {
+	tl.mutex.Lock()
+	defer tl.mutex.Unlock()
+	return tl.DoStringNoLock(code, cursor)
 }
 
 func (tl *Tasklist) CallLuaFunction(fname string, cursor *Entry) os.Error {
@@ -359,7 +362,6 @@ func MakeLuaState() *lua51.State {
 	L.OpenLibs()
 
 	L.CheckStack(1)
-
 
 	// cursor examination functions
 	
@@ -392,7 +394,7 @@ func MakeLuaState() *lua51.State {
 
 	// query construction functions
 
-	L.LoadString(decodeStatic("init.lua"))
+	L.DoString(decodeStatic("init.lua"))
 
 	return L
 }
