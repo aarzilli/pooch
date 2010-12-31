@@ -398,6 +398,10 @@ func TestSavedSearchSelect(tl *Tasklist) {
 	tis(tl, "#%idontexist", "\nWHERE\n   priority <> 5")
 }
 
+func TestQuerySelect(tl *Tasklist) {
+	tis(tl, "prova prova #bla#blo", "\nWHERE\n   id IN (\n      SELECT id FROM columns WHERE name = 'bla'\n   INTERSECT\n      SELECT id FROM columns WHERE name = 'blo')\nAND\n   priority <> 5\nAND\n   id IN (\n      SELECT id FROM ridx WHERE title_field MATCH 'prova prova'\n   UNION\n      SELECT id FROM ridx WHERE text_field MATCH 'prova prova')")
+}
+
 func main() {
 	tl := OpenOrCreate("/tmp/testing.pooch")
 	defer tl.Close()
@@ -434,4 +438,5 @@ func main() {
 	TestExclusionSelect(tl)
 	TestOptionsSelect(tl)
 	TestSavedSearchSelect(tl)
+	TestQuerySelect(tl)
 }

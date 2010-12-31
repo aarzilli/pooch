@@ -217,6 +217,10 @@ func (parser *Parser) IntoSelect(tl *Tasklist, pr *ParseResult) string {
 	where := pr.include.IntoClauses(tl, parser, "", false)
 	whereNot := pr.exclude.IntoClauses(tl, parser, "", true)
 
+	if pr.text != "" {
+		where = append(where, fmt.Sprintf("   id IN (\n      SELECT id FROM ridx WHERE title_field MATCH %s\n   UNION\n      SELECT id FROM ridx WHERE text_field MATCH %s)", tl.Quote(pr.text), tl.Quote(pr.text)))
+	}
+
 	for _, v := range whereNot { where = append(where, v) }
 
 	whereStr := ""
@@ -226,7 +230,4 @@ func (parser *Parser) IntoSelect(tl *Tasklist, pr *ParseResult) string {
 	}
 
 	return "SELECT tasks.id, title_field, text_field, priority, trigger_at_field, sort, group_concat(columns.name||':'||columns.value, '\v')\nFROM tasks NATURAL JOIN columns" + whereStr + "\nGROUP BY tasks.id\nORDER BY priority, trigger_at_field ASC, sort DESC"
-	
-	//TODO:
-	// - do the query
 }
