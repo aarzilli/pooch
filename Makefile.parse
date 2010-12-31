@@ -5,8 +5,13 @@ TARG=parse
 GOFILES=\
 	dbg.go types.go backend.go luaint.go\
 	parsetime.go tokenizer.go pureparser.go parserint.go\
+	staticserve.go\
 	newparse_test.go
 
 include $(GOROOT)/src/Make.cmd
+
+staticservedeps = static/*
+staticserve.go: $(staticservedeps)
+	perl make-staticserve.pl $(staticservedeps) > staticserve.go
 
 

@@ -15,6 +15,7 @@ import (
 	"strconv"
 	"hash/crc32"
 	"os"
+	"encoding/base64"
 )
 
 var TRIGGER_AT_FORMAT string = "2006-01-02 15:04"
@@ -300,3 +301,20 @@ func RepeatString(ch string, num int) string {
 	return strings.Repeat(ch, num)
 }
 
+func DecodeBase64(in string) string {
+	decbuf := make([]byte, base64.StdEncoding.DecodedLen(len(in)))
+	base64.StdEncoding.Decode(decbuf, []byte(in))
+	return string(decbuf)
+}
+
+func decodeStatic(name string) string {
+	content := FILES[name]
+	z := DecodeBase64(content)
+	var i int
+	for i = len(z)-1; i > 0; i-- {
+		if z[i] != 0 {
+			break
+		}
+	}
+	return z[0:i+1]
+}

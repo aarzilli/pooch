@@ -147,7 +147,7 @@ func LuaIntPriority(L *lua51.State) int {
 		func(tl *Tasklist, entry *Entry, value string) { pr := ParsePriority(value); entry.SetPriority(pr) })
 }
 
-func LuaIntTriggerAt(L *lua51.State) int {
+func LuaIntWhen(L *lua51.State) int {
 	return LuaIntGetterSetterFunctionInt("triggerat", L,
 		func(tl *Tasklist, entry *Entry) int { t := entry.TriggerAt(); if t != nil { return int(t.Seconds()) }; return 0 },
 		func(tl *Tasklist, entry *Entry, value int) { entry.SetTriggerAt(time.SecondsToUTC(int64(value))) })
@@ -359,26 +359,40 @@ func MakeLuaState() *lua51.State {
 	L.OpenLibs()
 
 	L.CheckStack(1)
+
+
+	// cursor examination functions
 	
 	L.Register("id", LuaIntId)
 	L.Register("title", LuaIntTitle)
 	L.Register("text", LuaIntText)
 	L.Register("priority", LuaIntPriority)
-	L.Register("triggerat", LuaIntTriggerAt)
+	L.Register("when", LuaIntWhen)
 	L.Register("sortfield", LuaIntSortField)
 	
 	L.Register("column", LuaIntColumn)
 
+	// search results control functions
+
 	L.Register("filterout", LuaIntFilterOut)
 	L.Register("filterin", LuaIntFilterIn)
+
+	// editing functions
+	
 	L.Register("persist", LuaIntPersist)
 	L.Register("remove", LuaIntRemove)
 	L.Register("clonecursor", LuaIntCloneCursor)
+
+	// time utility functions
 
 	L.Register("utctime", LuaIntUTCTime)
 	L.Register("localtime", LuaIntLocalTime)
 	L.Register("timestamp", LuaIntTimestamp)
 	L.Register("parsedatetime", LuaIntParseDateTime)
+
+	// query construction functions
+
+	L.LoadString(decodeStatic("init.lua"))
 
 	return L
 }

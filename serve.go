@@ -6,7 +6,6 @@
 package main
 
 import (
-	"encoding/base64"
 	"http"
 	"io"
 	"fmt"
@@ -17,12 +16,6 @@ import (
 	"strconv"
 	"os"
 )
-
-func DecodeBase64(in string) string {
-	decbuf := make([]byte, base64.StdEncoding.DecodedLen(len(in)))
-	base64.StdEncoding.Decode(decbuf, []byte(in))
-	return string(decbuf)
-}
 
 type TasklistWithIdServer func(c http.ResponseWriter, req *http.Request, tl *Tasklist, id string)
 type TasklistServer func(c http.ResponseWriter, req *http.Request, tl *Tasklist)
@@ -105,16 +98,7 @@ func StaticInMemoryServer(c http.ResponseWriter, req *http.Request) {
 		c.SetHeader("ETag", "\"" + signature + "\"")
 		c.SetHeader("Content-Type", ct + "; charset=utf-8")
 
-		content := FILES[req.URL.Path[1:]]
-		z := DecodeBase64(content)
-		var i int
-		for i = len(z)-1; i > 0; i-- {
-			if z[i] != 0 {
-				break
-			}
-		}
-		z = z[0:i+1]
-		io.WriteString(c, z);
+		io.WriteString(c, decodeStatic(req.URL.Path[1:]));
 	}
 }
 
