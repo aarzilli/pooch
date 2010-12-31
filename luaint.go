@@ -26,6 +26,8 @@ type LuaFlags struct {
 	persist bool // changes are persisted
 	filterOut bool // during search filters out the current result
 	remove bool // removes the current entry
+
+	objects []interface{}
 }
 
 func (tl *Tasklist) ResetLuaFlags() {
@@ -34,6 +36,7 @@ func (tl *Tasklist) ResetLuaFlags() {
 	tl.luaFlags.persist = false
 	tl.luaFlags.filterOut = false
 	tl.luaFlags.remove = false
+	tl.luaFlags.objects = make([]interface{}, 0)
 }
 
 func (tl *Tasklist) SetEntryInLua(name string, entry *Entry) {
@@ -73,6 +76,19 @@ func GetEntryFromLua(L *lua51.State, name string) *Entry {
 	L.Pop(1)
 	return *ptr
 	
+}
+
+func (tl *Tasklist) PushGoInterface(obj interface{}) {
+	idx := len(tl.luaFlags.objects)
+	tl.luaFlags.objects = append(tl.luaFlags.objects, obj)
+	tl.luaState.PushLightInteger(idx)
+}
+
+func (tl *Tasklist) ToGoInterface(index int) interface{} {
+	if !tl.luaState.IsLightUserdata(index) { return nil }
+	idx := tl.luaState.ToLightInteger(index)
+	if idx >= len(tl.luaFlags.objects) { return nil }
+	return tl.luaFlags.objects[idx]
 }
 
 func LuaIntGetterSetterFunction(fname string, L *lua51.State, getter func(tl *Tasklist, entry *Entry)string, setter func(tl *Tasklist, entry *Entry, value string)) int {
@@ -318,6 +334,24 @@ func LuaIntParseDateTime(L *lua51.State) int {
 	return 1
 }
 
+func LuaIntIdQuery(L *lua51.State) int {
+	if L.GetTop() != 1 {
+		LuaError(L, "Wrong number of arguments to idq")
+		return 0
+	}
+
+	input := L.ToString(-1)
+	L.Pop(1)
+
+	L.CheckStack(1)
+	
+	tl := GetTasklistFromLua(L)
+	tl.PushGoInterface(&SimpleExpr{ ":id", "=", input, nil, 0, "" })
+
+	return 1
+}
+
+
 func (tl *Tasklist) DoStringNoLock(code string, cursor *Entry) os.Error {
 	if cursor != nil { tl.SetEntryInLua(CURSOR, cursor) }
 	tl.SetTasklistInLua()
@@ -348,7 +382,7 @@ func (tl *Tasklist) CallLuaFunction(fname string, cursor *Entry) os.Error {
 
 	tl.luaState.CheckStack(1)
 	tl.luaState.GetGlobal(fname)
-	if lua51.PCall(tl.luaState, 0, 0, 0) != 0 {
+	if tl.luaState.PCall(0, 0, 0) != 0 {
 		errorMessage := tl.luaState.ToString(-1)
 		tl.LogError(fmt.Sprintf("Error while executing lua code: %s", errorMessage))
 		return &LuaIntError{errorMessage}
@@ -394,7 +428,8 @@ func MakeLuaState() *lua51.State {
 
 	// query construction functions
 
-	L.DoString(decodeStatic("init.lua"))
+	L.Register("idq", LuaIntIdQuery)
+
 
 	return L
 }

@@ -4,7 +4,6 @@ import (
 	"time"
 	"fmt"
 	"strings"
-	"lua51"
 )
 
 // part of the parser that interfaces with the backend
@@ -95,6 +94,9 @@ func (tl *Tasklist) ParseNew(entryText, queryText string) *Entry {
 
 func (expr *SimpleExpr) IntoClauseEx(tl *Tasklist) string {
 	switch expr.name {
+	case ":id":
+		return fmt.Sprintf("id = %s", tl.Quote(expr.value))
+		
 	case ":priority":
 		return fmt.Sprintf("priority = %d", expr.priority)
 		
@@ -152,6 +154,10 @@ func (expr *SimpleExpr) IntoSelect(tl *Tasklist, depth string) string {
 	} 
 
 	return fmt.Sprintf("%s%s", depth, expr.IntoClauseEx(tl))
+}
+
+type Clausable interface{
+	IntoClause(tl *Tasklist, depth string, negate bool) string
 }
 
 func (expr *SimpleExpr) IntoClause(tl *Tasklist, depth string, negate bool) string {
@@ -224,15 +230,11 @@ func (parser *Parser) GetLuaClause(tl *Tasklist, pr *ParseResult) string {
 		return ""
 	}
 
-	fmt.Printf("CHECKPOINT 1\n")
-
-	if lua51.PCall(tl.luaState, 0, 1, 0) != 0 {
+	if tl.luaState.PCall(0, 1, 0) != 0 {
 		errorMessage := tl.luaState.ToString(-1)
 		tl.LogError(fmt.Sprintf("Error while executing lua code: %s", errorMessage))
 		return ""
 	}
-
-	fmt.Printf("CHECKPOINT 2: %d\n", tl.luaState.GetTop())
 
 	tl.luaState.CheckStack(1)
 
@@ -241,10 +243,15 @@ func (parser *Parser) GetLuaClause(tl *Tasklist, pr *ParseResult) string {
 	case tl.luaState.IsString(-1):
 		//TODO compile string
 		fmt.Printf("Got a string!: %s\n", tl.luaState.ToString(-1))
-	case tl.luaState.IsTable(-1):
-		//TODO compile table
-		fmt.Printf("Got a table!\n")
+	case tl.luaState.IsLightUserdata(-1):
+		ud := tl.ToGoInterface(-1)
+		tl.luaState.Pop(1)
+		if clausable := ud.(Clausable); clausable != nil {
+			return clausable.IntoClause(tl, "   ", false)
+		}
 	}
+
+	tl.luaState.Pop(1)
 
 	return ""
 }
