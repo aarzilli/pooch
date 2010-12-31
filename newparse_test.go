@@ -304,7 +304,7 @@ func mme(a, b *Entry) {
 }
 
 func tpn(tl *Tasklist, entryText string, queryText string, entry *Entry) {
-	mme(ParseNew(tl, entryText, queryText), entry)
+	mme(tl.ParseNew(entryText, queryText), entry)
 }
 
 func TestSimpleEntry(tl *Tasklist) {
@@ -402,9 +402,43 @@ func TestQuerySelect(tl *Tasklist) {
 	tis(tl, "prova prova #bla#blo", "\nWHERE\n   id IN (\n      SELECT id FROM columns WHERE name = 'bla'\n   INTERSECT\n      SELECT id FROM columns WHERE name = 'blo')\nAND\n   priority <> 5\nAND\n   id IN (\n      SELECT id FROM ridx WHERE title_field MATCH 'prova prova'\n   UNION\n      SELECT id FROM ridx WHERE text_field MATCH 'prova prova')")
 }
 
+func SetupSearchStuff(tl *Tasklist) {
+	tl.Add(tl.ParseNew("#id=10#bla questa è una prova #blo", ""))
+	tl.Add(tl.ParseNew("#id=11#bib=10 ging bong un #bla", ""))
+	tl.Add(tl.ParseNew("#id=12#bib=20#bla questa è una prova", ""))
+}
+
+func tsearch(tl *Tasklist, queryText string, expectedIds []string) {
+	ids := make(map[string]string)
+
+	for _, id := range expectedIds { ids[id] = "" }
+	
+	entries, err := tl.Retrieve(tl.ParseSearch(queryText))
+	must(err)
+
+	if len(entries) != len(ids) {
+		panic(fmt.Sprintf("Wrong number of entries in result %d (expected %d)", len(entries), len(ids)))
+	}
+	
+	for _, entry := range entries {
+		if _, ok := ids[entry.Id()]; !ok {
+			panic(fmt.Sprintf("Unexpected id %s in result", entry.Id()))
+		}
+	}
+}
+
+func TestSearch(tl *Tasklist) {
+	tsearch(tl, "#bla", []string{ "10", "11", "12" })
+	tsearch(tl, "#bib=10", []string{ "11" })
+	tsearch(tl, "prova", []string{ "10", "12" })
+	tsearch(tl, "prova #blo", []string{ "10" })
+}
+
 func main() {
 	tl := OpenOrCreate("/tmp/testing.pooch")
 	defer tl.Close()
+	tl.Truncate()
+	SetupSearchStuff(tl)
 
 	fmt.Printf("Testing tokenizer\n")
 	TestTokSpaces()
@@ -439,4 +473,7 @@ func main() {
 	TestOptionsSelect(tl)
 	TestSavedSearchSelect(tl)
 	TestQuerySelect(tl)
+
+	fmt.Printf("Testing actual search into backend\n")
+	TestSearch(tl)
 }

@@ -105,6 +105,14 @@ func internalTasklistOpenOrCreate(filename string) *Tasklist {
 	return tasklist
 }
 
+func (tl *Tasklist) Truncate() {
+	tl.MustExec("DELETE FROM columns")
+	tl.MustExec("DELETE FROM tasks")
+	tl.MustExec("DELETE FROM ridx")
+	tl.MustExec("DELETE FROM saved_searches")
+	tl.MustExec("DELETE FROM errorlog")
+}
+
 func OpenOrCreate(filename string) *Tasklist {
 	if !enabledCaching {
 		return internalTasklistOpenOrCreate(filename)
@@ -373,16 +381,11 @@ func (tl *Tasklist) GetListEx(stmt *sqlite.Stmt, code string) ([]*Entry, os.Erro
 	return v, err
 }
 
-func (tl *Tasklist) Retrieve(theselect, query, code string) ([]*Entry, os.Error) {
+func (tl *Tasklist) Retrieve(theselect, code string) ([]*Entry, os.Error) {
 	stmt, serr := tl.conn.Prepare(theselect)
 	must(serr)
 	defer stmt.Finalize()
-
-	if query != "" {
-		serr = stmt.Exec(query, query)
-	} else {
-		serr = stmt.Exec()
-	}
+	serr = stmt.Exec()
 	must(serr)
 
 	return tl.GetListEx(stmt, code)

@@ -40,7 +40,7 @@ func ExtractColumnsFromSearch(search *ParseResult) Columns {
 	return cols
 }
 
-func ParseNew(tl *Tasklist, entryText, queryText string) *Entry {
+func (tl *Tasklist) ParseNew(entryText, queryText string) *Entry {
 	parsed, p := ParseEx(tl, entryText)
 
 	// the following is ignored, we try to always succeed
@@ -231,3 +231,10 @@ func (parser *Parser) IntoSelect(tl *Tasklist, pr *ParseResult) string {
 
 	return "SELECT tasks.id, title_field, text_field, priority, trigger_at_field, sort, group_concat(columns.name||':'||columns.value, '\v')\nFROM tasks NATURAL JOIN columns" + whereStr + "\nGROUP BY tasks.id\nORDER BY priority, trigger_at_field ASC, sort DESC"
 }
+
+
+func (tl *Tasklist) ParseSearch(queryText string) (string, string) {
+	pr, parser := ParseEx(tl, queryText)
+	return parser.IntoSelect(tl, pr), parser.command
+}
+
