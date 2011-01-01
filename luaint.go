@@ -334,23 +334,43 @@ func LuaIntParseDateTime(L *lua51.State) int {
 	return 1
 }
 
-func LuaIntIdQuery(L *lua51.State) int {
-	if L.GetTop() != 1 {
-		LuaError(L, "Wrong number of arguments to idq")
+func LuaIntStringFunction(L *lua51.State, name string, n int, fn func(tl *Tasklist, argv []string)int) int {
+	if L.GetTop() != n {
+		LuaError(L, "Wrong number of arguments to " + name)
 		return 0
 	}
 
-	input := L.ToString(-1)
-	L.Pop(1)
+	argv := make([]string, 0)
 
+	for i := 1; i <= n; i++ {
+		argv = append(argv, L.ToString(i))
+	}
+	L.Pop(n)
 	L.CheckStack(1)
-	
 	tl := GetTasklistFromLua(L)
-	tl.PushGoInterface(&SimpleExpr{ ":id", "=", input, nil, 0, "" })
-
-	return 1
+	return fn(tl, argv)
 }
 
+func LuaIntIdQuery(L *lua51.State) int {
+	return LuaIntStringFunction(L, "idq", 1, func(tl *Tasklist, argv []string)int {
+		tl.PushGoInterface(&SimpleExpr{ ":id", "=", argv[0], nil, 0, "" })
+		return 1
+	})
+}
+
+func LuaIntTitleQuery(L *lua51.State) int {	
+	return LuaIntStringFunction(L, "titleq", 1, func(tl *Tasklist, argv []string)int {
+		tl.PushGoInterface(&SimpleExpr{ ":title_field", "=", argv[0], nil, 0, "" })
+		return 1
+	})
+}
+
+func LuaIntTextQuery(L *lua51.State) int {
+	return LuaIntStringFunction(L, "textq", 1, func(tl *Tasklist, argv []string)int {
+		tl.PushGoInterface(&SimpleExpr{ ":text_field", "=", argv[0], nil, 0, "" })
+		return 1
+	})
+}
 
 func (tl *Tasklist) DoStringNoLock(code string, cursor *Entry) os.Error {
 	if cursor != nil { tl.SetEntryInLua(CURSOR, cursor) }
@@ -429,7 +449,8 @@ func MakeLuaState() *lua51.State {
 	// query construction functions
 
 	L.Register("idq", LuaIntIdQuery)
-
+	L.Register("titleq", LuaIntTitleQuery)
+	L.Register("textq", LuaIntTextQuery)
 
 	return L
 }

@@ -94,8 +94,10 @@ func (tl *Tasklist) ParseNew(entryText, queryText string) *Entry {
 
 func (expr *SimpleExpr) IntoClauseEx(tl *Tasklist) string {
 	switch expr.name {
-	case ":id":
-		return fmt.Sprintf("id = %s", tl.Quote(expr.value))
+	case ":id": fallthrough
+	case ":title_field": fallthrough
+	case ":text_field":
+		return fmt.Sprintf("%s = %s", expr.name[1:], tl.Quote(expr.value))
 		
 	case ":priority":
 		return fmt.Sprintf("priority = %d", expr.priority)

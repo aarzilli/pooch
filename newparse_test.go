@@ -436,6 +436,8 @@ func TestSearch(tl *Tasklist) {
 func TestLuaSelect(tl *Tasklist) {
 	tsearch(tl, "prova #+ idq('10')", []string{ "10" })
 	tsearch(tl, "borva #+ idq('10')", []string{ })
+	tsearch(tl, "#+ idq('10')", []string{ "10" })
+	tsearch(tl, "#+ titleq('ging bong un')", []string{ "11" })
 	theselect, _ := tl.ParseSearch("prova #+ idq('pippo')")
 	fmt.Printf("%s %\n", theselect)
 }
