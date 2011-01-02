@@ -353,30 +353,37 @@ func LuaIntStringFunction(L *lua51.State, name string, n int, fn func(tl *Taskli
 }
 
 func LuaIntIdQuery(L *lua51.State) int {
-	return LuaIntStringFunction(L, "idq", 1, func(tl *Tasklist, argv []string)int {
+	return LuaIntStringFunction(L, "idq", 1, func(tl *Tasklist, argv []string) int {
 		tl.PushGoInterface(&SimpleExpr{ ":id", "=", argv[0], nil, 0, "" })
 		return 1
 	})
 }
 
 func LuaIntTitleQuery(L *lua51.State) int {	
-	return LuaIntStringFunction(L, "titleq", 2, func(tl *Tasklist, argv []string)int {
+	return LuaIntStringFunction(L, "titleq", 2, func(tl *Tasklist, argv []string) int {
 		tl.PushGoInterface(&SimpleExpr{ ":title_field", argv[0], argv[1], nil, 0, "" })
 		return 1
 	})
 }
 
 func LuaIntTextQuery(L *lua51.State) int {
-	return LuaIntStringFunction(L, "textq", 2, func(tl *Tasklist, argv []string)int {
+	return LuaIntStringFunction(L, "textq", 2, func(tl *Tasklist, argv []string) int {
 		tl.PushGoInterface(&SimpleExpr{ ":text_field", argv[0], argv[1], nil, 0, "" })
 		return 1
 	})
 }
 
 func LuaIntWhenQuery(L *lua51.State) int {
-	return LuaIntStringFunction(L, "whenq", 2, func(tl *Tasklist, argv []string)int {
+	return LuaIntStringFunction(L, "whenq", 2, func(tl *Tasklist, argv []string) int {
 		n, _ := strconv.Atoi64(argv[1])
 		tl.PushGoInterface(&SimpleExpr{ ":when", argv[0], "", time.SecondsToUTC(n), 0, "" })
+		return 1
+	})
+}
+
+func LuaIntSearchQuery(L *lua51.State) int {
+	return LuaIntStringFunction(L, "searchq", 1, func(tl *Tasklist, argv []string) int {
+		tl.PushGoInterface(&SimpleExpr{ ":search", "match", argv[0], nil, 0, "" })
 		return 1
 	})
 }
@@ -461,6 +468,7 @@ func MakeLuaState() *lua51.State {
 	L.Register("titleq", LuaIntTitleQuery)
 	L.Register("textq", LuaIntTextQuery)
 	L.Register("whenq", LuaIntWhenQuery)
+	L.Register("searchq", LuaIntSearchQuery)
 
 	return L
 }

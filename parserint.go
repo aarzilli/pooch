@@ -112,6 +112,9 @@ func (expr *SimpleExpr) IntoClauseEx(tl *Tasklist) string {
 		} else if sqlop, ok := OPERATOR_CHECK[expr.op]; ok {
 			return fmt.Sprintf("%s %s %s", expr.name[1:], sqlop, tl.Quote(expr.value))
 		}
+
+	case ":search":
+		return fmt.Sprintf("id IN (SELECT id FROM ridx WHERE title_field MATCH %s UNION SELECT id FROM ridx WHERE text_field MATCH %s)", tl.Quote(expr.value), tl.Quote(expr.value))
 		
 	case ":priority":
 		return fmt.Sprintf("priority = %d", expr.priority)
