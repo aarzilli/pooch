@@ -360,15 +360,15 @@ func LuaIntIdQuery(L *lua51.State) int {
 }
 
 func LuaIntTitleQuery(L *lua51.State) int {	
-	return LuaIntStringFunction(L, "titleq", 1, func(tl *Tasklist, argv []string)int {
-		tl.PushGoInterface(&SimpleExpr{ ":title_field", "=", argv[0], nil, 0, "" })
+	return LuaIntStringFunction(L, "titleq", 2, func(tl *Tasklist, argv []string)int {
+		tl.PushGoInterface(&SimpleExpr{ ":title_field", argv[0], argv[1], nil, 0, "" })
 		return 1
 	})
 }
 
 func LuaIntTextQuery(L *lua51.State) int {
-	return LuaIntStringFunction(L, "textq", 1, func(tl *Tasklist, argv []string)int {
-		tl.PushGoInterface(&SimpleExpr{ ":text_field", "=", argv[0], nil, 0, "" })
+	return LuaIntStringFunction(L, "textq", 2, func(tl *Tasklist, argv []string)int {
+		tl.PushGoInterface(&SimpleExpr{ ":text_field", argv[0], argv[1], nil, 0, "" })
 		return 1
 	})
 }
