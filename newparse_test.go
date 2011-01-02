@@ -358,7 +358,8 @@ func TestEntryWithSearch(tl *Tasklist) {
 }
 
 func tis(tl *Tasklist, input string, expectedOutput string) {
-	output, _ := tl.ParseSearch(input)
+	output, _, err := tl.ParseSearch(input)
+	must(err)
 	mms_large(output, "SELECT tasks.id, title_field, text_field, priority, trigger_at_field, sort, group_concat(columns.name||':'||columns.value, '\v')\nFROM tasks NATURAL JOIN columns" + expectedOutput + "\nGROUP BY tasks.id\nORDER BY priority, trigger_at_field ASC, sort DESC", "")
 	stmt, err := tl.conn.Prepare("EXPLAIN " + output)
 	must(err)
@@ -405,14 +406,18 @@ func SetupSearchStuff(tl *Tasklist) {
 	tl.Add(tl.ParseNew("#id=10#bla questa è una prova #blo", ""))
 	tl.Add(tl.ParseNew("#id=11#bib=10 ging bong un #bla", ""))
 	tl.Add(tl.ParseNew("#id=12#bib=20#bla questa è una prova", ""))
+	tl.Add(tl.ParseNew("#id=13#2010-01-01 bang", ""))
+	tl.Add(tl.ParseNew("#id=14#2010-10-10 bang", ""))
 }
 
 func tsearch(tl *Tasklist, queryText string, expectedIds []string) {
 	ids := make(map[string]string)
 
 	for _, id := range expectedIds { ids[id] = "" }
-	
-	entries, err := tl.Retrieve(tl.ParseSearch(queryText))
+
+	theselect, code, err := tl.ParseSearch(queryText)
+	must(err)
+	entries, err := tl.Retrieve(theselect, code)
 	must(err)
 
 	if len(entries) != len(ids) {
@@ -438,8 +443,14 @@ func TestLuaSelect(tl *Tasklist) {
 	tsearch(tl, "borva #+ idq('10')", []string{ })
 	tsearch(tl, "#+ idq('10')", []string{ "10" })
 	tsearch(tl, "#+ titleq('ging bong un')", []string{ "11" })
-	theselect, _ := tl.ParseSearch("prova #+ idq('pippo')")
-	fmt.Printf("%s %\n", theselect)
+
+	tsearch(tl, "bang", []string{ "13", "14" })
+	tsearch(tl, "bang #+ whenq('>', 1275775200)", []string{ "14" })
+	tsearch(tl, "bang #+ whenq('<', 1275775200)", []string{ "13" })
+	
+	theselect, _, err := tl.ParseSearch("prova #+ whenq('>', 1275775200)")
+	must(err)
+	fmt.Printf("%s \n", theselect)
 }
 
 func main() {

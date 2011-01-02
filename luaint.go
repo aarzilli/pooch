@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 	"os"
+	"strconv"
 )
 
 var CURSOR string = "cursor"
@@ -372,6 +373,14 @@ func LuaIntTextQuery(L *lua51.State) int {
 	})
 }
 
+func LuaIntWhenQuery(L *lua51.State) int {
+	return LuaIntStringFunction(L, "whenq", 2, func(tl *Tasklist, argv []string)int {
+		n, _ := strconv.Atoi64(argv[1])
+		tl.PushGoInterface(&SimpleExpr{ ":when", argv[0], "", time.SecondsToUTC(n), 0, "" })
+		return 1
+	})
+}
+
 func (tl *Tasklist) DoStringNoLock(code string, cursor *Entry) os.Error {
 	if cursor != nil { tl.SetEntryInLua(CURSOR, cursor) }
 	tl.SetTasklistInLua()
@@ -451,6 +460,7 @@ func MakeLuaState() *lua51.State {
 	L.Register("idq", LuaIntIdQuery)
 	L.Register("titleq", LuaIntTitleQuery)
 	L.Register("textq", LuaIntTextQuery)
+	L.Register("whenq", LuaIntWhenQuery)
 
 	return L
 }

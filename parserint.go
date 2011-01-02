@@ -4,6 +4,7 @@ import (
 	"time"
 	"fmt"
 	"strings"
+	"os"
 )
 
 // part of the parser that interfaces with the backend
@@ -92,6 +93,15 @@ func (tl *Tasklist) ParseNew(entryText, queryText string) *Entry {
 	return MakeEntry(id, parsed.text, "", priority, triggerAt, sort, cols)
 }
 
+var OPERATOR_CHECK map[string]string = map[string]string{
+	"!=": "<>",
+	"=": "=",
+	">": ">",
+	"<": "<",
+	">=": ">=",
+	"<=": "<=",
+}
+
 func (expr *SimpleExpr) IntoClauseEx(tl *Tasklist) string {
 	switch expr.name {
 	case ":id": fallthrough
@@ -103,21 +113,9 @@ func (expr *SimpleExpr) IntoClauseEx(tl *Tasklist) string {
 		return fmt.Sprintf("priority = %d", expr.priority)
 		
 	case ":when":
-		switch expr.op {
-		case "!=":
-			expr.op = "<>"
-			fallthrough
-		case "=":
-			fallthrough
-		case ">":
-			fallthrough
-		case "<":
-			fallthrough
-		case ">=":
-			fallthrough
-		case "<=":
-			return fmt.Sprintf("trigger_at_field %s '%s'", expr.op, expr.valueAsTime.Format(TRIGGER_AT_FORMAT))
-		default:
+		if sqlop, ok := OPERATOR_CHECK[expr.op]; ok {
+			return fmt.Sprintf("trigger_at_field %s '%s'", sqlop, expr.valueAsTime.Format(TRIGGER_AT_FORMAT))
+		} else {
 			panic(MakeParseError(fmt.Sprintf("Unknown operator %s", expr.op)))
 		}
 
@@ -125,24 +123,12 @@ func (expr *SimpleExpr) IntoClauseEx(tl *Tasklist) string {
 		if expr.name[0] == ':' {
 			panic(MakeParseError(fmt.Sprintf("Unknown pseudo-field %s", expr.name)))
 		}
-		
-		switch expr.op {
-		case "":
+
+		if expr.op == "" {
 			return fmt.Sprintf("SELECT id FROM columns WHERE name = %s", tl.Quote(expr.name))
-		case "!=":
-			expr.op = "<>"
-			fallthrough
-		case "=":
-			fallthrough
-		case ">":
-			fallthrough
-		case "<":
-			fallthrough
-		case ">=":
-			fallthrough
-		case "<=":
-			return fmt.Sprintf("SELECT id FROM columns WHERE name = %s AND value %s %s", tl.Quote(expr.name), expr.op, tl.Quote(expr.value))
-		default:
+		} else if sqlop, ok := OPERATOR_CHECK[expr.op]; ok {
+			return fmt.Sprintf("SELECT id FROM columns WHERE name = %s AND value %s %s", tl.Quote(expr.name), sqlop, tl.Quote(expr.value))
+		} else {
 			panic(MakeParseError(fmt.Sprintf("Unknown operator %s", expr.op)))
 		}
 	}
@@ -217,8 +203,8 @@ func (expr *AndExpr) IntoClauses(tl *Tasklist, parser *Parser, depth string, neg
 	return r
 }
 
-func (parser *Parser) GetLuaClause(tl *Tasklist, pr *ParseResult) string {
-	if parser.extra == "" { return "" }
+func (parser *Parser) GetLuaClause(tl *Tasklist, pr *ParseResult) (string, os.Error) {
+	if parser.extra == "" { return "", nil }
 	
 	tl.mutex.Lock()
 	defer tl.mutex.Unlock()
@@ -229,18 +215,18 @@ func (parser *Parser) GetLuaClause(tl *Tasklist, pr *ParseResult) string {
 	if tl.luaState.LoadString("return " + parser.extra) != 0 {
 		errorMessage := tl.luaState.ToString(-1)
 		tl.LogError(fmt.Sprintf("Error while loading lua code: %s", errorMessage))
-		return ""
+		return "", MakeParseError(fmt.Sprintf("Error while loading lua code: %s", errorMessage))
 	}
 
 	if tl.luaState.PCall(0, 1, 0) != 0 {
 		errorMessage := tl.luaState.ToString(-1)
 		tl.LogError(fmt.Sprintf("Error while executing lua code: %s", errorMessage))
-		return ""
+		return "", MakeParseError(fmt.Sprintf("Error while executing lua code: %s", errorMessage))
 	}
 
 	tl.luaState.CheckStack(1)
 
-	if tl.luaState.GetTop() < 1 { fmt.Printf("no output\n"); return "" }
+	if tl.luaState.GetTop() < 1 { fmt.Printf("no output\n"); return "", MakeParseError("Extra lua code didn't return anything") }
 	switch {
 	case tl.luaState.IsString(-1):
 		//TODO compile string
@@ -249,16 +235,16 @@ func (parser *Parser) GetLuaClause(tl *Tasklist, pr *ParseResult) string {
 		ud := tl.ToGoInterface(-1)
 		tl.luaState.Pop(1)
 		if clausable := ud.(Clausable); clausable != nil {
-			return clausable.IntoClause(tl, "   ", false)
+			return clausable.IntoClause(tl, "   ", false), nil
 		}
 	}
 
 	tl.luaState.Pop(1)
 
-	return ""
+	return "", MakeParseError("Unable to interpret values returned by the extra lua code")
 }
 
-func (parser *Parser) IntoSelect(tl *Tasklist, pr *ParseResult) string {
+func (parser *Parser) IntoSelect(tl *Tasklist, pr *ParseResult) (string, os.Error) {
 	if parser.savedSearch != "" {
 		parseResult, newParser := ParseEx(tl, tl.GetSavedSearch(parser.savedSearch))
 		return newParser.IntoSelect(tl, parseResult)
@@ -273,7 +259,7 @@ func (parser *Parser) IntoSelect(tl *Tasklist, pr *ParseResult) string {
 
 	for _, v := range whereNot { where = append(where, v) }
 
-	extraClause := parser.GetLuaClause(tl, pr)
+	extraClause, error := parser.GetLuaClause(tl, pr)
 	if extraClause != "" {
 		where = append(where, extraClause)
 	}
@@ -284,12 +270,13 @@ func (parser *Parser) IntoSelect(tl *Tasklist, pr *ParseResult) string {
 		whereStr = "\nWHERE\n" + strings.Join(where, "\nAND\n")
 	}
 
-	return "SELECT tasks.id, title_field, text_field, priority, trigger_at_field, sort, group_concat(columns.name||':'||columns.value, '\v')\nFROM tasks NATURAL JOIN columns" + whereStr + "\nGROUP BY tasks.id\nORDER BY priority, trigger_at_field ASC, sort DESC"
+	return "SELECT tasks.id, title_field, text_field, priority, trigger_at_field, sort, group_concat(columns.name||':'||columns.value, '\v')\nFROM tasks NATURAL JOIN columns" + whereStr + "\nGROUP BY tasks.id\nORDER BY priority, trigger_at_field ASC, sort DESC", error
 }
 
 
-func (tl *Tasklist) ParseSearch(queryText string) (string, string) {
+func (tl *Tasklist) ParseSearch(queryText string) (string, string, os.Error) {
 	pr, parser := ParseEx(tl, queryText)
-	return parser.IntoSelect(tl, pr), parser.command
+	theselect, err := parser.IntoSelect(tl, pr)
+	return theselect, parser.command, err
 }
 
