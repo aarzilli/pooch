@@ -450,7 +450,11 @@ func TestLuaSelect(tl *Tasklist) {
 
 	tsearch(tl, "#+ titleq('match', 'prova')", []string{ "10", "12" })
 	tsearch(tl, "#+ searchq('prova')", []string{ "10", "12" })
-	
+
+	tsearch(tl, "#+ columnq('bla')", []string{ "10", "11", "12" })
+	tsearch(tl, "#+ columnq('bib', '=', '10')", []string{ "11" })
+	tsearch(tl, "prova #+ columnq('blo')", []string{ "10" })
+
 	theselect, _, err := tl.ParseSearch("prova #+ whenq('>', 1275775200)")
 	must(err)
 	fmt.Printf("%s \n", theselect)

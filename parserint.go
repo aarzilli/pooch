@@ -233,22 +233,26 @@ func (parser *Parser) GetLuaClause(tl *Tasklist, pr *ParseResult) (string, os.Er
 
 	tl.luaState.CheckStack(1)
 
-	if tl.luaState.GetTop() < 1 { fmt.Printf("no output\n"); return "", MakeParseError("Extra lua code didn't return anything") }
-	switch {
-	case tl.luaState.IsString(-1):
-		//TODO compile string
-		fmt.Printf("Got a string!: %s\n", tl.luaState.ToString(-1))
-	case tl.luaState.IsLightUserdata(-1):
-		ud := tl.ToGoInterface(-1)
-		tl.luaState.Pop(1)
-		if clausable := ud.(Clausable); clausable != nil {
-			return clausable.IntoClause(tl, "   ", false), nil
-		}
+	if tl.luaState.GetTop() < 1 {
+		return "", MakeParseError("Extra lua code didn't return anything")
+	}
+	
+	if !tl.luaState.IsLightUserdata(-1) {
+		return "", MakeParseError("Extra lua code didn't return a query object")
 	}
 
+	ud := tl.ToGoInterface(-1)
 	tl.luaState.Pop(1)
+	if ud == nil {
+		return "", MakeParseError("Extra lua code didn't return a query object")
+	}
+	
+	clausable := ud.(Clausable)
+	if clausable == nil {
+		return "", MakeParseError("Extra lua code didn't return a query object")
+	}
 
-	return "", MakeParseError("Unable to interpret values returned by the extra lua code")
+	return clausable.IntoClause(tl, "   ", false), nil
 }
 
 func (parser *Parser) IntoSelect(tl *Tasklist, pr *ParseResult) (string, os.Error) {

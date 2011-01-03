@@ -75,6 +75,7 @@ func GetEntryFromLua(L *lua51.State, name string) *Entry {
 	rawptr := L.ToUserdata(-1)
 	var ptr **Entry = (**Entry)(rawptr)
 	L.Pop(1)
+	if ptr == nil { return nil }
 	return *ptr
 	
 }
@@ -97,12 +98,20 @@ func LuaIntGetterSetterFunction(fname string, L *lua51.State, getter func(tl *Ta
 
 	if argNum == 0 {
 		entry := GetEntryFromLua(L, CURSOR)
+		if entry == nil {
+			LuaError(L, "No cursor set, can not use " + fname)
+			return 0
+		}
 		tl := GetTasklistFromLua(L)
 		L.PushString(getter(tl, entry))
 		return 1
 	} else if argNum == 1 {
 		value := L.ToString(1)
 		entry := GetEntryFromLua(L, CURSOR)
+		if entry == nil {
+			LuaError(L, "No cursor set, can not use " + fname)
+			return 0
+		}
 		tl := GetTasklistFromLua(L)
 		setter(tl, entry, value)
 		if !tl.luaFlags.cursorCloned { tl.luaFlags.cursorEdited = true }
@@ -118,12 +127,20 @@ func LuaIntGetterSetterFunctionInt(fname string, L *lua51.State, getter func(tl 
 
 	if argNum == 0 {
 		entry := GetEntryFromLua(L, CURSOR)
+		if entry == nil {
+			LuaError(L, "No cursor set, can not use " + fname)
+			return 0
+		}
 		tl := GetTasklistFromLua(L)
 		L.PushInteger(getter(tl, entry))
 		return 1
 	} else if argNum == 1 {
 		value := L.ToInteger(1)
 		entry := GetEntryFromLua(L, CURSOR)
+		if entry == nil {
+			LuaError(L, "No cursor set, can not use " + fname)
+			return 0
+		}
 		tl := GetTasklistFromLua(L)
 		setter(tl, entry, value)
 		if !tl.luaFlags.cursorCloned { tl.luaFlags.cursorEdited = true }
@@ -176,12 +193,20 @@ func LuaIntColumn(L *lua51.State) int {
 	if argNum == 1 {
 		name := L.ToString(1)
 		entry := GetEntryFromLua(L, CURSOR)
+		if entry == nil {
+			LuaError(L, "No cursor set, can not use column()")
+			return 0
+		}
 		L.PushString(entry.Column(name))
 		return 1
 	} else if argNum == 2 {
 		name := L.ToString(1)
 		value := L.ToString(2)
 		entry := GetEntryFromLua(L, CURSOR)
+		if entry == nil {
+			LuaError(L, "No cursor set, can not use column()")
+			return 0
+		}
 		entry.SetColumn(name, value)
 		tl := GetTasklistFromLua(L)
 		if !tl.luaFlags.cursorCloned { tl.luaFlags.cursorEdited = true }
@@ -219,6 +244,10 @@ func LuaIntRemove(L *lua51.State) int {
 func LuaIntCloneCursor(L *lua51.State) int {
 	tl := GetTasklistFromLua(L)
 	cursor := GetEntryFromLua(L, CURSOR)
+	if cursor == nil {
+		LuaError(L, "No cursor set, can not use clone()")
+		return 0
+	}
 	newcursor := tl.CloneEntry(cursor)
 	tl.SetEntryInLua(CURSOR, newcursor)
 	tl.luaFlags.cursorCloned = true
@@ -388,6 +417,35 @@ func LuaIntSearchQuery(L *lua51.State) int {
 	})
 }
 
+func LuaIntColumnQuery(L *lua51.State) int {
+	if (L.GetTop() != 1) && (L.GetTop() != 3) {
+		LuaError(L, "Wrong number of arguments to columnqx")
+		return 0
+	}
+
+	name := L.ToString(1)
+	op := ""
+	value := ""
+	if L.GetTop() == 3 {
+		op = L.ToString(2)
+		value = L.ToString(3)
+		L.Pop(3)
+	} else {
+		L.Pop(1)
+	}
+		
+	if name[0] == ':' {
+		LuaError(L, "Column name can not start with ':'")
+		return 0
+	}
+
+	L.CheckStack(1)
+	tl := GetTasklistFromLua(L)
+
+	tl.PushGoInterface(&SimpleExpr{ name, op, value, nil, 0, "" })
+	return 1
+}
+
 func (tl *Tasklist) DoStringNoLock(code string, cursor *Entry) os.Error {
 	if cursor != nil { tl.SetEntryInLua(CURSOR, cursor) }
 	tl.SetTasklistInLua()
@@ -469,6 +527,7 @@ func MakeLuaState() *lua51.State {
 	L.Register("textq", LuaIntTextQuery)
 	L.Register("whenq", LuaIntWhenQuery)
 	L.Register("searchq", LuaIntSearchQuery)
+	L.Register("columnq", LuaIntColumnQuery)
 
 	return L
 }
