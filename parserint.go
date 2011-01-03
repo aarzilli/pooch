@@ -165,7 +165,7 @@ func (expr *SimpleExpr) IntoClause(tl *Tasklist, depth string, negate bool) stri
 	return fmt.Sprintf("%sid %s (%s)", depth, s, expr.IntoClauseEx(tl))
 }
 
-func (expr *BoolExpr) IntoClauses(tl *Tasklist, parser *Parser, depth string, negate bool) []string {
+func (expr *BoolExpr) IntoClauses(tl *Tasklist, depth string, negate bool, addDone bool) []string {
 	r := make([]string, 0)
 	
 	count := len(expr.subExpr)
@@ -178,13 +178,19 @@ func (expr *BoolExpr) IntoClauses(tl *Tasklist, parser *Parser, depth string, ne
 	// scanning for :priority and :when fields
 	for _, subExpr := range expr.subExpr {
 		ssubExpr := subExpr.(*SimpleExpr)
+		if ssubExpr == nil { continue} 
 		if ssubExpr.name[0] != ':' { continue }
 		if ssubExpr.name == ":priority" { hasPriorityClause = true }
 		r = append(r, ssubExpr.IntoClause(tl, nextdepth, negate))
 		count--
 	}
 
-	//TODO: Compile complex subexpressions
+	// scanning for complex subqueries
+	for _, subExpr := range expr.subExpr {
+		if subExpr.(*SimpleExpr) != nil { continue }
+		r = append(r, subExpr.IntoClause(tl, nextdepth, negate))
+		count--
+	}
 
 	colExprs := make([]string, 0)
 
@@ -205,15 +211,19 @@ func (expr *BoolExpr) IntoClauses(tl *Tasklist, parser *Parser, depth string, ne
 		r = append(r, nextdepth + s + strings.Join(colExprs, "\n"+nextdepth+"INTERSECT\n") + ")")
 	}
 
-	if !hasPriorityClause && !negate {
-		if _, ok := parser.options["w/done"]; !ok {
-			r = append(r, nextdepth + "priority <> 5")
-		}
+	if !hasPriorityClause && addDone {
+		r = append(r, nextdepth + "priority <> 5")
 	}
 
 	return r
 }
 
+func (expr *BoolExpr) IntoClause(tl *Tasklist, depth string, negate bool) string {
+	clauses := expr.IntoClauses(tl, depth+"   ", negate, false)
+	return depth + "(\n" + strings.Join(clauses, "\n"+depth+expr.operator+"\n") + ")"
+	
+}
+	
 func (parser *Parser) GetLuaClause(tl *Tasklist, pr *ParseResult) (string, os.Error) {
 	if parser.extra == "" { return "", nil }
 	
@@ -265,8 +275,9 @@ func (parser *Parser) IntoSelect(tl *Tasklist, pr *ParseResult) (string, os.Erro
 		return newParser.IntoSelect(tl, parseResult)
 	}
 	
-	where := pr.include.IntoClauses(tl, parser, "", false)
-	whereNot := pr.exclude.IntoClauses(tl, parser, "", true)
+	_, addDone := parser.options["w/done"]; addDone = !addDone
+	where := pr.include.IntoClauses(tl, "", false, addDone)
+	whereNot := pr.exclude.IntoClauses(tl, "", true, false)
 
 	if pr.text != "" {
 		where = append(where, fmt.Sprintf("   id IN (\n      SELECT id FROM ridx WHERE title_field MATCH %s\n   UNION\n      SELECT id FROM ridx WHERE text_field MATCH %s)", tl.Quote(pr.text), tl.Quote(pr.text)))
