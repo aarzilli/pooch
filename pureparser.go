@@ -57,6 +57,17 @@ type ParseResult struct {
 	exclude BoolExpr
 }
 
+func MakeParseResult() *ParseResult {
+	r := &ParseResult{}
+	
+	r.include.operator = "AND"
+	r.exclude.operator = "AND"
+	r.include.subExpr = make([]Clausable, 0)
+	r.exclude.subExpr = make([]Clausable, 0)
+
+	return r
+}
+
 func (p *Parser) ParseSpeculative(fn func()bool) bool {
 	pos := p.tkzer.next
 	r := false
@@ -245,10 +256,8 @@ func (p *Parser) ParseExclusion(r *SimpleExpr) bool {
 }
 
 func (p *Parser) ParseEx() *ParseResult {
-	r := &ParseResult{}
+	r := MakeParseResult()
 	query := make([]string, 0)
-	r.include.subExpr = make([]Clausable, 0)
-	r.exclude.subExpr = make([]Clausable, 0)
 
 LOOP: for {
 		simple := &SimpleExpr{}

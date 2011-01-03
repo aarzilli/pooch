@@ -419,7 +419,7 @@ func LuaIntSearchQuery(L *lua51.State) int {
 
 func LuaIntColumnQuery(L *lua51.State) int {
 	if (L.GetTop() != 1) && (L.GetTop() != 3) {
-		LuaError(L, "Wrong number of arguments to columnqx")
+		LuaError(L, "Wrong number of arguments to columnq")
 		return 0
 	}
 
@@ -444,6 +444,50 @@ func LuaIntColumnQuery(L *lua51.State) int {
 
 	tl.PushGoInterface(&SimpleExpr{ name, op, value, nil, 0, "" })
 	return 1
+}
+
+func LuaIntBoolQuery(L *lua51.State, operator, name string) int {
+	if L.GetTop() < 2 {
+		LuaError(L, "Wrong number of arguments to " + name)
+		return 0
+	}
+
+	L.CheckStack(1)
+	tl := GetTasklistFromLua(L)
+
+	r := &BoolExpr{ operator, make([]Clausable, 0) }
+
+	for i := 1; i <= L.GetTop(); i++ {
+		if !L.IsLightUserdata(i) {
+			LuaError(L, "Wrong argument type to " + name + " only query objects accepted as arguments")
+			return 0
+		}
+
+		ud := tl.ToGoInterface(i)
+		if ud == nil {
+			LuaError(L, "Wrong argument type to " + name + " only query objects accepted as arguments")
+			return 0
+		}
+
+		clausable := ud.(Clausable)
+		if clausable == nil {
+			LuaError(L, "Wrong argument type to " + name + " only query objects accepted as arguments")
+			return 0
+		}
+
+		r.subExpr = append(r.subExpr, clausable)
+	}
+
+	tl.PushGoInterface(r)
+	return 1
+}
+
+func LuaIntAndQuery(L *lua51.State) int {
+	return LuaIntBoolQuery(L, "AND", "andq")
+}
+
+func LuaIntOrQuery(L *lua51.State) int {
+	return LuaIntBoolQuery(L, "OR", "orq")
 }
 
 func (tl *Tasklist) DoStringNoLock(code string, cursor *Entry) os.Error {
@@ -528,6 +572,8 @@ func MakeLuaState() *lua51.State {
 	L.Register("whenq", LuaIntWhenQuery)
 	L.Register("searchq", LuaIntSearchQuery)
 	L.Register("columnq", LuaIntColumnQuery)
+	L.Register("andq", LuaIntAndQuery)
+	L.Register("orq", LuaIntOrQuery)
 
 	return L
 }
