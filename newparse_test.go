@@ -124,18 +124,22 @@ func tae_ex(in string) (*Parser, *ParseResult) {
 	return p, r
 }
 
-func check_and_expr(r *AndExpr, expected []string, expVal []string, expExtra []string) {
+func check_and_expr(r *BoolExpr, expected []string, expVal []string, expExtra []string) {
 	if len(r.subExpr) != len(expected) {
 		panic(fmt.Sprintf("Different number of returned values found [%v] expected [%v]", r.subExpr, expected))
 	}
 	
 	for i, v := range expected {
-		mms(r.subExpr[i].name, v, "matching name")
-		if (expVal != nil) {
-			mms(r.subExpr[i].op, "=", "matching operator")
-			mms(r.subExpr[i].value, expVal[i], "matching value")
+		sexpr := r.subExpr[i].(*SimpleExpr)
+		if sexpr == nil {
+			panic("Found a subexpression that isn't simple")
 		}
-		if (expExtra != nil) { mms(r.subExpr[i].extra, expExtra[i], "matching extra content") }
+		mms(sexpr.name, v, "matching name")
+		if (expVal != nil) {
+			mms(sexpr.op, "=", "matching operator")
+			mms(sexpr.value, expVal[i], "matching value")
+		}
+		if (expExtra != nil) { mms(sexpr.extra, expExtra[i], "matching extra content") }
 	}
 }
 
@@ -196,7 +200,11 @@ func tae2(in string, includeExpected []string, excludeExpected []string, query s
 	}
 
 	for i, v := range includeExpected {
-		mms(r.include.subExpr[i].name, v, "matching name of normal expression")
+		sexpr := r.include.subExpr[i].(*SimpleExpr)
+		if sexpr == nil {
+			panic("Non-simple subexpression found")
+		}
+		mms(sexpr.name, v, "matching name of normal expression")
 	}
 
 	if len(r.exclude.subExpr) != len(excludeExpected) {
@@ -204,7 +212,11 @@ func tae2(in string, includeExpected []string, excludeExpected []string, query s
 	}
 
 	for i, v := range excludeExpected {
-		mms(r.exclude.subExpr[i].name, v, "matching name of excluded expression")
+		sexpr := r.exclude.subExpr[i].(*SimpleExpr)
+		if sexpr == nil {
+			panic("Non-simple subexpression found")
+		}
+		mms(sexpr.name, v, "matching name of excluded expression")
 	}
 
 	mms(strings.Trim(r.text, " "), strings.Trim(query, " "), "matching query")

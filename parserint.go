@@ -27,12 +27,14 @@ func ExtractColumnsFromSearch(search *ParseResult) Columns {
 	cols := make(Columns)
 
 	for _, expr := range search.include.subExpr {
-		if expr.name[0] == '!' { continue }
-		switch expr.op {
+		sexpr := expr.(*SimpleExpr)
+		if sexpr == nil { continue }
+		if sexpr.name[0] == '!' { continue }
+		switch sexpr.op {
 		case "=":
-			cols[expr.name] = expr.value
+			cols[sexpr.name] = sexpr.value
 		case "":
-			cols[expr.name] = ""
+			cols[sexpr.name] = ""
 		default:
 			return nil
 		}
@@ -55,16 +57,18 @@ func (tl *Tasklist) ParseNew(entryText, queryText string) *Entry {
 	catFound := false
 	
 	for _, expr := range parsed.include.subExpr {
-		switch expr.name {
-		case ":when": triggerAt = expr.valueAsTime
-		case ":priority": priority = expr.priority
-		case "id": id = expr.value
+		sexpr := expr.(*SimpleExpr)
+		if sexpr == nil { continue }
+		switch sexpr.name {
+		case ":when": triggerAt = sexpr.valueAsTime
+		case ":priority": priority = sexpr.priority
+		case "id": id = sexpr.value
 		default:
-			if expr.op == "" {
-				cols[expr.name] = ""
+			if sexpr.op == "" {
+				cols[sexpr.name] = ""
 				catFound = true
-			} else if expr.op == "=" {
-				cols[expr.name] = expr.value
+			} else if sexpr.op == "=" {
+				cols[sexpr.name] = sexpr.value
 			}
 		}
 	}
@@ -151,10 +155,6 @@ func (expr *SimpleExpr) IntoSelect(tl *Tasklist, depth string) string {
 	return fmt.Sprintf("%s%s", depth, expr.IntoClauseEx(tl))
 }
 
-type Clausable interface{
-	IntoClause(tl *Tasklist, depth string, negate bool) string
-}
-
 func (expr *SimpleExpr) IntoClause(tl *Tasklist, depth string, negate bool) string {
 	if expr.name[0] == ':' {
 		return fmt.Sprintf("%s%s", depth, expr.IntoClauseEx(tl))
@@ -165,7 +165,7 @@ func (expr *SimpleExpr) IntoClause(tl *Tasklist, depth string, negate bool) stri
 	return fmt.Sprintf("%sid %s (%s)", depth, s, expr.IntoClauseEx(tl))
 }
 
-func (expr *AndExpr) IntoClauses(tl *Tasklist, parser *Parser, depth string, negate bool) []string {
+func (expr *BoolExpr) IntoClauses(tl *Tasklist, parser *Parser, depth string, negate bool) []string {
 	r := make([]string, 0)
 	
 	count := len(expr.subExpr)
@@ -177,21 +177,25 @@ func (expr *AndExpr) IntoClauses(tl *Tasklist, parser *Parser, depth string, neg
 
 	// scanning for :priority and :when fields
 	for _, subExpr := range expr.subExpr {
-		if subExpr.name[0] != ':' { continue }
-		if subExpr.name == ":priority" { hasPriorityClause = true }
-		r = append(r, subExpr.IntoClause(tl, nextdepth, negate))
+		ssubExpr := subExpr.(*SimpleExpr)
+		if ssubExpr.name[0] != ':' { continue }
+		if ssubExpr.name == ":priority" { hasPriorityClause = true }
+		r = append(r, ssubExpr.IntoClause(tl, nextdepth, negate))
 		count--
 	}
+
+	//TODO: Compile complex subexpressions
 
 	colExprs := make([]string, 0)
 
 	// scanning for normal 
 	for _, subExpr := range expr.subExpr {
-		if subExpr.name[0] == ':' { continue }
+		ssubExpr := subExpr.(*SimpleExpr)
+		if ssubExpr.name[0] == ':' { continue }
 		if count == 1 {
-			r = append(r, subExpr.IntoClause(tl, nextdepth, negate))
+			r = append(r, ssubExpr.IntoClause(tl, nextdepth, negate))
 		} else {
-			colExprs = append(colExprs, subExpr.IntoSelect(tl, nnextdepth))
+			colExprs = append(colExprs, ssubExpr.IntoSelect(tl, nnextdepth))
 		}
 	}
 

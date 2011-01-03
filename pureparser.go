@@ -42,14 +42,19 @@ func (se *SimpleExpr) String() string {
 	return "#<" + se.name + ">" + "<" + se.op + se.value + ">";
 }
 
-type AndExpr struct {
-	subExpr []*SimpleExpr
+type Clausable interface{
+	IntoClause(tl *Tasklist, depth string, negate bool) string
+}
+
+type BoolExpr struct {
+	operator string
+	subExpr []Clausable
 }
 
 type ParseResult struct {
 	text string
-	include AndExpr
-	exclude AndExpr
+	include BoolExpr
+	exclude BoolExpr
 }
 
 func (p *Parser) ParseSpeculative(fn func()bool) bool {
@@ -242,8 +247,8 @@ func (p *Parser) ParseExclusion(r *SimpleExpr) bool {
 func (p *Parser) ParseEx() *ParseResult {
 	r := &ParseResult{}
 	query := make([]string, 0)
-	r.include.subExpr = make([]*SimpleExpr, 0)
-	r.exclude.subExpr = make([]*SimpleExpr, 0)
+	r.include.subExpr = make([]Clausable, 0)
+	r.exclude.subExpr = make([]Clausable, 0)
 
 LOOP: for {
 		simple := &SimpleExpr{}
