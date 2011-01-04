@@ -208,7 +208,13 @@ func (expr *BoolExpr) IntoClauses(tl *Tasklist, depth string, negate bool, addDo
 	if len(colExprs) > 0 {
 		s := "id IN (\n"
 		if negate { s = "id NOT IN (\n" }
-		r = append(r, nextdepth + s + strings.Join(colExprs, "\n"+nextdepth+"INTERSECT\n") + ")")
+		setop := ""
+		if expr.operator == "AND" {
+			setop = "INTERSECT"
+		} else {
+			setop = "UNION"
+		}
+		r = append(r, nextdepth + s + strings.Join(colExprs, "\n"+nextdepth+setop + "\n") + ")")
 	}
 
 	if !hasPriorityClause && addDone {

@@ -418,8 +418,13 @@ func SetupSearchStuff(tl *Tasklist) {
 	tl.Add(tl.ParseNew("#id=10#bla questa è una prova #blo", ""))
 	tl.Add(tl.ParseNew("#id=11#bib=10 ging bong un #bla", ""))
 	tl.Add(tl.ParseNew("#id=12#bib=20#bla questa è una prova", ""))
+	
 	tl.Add(tl.ParseNew("#id=13#2010-01-01 bang", ""))
 	tl.Add(tl.ParseNew("#id=14#2010-10-10 bang", ""))
+
+	tl.Add(tl.ParseNew("#id=15#bza bung", ""))
+	tl.Add(tl.ParseNew("#id=16#bzo bung", ""))
+	tl.Add(tl.ParseNew("#id=17#bzi bung", ""))
 }
 
 func tsearch(tl *Tasklist, queryText string, expectedIds []string) {
@@ -433,12 +438,12 @@ func tsearch(tl *Tasklist, queryText string, expectedIds []string) {
 	must(err)
 
 	if len(entries) != len(ids) {
-		panic(fmt.Sprintf("Wrong number of entries in result %d (expected %d)", len(entries), len(ids)))
+		panic(fmt.Sprintf("Wrong number of entries in result %d (expected %d)\nSELECT:\n%s", len(entries), len(ids), theselect))
 	}
 	
 	for _, entry := range entries {
 		if _, ok := ids[entry.Id()]; !ok {
-			panic(fmt.Sprintf("Unexpected id %s in result", entry.Id()))
+			panic(fmt.Sprintf("Unexpected id %s in result\nSELECT:\n%s", entry.Id(), theselect))
 		}
 	}
 }
@@ -467,7 +472,11 @@ func TestLuaSelect(tl *Tasklist) {
 	tsearch(tl, "#+ columnq('bib', '=', '10')", []string{ "11" })
 	tsearch(tl, "prova #+ columnq('blo')", []string{ "10" })
 
-	theselect, _, err := tl.ParseSearch("prova #+ whenq('>', 1275775200)")
+	tsearch(tl, "bung", []string{ "15", "16", "17" })
+	tsearch(tl, "bung #+ orq(columnq('bza'), columnq('bzo'))", []string{ "15", "16" })
+	tsearch(tl, "bung #+ orq(columnq('bza'), idq('17'))", []string{ "15", "17" })
+
+	theselect, _, err := tl.ParseSearch("prova #+ orq(columnq('blap', '>', 'burp'), whenq('>', 1275775200))")
 	must(err)
 	fmt.Printf("%s \n", theselect)
 }
