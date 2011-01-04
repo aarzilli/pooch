@@ -97,6 +97,14 @@ func (tl *Tasklist) ParseNew(entryText, queryText string) *Entry {
 	return MakeEntry(id, parsed.text, "", priority, triggerAt, sort, cols)
 }
 
+type NotExpr struct {
+	subExpr Clausable
+}
+
+func (ne *NotExpr) IntoClause(tl *Tasklist, depth string, negate bool) string {
+	return depth+"NOT (\n"+ne.subExpr.IntoClause(tl, depth+"   ", negate)+")"
+}
+
 var OPERATOR_CHECK map[string]string = map[string]string{
 	"!=": "<>",
 	"=": "=",
@@ -256,22 +264,12 @@ func (parser *Parser) GetLuaClause(tl *Tasklist, pr *ParseResult) (string, os.Er
 	if tl.luaState.GetTop() < 1 {
 		return "", MakeParseError("Extra lua code didn't return anything")
 	}
-	
-	if !tl.luaState.IsLightUserdata(-1) {
-		return "", MakeParseError("Extra lua code didn't return a query object")
-	}
 
-	ud := tl.ToGoInterface(-1)
-	tl.luaState.Pop(1)
-	if ud == nil {
-		return "", MakeParseError("Extra lua code didn't return a query object")
-	}
-	
-	clausable := ud.(Clausable)
+	clausable := GetQueryObject(tl, -1)
 	if clausable == nil {
 		return "", MakeParseError("Extra lua code didn't return a query object")
 	}
-
+	
 	return clausable.IntoClause(tl, "   ", false), nil
 }
 

@@ -475,6 +475,8 @@ func TestLuaSelect(tl *Tasklist) {
 	tsearch(tl, "bung", []string{ "15", "16", "17" })
 	tsearch(tl, "bung #+ orq(columnq('bza'), columnq('bzo'))", []string{ "15", "16" })
 	tsearch(tl, "bung #+ orq(columnq('bza'), idq('17'))", []string{ "15", "17" })
+	
+	tsearch(tl, "bung #+ notq(orq(columnq('bza'), columnq('bzo')))", []string{ "17" })
 
 	theselect, _, err := tl.ParseSearch("prova #+ orq(columnq('blap', '>', 'burp'), whenq('>', 1275775200))")
 	must(err)
