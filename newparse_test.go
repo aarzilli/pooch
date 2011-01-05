@@ -370,7 +370,7 @@ func TestEntryWithSearch(tl *Tasklist) {
 }
 
 func tis(tl *Tasklist, input string, expectedOutput string) {
-	output, _, err := tl.ParseSearch(input)
+	output, _, _, err := tl.ParseSearch(input)
 	must(err)
 	mms_large(output, "SELECT tasks.id, title_field, text_field, priority, trigger_at_field, sort, group_concat(columns.name||':'||columns.value, '\v')\nFROM tasks NATURAL JOIN columns" + expectedOutput + "\nGROUP BY tasks.id\nORDER BY priority, trigger_at_field ASC, sort DESC", "")
 	stmt, err := tl.conn.Prepare("EXPLAIN " + output)
@@ -399,7 +399,7 @@ func TestExclusionSelect(tl *Tasklist) {
 
 	tis(tl, "#bib -#bab", "\nWHERE\n   id IN (SELECT id FROM columns WHERE name = 'bib')\nAND\n   priority <> 5\nAND\n   id NOT IN (SELECT id FROM columns WHERE name = 'bab')")
 
-	tis(tl, "#bib -#bab -#bob", "\nWHERE\n   id IN (SELECT id FROM columns WHERE name = 'bib')\nAND\n   priority <> 5\nAND\n   id NOT IN (\n      SELECT id FROM columns WHERE name = 'bab'\n   INTERSECT\n      SELECT id FROM columns WHERE name = 'bob')")
+	tis(tl, "#bib -#bab -#bob", "\nWHERE\n   id IN (SELECT id FROM columns WHERE name = 'bib')\nAND\n   priority <> 5\nAND\n   id NOT IN (\n      SELECT id FROM columns WHERE name = 'bab'\n   UNION\n      SELECT id FROM columns WHERE name = 'bob')")
 }
 
 func TestOptionsSelect(tl *Tasklist) {
@@ -432,7 +432,7 @@ func tsearch(tl *Tasklist, queryText string, expectedIds []string) {
 
 	for _, id := range expectedIds { ids[id] = "" }
 
-	theselect, code, err := tl.ParseSearch(queryText)
+	theselect, code, _, err := tl.ParseSearch(queryText)
 	must(err)
 	entries, err := tl.Retrieve(theselect, code)
 	must(err)
@@ -478,7 +478,7 @@ func TestLuaSelect(tl *Tasklist) {
 	
 	tsearch(tl, "bung #+ notq(orq(columnq('bza'), columnq('bzo')))", []string{ "17" })
 
-	theselect, _, err := tl.ParseSearch("prova #+ orq(columnq('blap', '>', 'burp'), whenq('>', 1275775200))")
+	theselect, _, _, err := tl.ParseSearch("prova #+ orq(columnq('blap', '>', 'burp'), whenq('>', 1275775200))")
 	must(err)
 	fmt.Printf("%s \n", theselect)
 }
