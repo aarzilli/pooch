@@ -306,10 +306,10 @@ func StatementScan(stmt *sqlite.Stmt, hasCols bool) (*Entry, os.Error) {
 
 	cols := make(Columns)
 	if hasCols {
-		for _, v := range strings.Split(columns, "\v", -1) {
-			col := strings.Split(v, ":", 2)
-			Logf(DEBUG, "   col: %s\n", col)
-			cols[col[0]] = col[1]
+		pieces := strings.Split(columns, "\u001f", -1)
+		for i := 0; i+1 < len(pieces); i += 2 {
+			Logf(DEBUG, "   col: [%s] [%s]\n", pieces[0], pieces[1])
+			cols[pieces[i]] = pieces[i+1]
 		}
 	}
 
@@ -319,7 +319,7 @@ func StatementScan(stmt *sqlite.Stmt, hasCols bool) (*Entry, os.Error) {
 }
 
 func (tl *Tasklist) Get(id string) *Entry {
-	stmt, serr := tl.conn.Prepare("SELECT tasks.id, tasks.title_field, tasks.text_field, tasks.priority, tasks.trigger_at_field, tasks.sort, group_concat(columns.name||':'||columns.value, '\v') FROM tasks NATURAL JOIN columns WHERE tasks.id = ? GROUP BY tasks.id")
+	stmt, serr := tl.conn.Prepare(SELECT_HEADER + "WHERE tasks.id = ? GROUP BY tasks.id")
 	must(serr)
 	defer stmt.Finalize()
 	must(stmt.Exec(id))
@@ -539,7 +539,7 @@ func (tl *Tasklist) RenameTag(src, dst string) {
 }
 
 func (tl *Tasklist) RunTimedTriggers() {
-	stmt, serr := tl.conn.Prepare("SELECT tasks.id, tasks.title_field, tasks.text_field, tasks.priority, tasks.trigger_at_field, tasks.sort, group_concat(columns.name||':'||columns.value, '\v') FROM tasks NATURAL JOIN columns WHERE tasks.trigger_at_field < ? AND tasks.priority = ? GROUP BY id")
+	stmt, serr := tl.conn.Prepare(SELECT_HEADER + "WHERE tasks.trigger_at_field < ? AND tasks.priority = ? GROUP BY id")
 	must(serr)
 	defer stmt.Finalize()
 
