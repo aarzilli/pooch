@@ -136,7 +136,11 @@ func (expr *SimpleExpr) IntoClauseEx(tl *Tasklist) string {
 		if expr.op == "notnull" {
 			return "trigger_at_field IS NOT NULL"
 		} else if sqlop, ok := OPERATOR_CHECK[expr.op]; ok {
-			return fmt.Sprintf("trigger_at_field %s '%s'", sqlop, expr.valueAsTime.Format(TRIGGER_AT_FORMAT))
+			value := expr.value
+			if expr.valueAsTime != nil {
+				value = expr.valueAsTime.Format(TRIGGER_AT_FORMAT)
+			} 
+			return fmt.Sprintf("trigger_at_field %s '%s'", sqlop, value)
 		} else {
 			panic(MakeParseError(fmt.Sprintf("Unknown operator %s", expr.op)))
 		}

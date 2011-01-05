@@ -338,9 +338,9 @@ func CalendarServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 
 func GetCalendarEvents(tl *Tasklist, query string, r *vector.Vector, start, end string, endSecs int64) {
 	pr, parser := tl.ParseEx(query)
-	pr.AddIncludeClause(&SimpleExpr{ ":when", ">", tl.Quote(start), nil, 0, ""  })
-	pr.AddIncludeClause(&SimpleExpr{ ":when", "<", tl.Quote(end), nil, 0, "" })
 	pr.AddIncludeClause(&SimpleExpr{ ":when", "notnull", "", nil, 0, "" })
+	pr.AddIncludeClause(&SimpleExpr{ ":when", ">", start, nil, 0, ""  })
+	pr.AddIncludeClause(&SimpleExpr{ ":when", "<", end, nil, 0, "" })
 	theselect, _ := parser.IntoSelect(tl, pr)
 	v, _ := tl.Retrieve(theselect, parser.command)
 
