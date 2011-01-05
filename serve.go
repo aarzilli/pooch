@@ -298,16 +298,21 @@ func ListServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 }
 
 func CalendarServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
-	query := strings.Replace(req.FormValue("q"), "\r", "", -1)
+	query := req.FormValue("q")
+	_, _, isSavedSearch, err := tl.ParseSearch(query)
 
 	CalendarHeaderHTML(map[string]string{ "query": query }, c)
-	CommonHeaderHTML(headerInfo(tl, "/cal", query, nil), c)
+	CommonHeaderHTML(headerInfo(tl, "/cal", query, isSavedSearch, err, nil), c)
 	CalendarHTML(map[string]string{ "query": query }, c)
 }
 
 func GetCalendarEvents(tl *Tasklist, query string, r *vector.Vector, start, end string, endSecs int64) {
-	theselect, query, code := SearchParse(query, true, false, []string { "tasks.trigger_at_field IS NOT NULL", "tasks.trigger_at_field > " + tl.Quote(start), "tasks.trigger_at_field < " + tl.Quote(end) }, make(map[string]bool), tl)
-	v, _ := tl.Retrieve(theselect, query, code)
+	pr, parser := tl.ParseEx(query)
+	pr.AddIncludeClause(&SimpleExpr{ ":when", ">", tl.Quote(start), nil, 0, ""  })
+	pr.AddIncludeClause(&SimpleExpr{ ":when", "<", tl.Quote(end), nil, 0, "" })
+	pr.AddIncludeClause(&SimpleExpr{ ":when", "notnull", "", nil, 0, "" })
+	theselect, _ := parser.IntoSelect(tl, pr)
+	v, _ := tl.Retrieve(theselect, parser.command)
 
 	timezone := tl.GetTimezone()
 
@@ -385,7 +390,7 @@ func SaveSearchServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 }
 
 func RemoveSearchServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
-	_, parser := ParseEx(tl, req.FormValue("query"))
+	_, parser := tl.ParseEx(req.FormValue("query"))
 	if parser.savedSearch != "" {
 		tl.RemoveSaveSearch(parser.savedSearch)
 	}

@@ -10,7 +10,7 @@ import (
 
 // part of the parser that interfaces with the backend
 
-func ParseEx(tl *Tasklist, text string) (*ParseResult, *Parser) {
+func (tl *Tasklist) ParseEx(text string) (*ParseResult, *Parser) {
 	t := NewTokenizer(text)
 	p := NewParser(t, tl.GetTimezone())
 	return p.ParseEx(), p
@@ -45,7 +45,7 @@ func ExtractColumnsFromSearch(search *ParseResult) Columns {
 }
 
 func (tl *Tasklist) ParseNew(entryText, queryText string) *Entry {
-	parsed, p := ParseEx(tl, entryText)
+	parsed, p := tl.ParseEx(entryText)
 
 	// the following is ignored, we try to always succeed
 	//if p.savedSearch != "" { return nil, MakeParseError("Saved search (@%) expression not allowed in new entry") }
@@ -75,7 +75,7 @@ func (tl *Tasklist) ParseNew(entryText, queryText string) *Entry {
 	}
 
 	// extraction of columns from search expression
-	searchParsed, _ := ParseEx(tl, queryText)
+	searchParsed, _ := tl.ParseEx(queryText)
 	searchCols := ExtractColumnsFromSearch(searchParsed)
 	if searchCols != nil {
 		for k, v := range searchCols {
@@ -274,9 +274,13 @@ func (parser *Parser) GetLuaClause(tl *Tasklist, pr *ParseResult) (string, os.Er
 	return clausable.IntoClause(tl, "   ", false), nil
 }
 
+func (pr *ParseResult) AddIncludeClause(expr *SimpleExpr) {
+	pr.include.subExpr = append(pr.include.subExpr, expr)
+}
+
 func (parser *Parser) IntoSelect(tl *Tasklist, pr *ParseResult) (string, os.Error) {
 	if parser.savedSearch != "" {
-		parseResult, newParser := ParseEx(tl, tl.GetSavedSearch(parser.savedSearch))
+		parseResult, newParser := tl.ParseEx(tl.GetSavedSearch(parser.savedSearch))
 		return newParser.IntoSelect(tl, parseResult)
 	}
 	
@@ -306,7 +310,7 @@ func (parser *Parser) IntoSelect(tl *Tasklist, pr *ParseResult) (string, os.Erro
 
 
 func (tl *Tasklist) ParseSearch(queryText string) (string, string, bool, os.Error) {
-	pr, parser := ParseEx(tl, queryText)
+	pr, parser := tl.ParseEx(queryText)
 	theselect, err := parser.IntoSelect(tl, pr)
 	return theselect, parser.command, parser.savedSearch != "", err
 }

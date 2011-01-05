@@ -14,7 +14,6 @@ import (
 	"strings"
 	"strconv"
 	"json"
-	"container/vector"
 	"io/ioutil"
 )
 
@@ -93,9 +92,7 @@ func HelpCreate() {
 
 func CmdQuickAdd(args []string) {
 	CheckArgsOpenDb(args, map[string]bool{}, 0, 1000, "add", func(tl *Tasklist, args []string, flags map[string]bool) {
-		var parse_errors *vector.StringVector
 		var entry *Entry
-		
 		if (len(args) == 1) && (args[0] == "-") {
 			entry = tl.ExtendedAddParse()
 		} else {
@@ -139,7 +136,7 @@ func CmdSearch(args []string) {
 		}
 		
 		timezone := tl.GetTimezone()
-		includeDone := flags["d"]; tsv := flags["t"]; js := flags["j"]
+		tsv := flags["t"]; js := flags["j"]
 
 		showCols := make(map[string]bool)
 
