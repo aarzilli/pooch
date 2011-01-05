@@ -183,57 +183,18 @@ func (expr *SimpleExpr) IntoClause(tl *Tasklist, depth string, negate bool) stri
 func (expr *BoolExpr) IntoClauses(tl *Tasklist, depth string, negate bool, addDone bool) []string {
 	r := make([]string, 0)
 	
-	count := len(expr.subExpr)
-
 	nextdepth := "   " + depth
-	nnextdepth := "   " + nextdepth
 
 	hasPriorityClause := false
 
-	// scanning for :priority and :when fields
 	for _, subExpr := range expr.subExpr {
-		ssubExpr := subExpr.(*SimpleExpr)
-		if ssubExpr == nil { continue} 
-		if ssubExpr.name[0] != ':' { continue }
-		if ssubExpr.name == ":priority" { hasPriorityClause = true }
-		r = append(r, ssubExpr.IntoClause(tl, nextdepth, negate))
-		count--
-	}
-
-	// scanning for complex subqueries
-	for _, subExpr := range expr.subExpr {
-		if subExpr.(*SimpleExpr) != nil { continue }
-		r = append(r, subExpr.IntoClause(tl, nextdepth, negate))
-		count--
-	}
-
-	colExprs := make([]string, 0)
-
-	// scanning for normal 
-	for _, subExpr := range expr.subExpr {
-		ssubExpr := subExpr.(*SimpleExpr)
-		if ssubExpr.name[0] == ':' { continue }
-		if count == 1 {
-			r = append(r, ssubExpr.IntoClause(tl, nextdepth, negate))
-		} else {
-			colExprs = append(colExprs, ssubExpr.IntoSelect(tl, nnextdepth))
-		}
-	}
-
-	if len(colExprs) > 0 {
-		s := "id IN (\n"
-		if negate { s = "id NOT IN (\n" }
-		setop := ""
-		if expr.operator == "AND" {
-			if negate {
-				setop = "UNION"
-			} else {
-				setop = "INTERSECT"
+		if ssubExpr := subExpr.(*SimpleExpr); ssubExpr != nil {
+			if ssubExpr.name == ":priority" {
+				hasPriorityClause = true
 			}
-		} else {
-			setop = "UNION"
 		}
-		r = append(r, nextdepth + s + strings.Join(colExprs, "\n"+nextdepth+setop + "\n") + ")")
+
+		r = append(r, subExpr.IntoClause(tl, nextdepth, negate))
 	}
 
 	if !hasPriorityClause && addDone {

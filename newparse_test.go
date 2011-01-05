@@ -372,7 +372,7 @@ func TestEntryWithSearch(tl *Tasklist) {
 func tis(tl *Tasklist, input string, expectedOutput string) {
 	output, _, _, err := tl.ParseSearch(input)
 	must(err)
-	mms_large(output, "SELECT tasks.id, title_field, text_field, priority, trigger_at_field, sort, group_concat(columns.name||':'||columns.value, '\v')\nFROM tasks NATURAL JOIN columns" + expectedOutput + "\nGROUP BY tasks.id\nORDER BY priority, trigger_at_field ASC, sort DESC", "")
+	mms_large(output, SELECT_HEADER + expectedOutput + "\nGROUP BY tasks.id\nORDER BY priority, trigger_at_field ASC, sort DESC", "")
 	stmt, err := tl.conn.Prepare("EXPLAIN " + output)
 	must(err)
 	defer stmt.Finalize()
@@ -387,11 +387,11 @@ func TestNoQuerySelect(tl *Tasklist) {
 	tis(tl, "#l", "\nWHERE\n   priority = 2")
 	tis(tl, "#2010-10-2", "\nWHERE\n   trigger_at_field = '2010-10-02 00:00'\nAND\n   priority <> 5")
 	
-	tis(tl, "#bib#l", "\nWHERE\n   priority = 2\nAND\n   id IN (SELECT id FROM columns WHERE name = 'bib')")
+	tis(tl, "#bib#l", "\nWHERE\n   id IN (SELECT id FROM columns WHERE name = 'bib')\nAND\n   priority = 2")
 
-	tis(tl, "#bib#bab#bob", "\nWHERE\n   id IN (\n      SELECT id FROM columns WHERE name = 'bib'\n   INTERSECT\n      SELECT id FROM columns WHERE name = 'bab'\n   INTERSECT\n      SELECT id FROM columns WHERE name = 'bob')\nAND\n   priority <> 5")
+	tis(tl, "#bib#bab#bob", "\nWHERE\n   id IN (SELECT id FROM columns WHERE name = 'bib')\nAND\n   id IN (SELECT id FROM columns WHERE name = 'bab')\nAND\n   id IN (SELECT id FROM columns WHERE name = 'bob')\nAND\n   priority <> 5")
 
-	tis(tl, "#bib#bab#2010-10-02", "\nWHERE\n   trigger_at_field = '2010-10-02 00:00'\nAND\n   id IN (\n      SELECT id FROM columns WHERE name = 'bib'\n   INTERSECT\n      SELECT id FROM columns WHERE name = 'bab')\nAND\n   priority <> 5")
+	tis(tl, "#bib#bab#2010-10-02", "\nWHERE\n   id IN (SELECT id FROM columns WHERE name = 'bib')\nAND\n   id IN (SELECT id FROM columns WHERE name = 'bab')\nAND\n   trigger_at_field = '2010-10-02 00:00'\nAND\n   priority <> 5")
 }
 
 func TestExclusionSelect(tl *Tasklist) {
@@ -399,7 +399,7 @@ func TestExclusionSelect(tl *Tasklist) {
 
 	tis(tl, "#bib -#bab", "\nWHERE\n   id IN (SELECT id FROM columns WHERE name = 'bib')\nAND\n   priority <> 5\nAND\n   id NOT IN (SELECT id FROM columns WHERE name = 'bab')")
 
-	tis(tl, "#bib -#bab -#bob", "\nWHERE\n   id IN (SELECT id FROM columns WHERE name = 'bib')\nAND\n   priority <> 5\nAND\n   id NOT IN (\n      SELECT id FROM columns WHERE name = 'bab'\n   UNION\n      SELECT id FROM columns WHERE name = 'bob')")
+	tis(tl, "#bib -#bab -#bob", "\nWHERE\n   id IN (SELECT id FROM columns WHERE name = 'bib')\nAND\n   priority <> 5\nAND\n   id NOT IN (SELECT id FROM columns WHERE name = 'bab')\nAND\n   id NOT IN (SELECT id FROM columns WHERE name = 'bob')")
 }
 
 func TestOptionsSelect(tl *Tasklist) {
@@ -411,7 +411,7 @@ func TestSavedSearchSelect(tl *Tasklist) {
 }
 
 func TestQuerySelect(tl *Tasklist) {
-	tis(tl, "prova prova #bla#blo", "\nWHERE\n   id IN (\n      SELECT id FROM columns WHERE name = 'bla'\n   INTERSECT\n      SELECT id FROM columns WHERE name = 'blo')\nAND\n   priority <> 5\nAND\n   id IN (\n      SELECT id FROM ridx WHERE title_field MATCH 'prova prova'\n   UNION\n      SELECT id FROM ridx WHERE text_field MATCH 'prova prova')")
+	tis(tl, "prova prova #bla#blo", "\nWHERE\n   id IN (SELECT id FROM columns WHERE name = 'bla')\nAND\n   id IN (SELECT id FROM columns WHERE name = 'blo')\nAND\n   priority <> 5\nAND\n   id IN (\n      SELECT id FROM ridx WHERE title_field MATCH 'prova prova'\n   UNION\n      SELECT id FROM ridx WHERE text_field MATCH 'prova prova')")
 }
 
 func SetupSearchStuff(tl *Tasklist) {
