@@ -1,5 +1,0 @@
-- hook to call when triggering (builds next iteration of the entry)
-- calculated column
-- application (enables several hooks into the system)
-- argomento della search che esegue una operazione su ogni elemento trovato
-
