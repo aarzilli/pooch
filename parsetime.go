@@ -70,3 +70,11 @@ func ParseDateTime(input string, timezone int) (datetime *time.Time, error os.Er
 	error = MakeParseError(fmt.Sprintf("Unparsable date: %s", input))
 	return
 }
+
+func TimeFormatTimezone(atime *time.Time, format string, timezone int) string {
+	z := time.SecondsToUTC(atime.Seconds() + (int64(timezone) * 60 * 60))
+	z.ZoneOffset = timezone * 60
+	
+	return z.Format(format)
+
+}

@@ -143,12 +143,7 @@ func RemoveServer(c http.ResponseWriter, req *http.Request, tl *Tasklist, id str
 }
 
 func QaddServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
-	entry, _, _ := QuickParse(CheckFormValue(req, "text"), req.FormValue("q"), tl, tl.GetTimezone())
-	if entry.Columns()["id"] != "" {
-		entry.SetId(entry.Columns()["id"])
-	} else {
-		entry.SetId(tl.MakeRandomId())
-	}
+	entry := tl.ParseNew(CheckFormValue(req, "text"), req.FormValue("q"))
 	
 	tl.Add(entry)
 	io.WriteString(c, "added: " + entry.Id())
@@ -183,25 +178,6 @@ func ShowSubcols(c http.ResponseWriter, query string, tl *Tasklist) {
 
 	io.WriteString(c, "<hr/>\n")
 	
-	for _, v := range tl.GetSubcols("") {
-		SubcolEntryHTML(map[string]string{"name": "@"+v, "dst": "@"+v}, c)
-	}
-
-	Logf(DEBUG, "Query is: %s\n", query)
-
-	if len(query) > 0 && isQuickTagStart(query[0]) && strings.IndexAny(query, " ") == -1 {
-		Logf(DEBUG, "Adding stuff in\n");
-		set := make(map[string]string)
-		_, theselect := SearchParseToken("+"+query, tl, set, make(map[string]bool), false)
-		subcols := tl.GetSubcols(theselect);
-
-		for _, v := range subcols {
-			if _, ok := set[v]; ok { continue }
-			dst := fmt.Sprintf("%s@%s", query, v)
-			SubcolEntryHTML(map[string]string{"name": dst, "dst": dst}, c)
-		}
-	}
-
 	SubcolsEnder(map[string]string{ }, c)
 }
 
@@ -240,11 +216,10 @@ func queryForTitle(query string) string {
 	return queryForTitle
 }
 
-func headerInfo(tl *Tasklist, pageName string, query string, includeDone bool, retrieveError os.Error) map[string]interface{} {
+func headerInfo(tl *Tasklist, pageName string, query string, isSavedSearch bool, parseError, retrieveError os.Error) map[string]interface{} {
 	css := tl.GetSetting("theme")
 	timezone := tl.GetTimezone()
-	includeDoneStr := ""; if includeDone { includeDoneStr = "checked" }
-	removeSearch := ""; if IsSavedQuery(query) { removeSearch = "remove-search" }
+	removeSearch := ""; if isSavedSearch { removeSearch = "remove-search" }
 	var otherPageName, otherPageLink string
 	if pageName == "/list" {
 		otherPageName = "/cal"
@@ -260,7 +235,6 @@ func headerInfo(tl *Tasklist, pageName string, query string, includeDone bool, r
 		"queryForTitle": queryForTitle(query),
 		"theme": css,
 		"timezone": fmt.Sprintf("%d", timezone),
-		"includeDone": includeDoneStr,
 		"removeSearch": removeSearch,
 		"error": retrieveError,
 		"otherPageName": otherPageName,
@@ -272,19 +246,19 @@ func headerInfo(tl *Tasklist, pageName string, query string, includeDone bool, r
  * Tasklist
  */
 func ListServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
-	includeDone := req.FormValue("done") != ""
 	query := strings.Replace(req.FormValue("q"), "\r", "", -1)
 	showCols := make(map[string]bool)
 	timezone := tl.GetTimezone()
 
-	v, err := tl.Retrieve(SearchParse(query, includeDone, false, nil, showCols, tl))
+	theselect, code, isSavedSearch, perr := tl.ParseSearch(query)
+	v, rerr := tl.Retrieve(theselect, code)
 
 	colNames := []string{}
 	for colName, _ := range showCols {
 		colNames = append(colNames, colName)
 	}
 
-	headerInfo := headerInfo(tl, "/list", query, includeDone, err)
+	headerInfo := headerInfo(tl, "/list", query, isSavedSearch, perr, rerr)
 	
 	ListHeaderHTML(headerInfo, c)
 	CommonHeaderHTML(headerInfo, c)
@@ -325,10 +299,9 @@ func ListServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 
 func CalendarServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	query := strings.Replace(req.FormValue("q"), "\r", "", -1)
-	includeDone := req.FormValue("done") != ""
 
 	CalendarHeaderHTML(map[string]string{ "query": query }, c)
-	CommonHeaderHTML(headerInfo(tl, "/cal", query, includeDone, nil), c)
+	CommonHeaderHTML(headerInfo(tl, "/cal", query, nil), c)
 	CalendarHTML(map[string]string{ "query": query }, c)
 }
 
@@ -412,10 +385,10 @@ func SaveSearchServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 }
 
 func RemoveSearchServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
-	query := req.FormValue("query")
-	if !IsSavedQuery(query) { return }
-	name := query[2:len(query)]
-	tl.RemoveSaveSearch(name)
+	_, parser := ParseEx(tl, req.FormValue("query"))
+	if parser.savedSearch != "" {
+		tl.RemoveSaveSearch(parser.savedSearch)
+	}
 }
 
 func RenTagServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
@@ -481,5 +454,16 @@ func Serve(port string) {
 		return
 	}
 	fmt.Printf("Done serving\n")
+}
+
+func ToCalendarEvent(entry *Entry, className string, timezone int) map[string]interface{} {
+	return map[string]interface{}{
+		"id": entry.Id(),
+		"title": entry.Title(),
+		"allDay": true,
+		"start": TimeFormatTimezone(entry.TriggerAt(), time.RFC3339, timezone),
+		"className": className,
+		"ignoreTimezone": true,
+	}
 }
 

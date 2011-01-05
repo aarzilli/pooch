@@ -13,9 +13,8 @@ import (
 	"time"
 	"strconv"
 	"regexp"
-	"bufio"
-	"tabwriter"
-	"io/ioutil"
+
+
 )
 
 var TRIGGER_AT_SHORT_FORMAT string = "02/01 15:04"
@@ -349,166 +348,11 @@ func QuickParse(input string, query string, tl *Tasklist, timezone int) (*Entry,
 	return MakeEntry("", r, "", priority, triggerAt, sort, cols), catfound, errors
 }
 
-func TimeFormatTimezone(atime *time.Time, format string, timezone int) string {
-	z := time.SecondsToUTC(atime.Seconds() + (int64(timezone) * 60 * 60))
-	z.ZoneOffset = timezone * 60
-	
-	return z.Format(format)
-
-}
-
-func TimeString(triggerAt *time.Time, sort string, timezone int) string {
-	if triggerAt != nil {
-		now := time.UTC()
-		showYear := (triggerAt.Format("2006") != now.Format("2006"))
-		showTime := (triggerAt.Format("15:04") != "00:00")
-
-		var formatString string
-		if showYear {
-			formatString = "2006-01-02"
-		} else {
-			formatString = "02/01"
-		}
-
-		if showTime {
-			formatString += " 15:04"
-		}
-
-		return "@ " + TimeFormatTimezone(triggerAt, formatString, timezone)
-		//return "@ " + triggerAt.Format(formatString)
-	} else {
-		return sort
-	}
-
-	return ""
-}
 
 
 
-
-func DemarshalEntry(umentry *UnmarshalEntry, timezone int) *Entry {
-	triggerAt, err := ParseDateTime(umentry.TriggerAt, timezone)
-	must(err)
-	
-	sort := umentry.Sort
-	if sort == "" { sort = SortFromTriggerAt(triggerAt) }
-
-	cols, foundcat := ParseCols(umentry.Cols, timezone)
-
-	if !foundcat {
-		cols["uncat"] = ""
-	}
-	
-	return MakeEntry(
-		umentry.Id,
-		umentry.Title,
-		umentry.Text,
-		umentry.Priority,
-		triggerAt,
-		sort,
-		cols)
-}
-
-func MarshalEntry(entry *Entry, timezone int) *UnmarshalEntry {
-	triggerAtString := entry.TriggerAtString(timezone)
-
-	return MakeUnmarshalEntry(
-		entry.Id(),
-		entry.Title(),
-		entry.Text(),
-		entry.Priority(),
-		triggerAtString,
-		entry.Sort(),
-		entry.ColString()) 
-}
-
-func ToCalendarEvent(entry *Entry, className string, timezone int) map[string]interface{} {
-	return map[string]interface{}{
-		"id": entry.Id(),
-		"title": entry.Title(),
-		"allDay": true,
-		"start": TimeFormatTimezone(entry.TriggerAt(), time.RFC3339, timezone),
-		"className": className,
-		"ignoreTimezone": true,
-	}
-}
-
-func ParseTsvFormat(in string, tl *Tasklist, timezone int) *Entry {
-	fields := strings.Split(in, "\t", 4)
-
-	entry, _, _ := QuickParse(fields[1], "", tl, timezone)
-
-	priority, err := ParsePriority(fields[2])
-	must(err)
-
-	var triggerAt *time.Time = nil
-	var sort string
-	if priority == TIMED {
-		var dterr os.Error
-		triggerAt, dterr = ParseDateTime(fields[3], timezone)
-		must(dterr)
-		sort = SortFromTriggerAt(triggerAt)
-	} else {
-		sort = fields[3]
-	}
-
-	entry.SetId(fields[0])
-	entry.SetPriority(priority)
-	entry.SetTriggerAt(triggerAt)
-	entry.SetSort(sort)
-
-	return entry
-}
-
-func (e *Entry) CatString() string {
-	var r vector.StringVector
-
-	for k, v := range e.Columns() {
-		if v != "" { continue; }
-		r.Push(k)
-	}
-	
-	return "#" + strings.Join(([]string)(r), "#")
-}
-
-func (e *Entry) ColString() string {
-	var r vector.StringVector
-
-	for k, v := range e.Columns() {
-		r.Push(k + ": " + v)
-	}
-
-	return strings.Join(([]string)(r), "\n") + "\n"
-}
-
-func (entry *Entry) Print() {
-	fmt.Printf("%s\n%s\n", entry.Title(), entry.Text())
-	
-	tw := tabwriter.NewWriter(os.Stdout, 8, 8, 4, ' ', 0)
-	w := bufio.NewWriter(tw)
-	
-	pr := entry.Priority()
-	w.WriteString(fmt.Sprintf("Priority:\t%s\n", pr.String()))
-	if entry.TriggerAt() != nil {
-		w.WriteString(fmt.Sprintf("When:\t%s\n", entry.TriggerAt()))
-	} else {
-		w.WriteString("When:\tN/A\n")
-	}
-	w.WriteString(fmt.Sprintf("Sort:\t%s\n", entry.Sort()))
-	for k, v := range entry.Columns() {
-		pv := v
-		if v == "" { pv = "<category>" }
-		w.WriteString(fmt.Sprintf("%s:\t%v\n", k, pv))
-	}
-	w.WriteString("\n")
-	w.Flush()
-	tw.Flush()
-}
 
 func ReadForExtendedAdd() (quickAdd string, text string, colStr string) {
-	buf, err := ioutil.ReadAll(os.Stdin)
-	must(err)
-	input := string(buf)
 
 
 	text, colStr = "", ""
@@ -525,16 +369,3 @@ func ReadForExtendedAdd() (quickAdd string, text string, colStr string) {
 	return
 }
 
-func ExtendedAddParse(timezone int) (*Entry, *vector.StringVector) {
-	quickAdd, text, colStr := ReadForExtendedAdd()
-	entry, quickParseFoundCategory, parse_errors := QuickParse(quickAdd, "", nil, 0)
-	entry.SetText(text)
-	cols, parseColsFoundCategory := ParseCols(colStr, timezone)
-	entry.MergeColumns(cols)
-
-	if parseColsFoundCategory && !quickParseFoundCategory {
-		cols["uncat"] = "", false
-	}
-
-	return entry, parse_errors
-}

@@ -56,7 +56,6 @@ var CommonHeaderHTML ExecutableTemplate = MakeExecutableTemplate(`
            <textarea name='q' id='q' cols='50' rows='10'>{query|html}</textarea>
            <input type='submit' value='search'>
            &nbsp;
-           <input type='checkbox' name='done' value='1' {includeDone|html}> include done
            {.section removeSearch }
              <input type='button' style='float: right' value='edit query' onClick='javascript:editsearch()'/>
              <input type='button' style='float: right' value='remove query' onClick='javascript:removesearch()'/>

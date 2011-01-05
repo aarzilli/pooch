@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"time"
 	"regexp"
+	"os"
 	"fmt"
 )
 
@@ -365,3 +366,30 @@ func ParseCols(colStr string, timezone int) (Columns, bool) {
 
 	return cols, foundcat
 }
+
+func ParseTsvFormat(in string, tl *Tasklist, timezone int) *Entry {
+	fields := strings.Split(in, "\t", 4)
+
+	entry := tl.ParseNew(fields[1], "")
+
+	priority := ParsePriority(fields[2])
+
+	var triggerAt *time.Time = nil
+	var sort string
+	if priority == TIMED {
+		var dterr os.Error
+		triggerAt, dterr = ParseDateTime(fields[3], timezone)
+		must(dterr)
+		sort = SortFromTriggerAt(triggerAt)
+	} else {
+		sort = fields[3]
+	}
+
+	entry.SetId(fields[0])
+	entry.SetPriority(priority)
+	entry.SetTriggerAt(triggerAt)
+	entry.SetSort(sort)
+
+	return entry
+}
+

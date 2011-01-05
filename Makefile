@@ -4,9 +4,10 @@ TARG=pooch
 #TARG=parsemain
 
 GOFILES=\
-	dbg.go types.go parse.go\
-	dbname.go luaint.go backend.go staticserve.go htmlformat.go serve.go compat.go\
-	multiserve.go\
+	dbg.go types.go dbname.go compat.go\
+	parsetime.go tokenizer.go pureparser.go parserint.go\
+	luaint.go backend.go\
+	staticserve.go htmlformat.go serve.go multiserve.go\
 	pooch.go
 
 include $(GOROOT)/src/Make.cmd

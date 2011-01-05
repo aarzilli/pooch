@@ -16,6 +16,8 @@ import (
 	"hash/crc32"
 	"os"
 	"encoding/base64"
+	"tabwriter"
+	"bufio"
 )
 
 var TRIGGER_AT_FORMAT string = "2006-01-02 15:04"
@@ -118,8 +120,40 @@ func must(err os.Error) {
 	if err != nil { panic(err) }
 }
 
-func MakeUnmarshalEntry(id string, title string, text string, priority Priority, triggerAt string, sort string, cols string) *UnmarshalEntry {
-	return &UnmarshalEntry{id, title, text, priority, triggerAt, sort, cols}
+func MarshalEntry(entry *Entry, timezone int) *UnmarshalEntry {
+	triggerAtString := entry.TriggerAtString(timezone)
+
+	return &UnmarshalEntry{
+		entry.Id(),
+		entry.Title(),
+		entry.Text(),
+		entry.Priority(),
+		triggerAtString,
+		entry.Sort(),
+		entry.ColString()}
+}
+
+func DemarshalEntry(umentry *UnmarshalEntry, timezone int) *Entry {
+	triggerAt, err := ParseDateTime(umentry.TriggerAt, timezone)
+	must(err)
+	
+	sort := umentry.Sort
+	if sort == "" { sort = SortFromTriggerAt(triggerAt) }
+
+	cols, foundcat := ParseCols(umentry.Cols, timezone)
+
+	if !foundcat {
+		cols["uncat"] = ""
+	}
+	
+	return MakeEntry(
+		umentry.Id,
+		umentry.Title,
+		umentry.Text,
+		umentry.Priority,
+		triggerAt,
+		sort,
+		cols)
 }
 
 func MakeEntry(id string, title string, text string, priority Priority, triggerAt *time.Time, sort string, columns Columns) *Entry {
@@ -215,6 +249,16 @@ func (e *Entry) CatHash() uint32 {
 	hasher.Write(([]uint8)(catstring))
 
 	return hasher.Sum32()
+}
+
+func (e *Entry) ColString() string {
+	var r vector.StringVector
+
+	for k, v := range e.Columns() {
+		r.Push(k + ": " + v)
+	}
+
+	return strings.Join(([]string)(r), "\n") + "\n"
 }
 
 func StripQuotes(in string) string {
@@ -318,3 +362,65 @@ func decodeStatic(name string) string {
 	}
 	return z[0:i+1]
 }
+
+func (entry *Entry) Print() {
+	fmt.Printf("%s\n%s\n", entry.Title(), entry.Text())
+	
+	tw := tabwriter.NewWriter(os.Stdout, 8, 8, 4, ' ', 0)
+	w := bufio.NewWriter(tw)
+	
+	pr := entry.Priority()
+	w.WriteString(fmt.Sprintf("Priority:\t%s\n", pr.String()))
+	if entry.TriggerAt() != nil {
+		w.WriteString(fmt.Sprintf("When:\t%s\n", entry.TriggerAt()))
+	} else {
+		w.WriteString("When:\tN/A\n")
+	}
+	w.WriteString(fmt.Sprintf("Sort:\t%s\n", entry.Sort()))
+	for k, v := range entry.Columns() {
+		pv := v
+		if v == "" { pv = "<category>" }
+		w.WriteString(fmt.Sprintf("%s:\t%v\n", k, pv))
+	}
+	w.WriteString("\n")
+	w.Flush()
+	tw.Flush()
+}
+
+func (e *Entry) CatString() string {
+	var r vector.StringVector
+
+	for k, v := range e.Columns() {
+		if v != "" { continue; }
+		r.Push(k)
+	}
+	
+	return "#" + strings.Join(([]string)(r), "#")
+}
+
+func TimeString(triggerAt *time.Time, sort string, timezone int) string {
+	if triggerAt != nil {
+		now := time.UTC()
+		showYear := (triggerAt.Format("2006") != now.Format("2006"))
+		showTime := (triggerAt.Format("15:04") != "00:00")
+
+		var formatString string
+		if showYear {
+			formatString = "2006-01-02"
+		} else {
+			formatString = "02/01"
+		}
+
+		if showTime {
+			formatString += " 15:04"
+		}
+
+		return "@ " + TimeFormatTimezone(triggerAt, formatString, timezone)
+		//return "@ " + triggerAt.Format(formatString)
+	} else {
+		return sort
+	}
+
+	return ""
+}
+

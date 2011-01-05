@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 	"os"
+	"io/ioutil"
 )
 
 // part of the parser that interfaces with the backend
@@ -304,9 +305,16 @@ func (parser *Parser) IntoSelect(tl *Tasklist, pr *ParseResult) (string, os.Erro
 }
 
 
-func (tl *Tasklist) ParseSearch(queryText string) (string, string, os.Error) {
+func (tl *Tasklist) ParseSearch(queryText string) (string, string, bool, os.Error) {
 	pr, parser := ParseEx(tl, queryText)
 	theselect, err := parser.IntoSelect(tl, pr)
-	return theselect, parser.command, err
+	return theselect, parser.command, parser.savedSearch != "", err
 }
 
+func (tl *Tasklist) ExtendedAddParse() *Entry {
+	buf, err := ioutil.ReadAll(os.Stdin)
+	must(err)
+	input := string(buf)
+
+	return tl.ParseNew(input, "")
+}

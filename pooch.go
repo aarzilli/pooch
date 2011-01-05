@@ -30,7 +30,6 @@ var commands map[string](func (args []string)) = map[string](func (args []string
 	"update": CmdQuickUpdate,
 	"search": CmdSearch,
 	"savesearch": CmdSaveSearch,
-	"colist": CmdColist,
 	"tsvup": CmdTsvUpdate,
 	"rename": CmdRename,
 	"rentag": CmdRenTag,
@@ -49,7 +48,6 @@ var help_commands map[string](func ()) = map[string](func ()){
 	"update": HelpQuickUpdate,
 	"search": HelpSearch,
 	"savesearch": HelpSaveSearch,
-	"colist": HelpColist,
 	"tsvup": HelpTsvUpdate,
 	"rename": HelpRename,
 	"rentag": HelpRenTag,
@@ -99,12 +97,10 @@ func CmdQuickAdd(args []string) {
 		var entry *Entry
 		
 		if (len(args) == 1) && (args[0] == "-") {
-			entry, parse_errors = ExtendedAddParse(tl.GetTimezone())
+			entry = tl.ExtendedAddParse()
 		} else {
-			entry, _, parse_errors = QuickParse(strings.Join(args[0:], " "), "", nil, tl.GetTimezone())
+			entry  = tl.ParseNew(strings.Join(args[0:], " "), "")
 		}
-		fmt.Fprintf(os.Stderr, "%s\n", strings.Join(*parse_errors, "\n"))
-		entry.SetId(tl.MakeRandomId())
 		tl.Add(entry)
 		Logf(INFO, "Added entry: %s\n", entry.Id())
 	})
@@ -119,9 +115,7 @@ func CmdQuickUpdate(args []string) {
 	CheckArgsOpenDb(args, map[string]bool{}, 1, 1000, "update", func (tl *Tasklist, args []string, flags map[string]bool) {
 		CheckId(tl, args[0], "update")
 		
-		entry, _, parse_errors := QuickParse(strings.Join(args[1:], " "), "", nil, 0)
-		
-		fmt.Fprintf(os.Stderr, "%s\n", strings.Join(*parse_errors, "\n"))
+		entry := tl.ParseNew(strings.Join(args[1:], " "), "")
 		
 		entry.SetId(args[0])
 		tl.Update(entry, false)
@@ -148,16 +142,14 @@ func CmdSearch(args []string) {
 		includeDone := flags["d"]; tsv := flags["t"]; js := flags["j"]
 
 		showCols := make(map[string]bool)
-		
-		theselect, query, code := SearchParse(input, includeDone, false, nil, showCols, tl)
-		
-		Logf(DEBUG, "Search statement [%s] with query [%s]\n", theselect, query)
 
-		entries, err := tl.Retrieve(theselect, query, code)
+		theselect, command, _, perr := tl.ParseSearch(input)
+		must(perr)
+		
+		Logf(DEBUG, "Search statement\n%s\n", theselect)
 
-		if err != nil {
-			Logf(ERROR, "There was an error while executing the search query: %s\n", err.String())
-		}
+		entries, serr := tl.Retrieve(theselect, command)
+		must(serr)
 		
 		switch {
 		case tsv: CmdListExTsv(entries, showCols, timezone)
@@ -185,29 +177,6 @@ func CmdSaveSearch(args []string) {
 func HelpSaveSearch() {
 	fmt.Fprintf(os.Stderr, "Usage: savesearch <name> <search string>\n\n")
 	fmt.Fprintf(os.Stderr, "\tSaves the search string as <name>\n")
-}
-
-func CmdColist(args []string) {
-	CheckArgsOpenDb(args, map[string]bool{}, 0, 1, "colist", func(tl *Tasklist, args []string, flags map[string]bool) {
-		theselect, base := "", ""
-		set := make(map[string]string)
-		if len(args) > 0 {
-			base = args[0]
-			_, theselect = SearchParseToken("+"+base, tl, set, make(map[string]bool), false)
-		}
-		
-		subcols := tl.GetSubcols(theselect);
-		
-		for _, x := range subcols {
-			if _, ok := set[x]; ok { continue }
-			fmt.Printf("%s#%s\n", base, x)
-		}
-	})
-}
-
-func HelpColist() {
-	fmt.Fprintf(os.Stderr, "Usage: colist <list of columns>\n\n")
-	fmt.Fprintf(os.Stderr, "\tReturns categories associated with the list of columns (the list of columns colud be empty)")
 }
 
 func CmdRemove(args []string) {
