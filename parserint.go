@@ -219,7 +219,11 @@ func (expr *BoolExpr) IntoClauses(tl *Tasklist, depth string, negate bool, addDo
 		if negate { s = "id NOT IN (\n" }
 		setop := ""
 		if expr.operator == "AND" {
-			setop = "INTERSECT"
+			if negate {
+				setop = "UNION"
+			} else {
+				setop = "INTERSECT"
+			}
 		} else {
 			setop = "UNION"
 		}

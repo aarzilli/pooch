@@ -185,7 +185,7 @@ func ErrorLogServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	css := tl.GetSetting("theme")
 	errors := tl.RetrieveErrors()
 
-	ErrorLogHeaderHTML(map[string]string{ "theme": css }, c)
+	ErrorLogHeaderHTML(map[string]string{ "name": "error log", "theme": css, "code": "" }, c)
 
 	for idx, error := range errors {
 		htmlClass := "entry"
@@ -199,6 +199,36 @@ func ErrorLogServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 			"message": error.Message }, c)
 	}
 
+	ErrorLogEnderHTML(nil, c)
+}
+
+func ExplainServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
+	css := tl.GetSetting("theme")
+
+	theselect, code, isSavedSearch, err := tl.ParseSearch(req.FormValue("q"))
+
+	myexplain := ""
+
+	myexplain += fmt.Sprintf("Errors: %s\nSaved Search: %v\n\nSQL:\n%s\n\nCODE:\n%s\n\nSQLITE OPCODES:\n", err, isSavedSearch, theselect, code)
+	
+	ErrorLogHeaderHTML(map[string]string{ "name": "explanation", "theme": css, "code": myexplain }, c)
+	ExplainEntryHeaderHTML(nil, c)
+
+	theselect = "EXPLAIN " + theselect
+
+	expls := tl.ExplainRetrieve(theselect)
+
+	for idx, expl := range expls {
+		htmlClass := "entry"
+		if idx % 2 != 0 {
+			htmlClass += " oddentry"
+		}
+
+		ExplainEntryHTML(map[string]interface{}{
+			"htmlClass": htmlClass,
+			"explain": expl }, c)
+	}
+	
 	ErrorLogEnderHTML(nil, c)
 }
 
@@ -433,6 +463,7 @@ func SetupHandleFunc(wrapperTasklistServer func(TasklistServer)http.HandlerFunc,
 	http.HandleFunc("/cal", WrapperServer(wrapperTasklistServer(CalendarServer)))
 	http.HandleFunc("/opts", WrapperServer(wrapperTasklistServer(OptionServer)))
 	http.HandleFunc("/errorlog", WrapperServer(wrapperTasklistServer(ErrorLogServer)))
+	http.HandleFunc("/explain", WrapperServer(wrapperTasklistServer(ExplainServer)))
 
 	// List ajax urls
 	http.HandleFunc("/change-priority", WrapperServer(wrapperTasklistWithIdServer(ChangePriorityServer)))

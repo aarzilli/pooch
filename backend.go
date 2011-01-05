@@ -408,6 +408,32 @@ func (tl *Tasklist) RetrieveErrors() []*ErrorEntry {
 	return r
 }
 
+type ExplainEntry struct {
+	addr string
+	opcode string
+	p1, p2, p3, p4, p5 string
+	comment string
+}
+
+func (tl *Tasklist) ExplainRetrieve(theselect string) []*ExplainEntry {
+	stmt, serr := tl.conn.Prepare(theselect)
+	must(serr)
+	defer stmt.Finalize()
+	must(stmt.Exec())
+
+	r := make([]*ExplainEntry, 0)
+	for stmt.Next() {
+		ee := &ExplainEntry{}
+		must(stmt.Scan(&(ee.addr), &(ee.opcode),
+			&(ee.p1), &(ee.p2), &(ee.p3), &(ee.p4), &(ee.p5),
+			&(ee.comment)))
+		r = append(r, ee)
+	}
+
+	return r
+}
+
+
 func (tl *Tasklist) GetSavedSearches() []string {
 	v := make([]string, 0)
 

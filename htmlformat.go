@@ -80,6 +80,7 @@ var CommonHeaderHTML ExecutableTemplate = MakeExecutableTemplate(`
     </span>
     &nbsp;
     <a href='{otherPageName}?q={query|url}'>[see as {otherPageLink}]</a>
+    <a href='/explain?q={query|url}'>[see explanation]</a>
   </span></h2>
 
   {.section error}
@@ -189,10 +190,11 @@ var ListEnderHTML ExecutableTemplate = MakeExecutableTemplate(`
 var ErrorLogHeaderHTML ExecutableTemplate = MakeExecutableTemplate(`
 <html>
 <head>
-  <title>Pooch: error log</title>
+  <title>Pooch: {name|html}</title>
   <link type='text/css' rel='stylesheet' href='{theme}'>
 </head>
 <body>
+  <p><pre style='font-family: monospace'>{code|html}</pre></p>
   <table width='100%' id='maintable' style='border-collapse: collapse;'>
 `)
 
@@ -200,6 +202,36 @@ var ErrorLogEntryHTML ExecutableTemplate = MakeExecutableTemplate(`
   <tr class='{htmlClass}'>
     <td class='etime'>{time}</td>
     <td class='etitle'>{message|html}</td>
+  </tr>
+`)
+
+var ExplainEntryHeaderHTML ExecutableTemplate = MakeExecutableTemplate(`
+  <th>
+    <tr class='entry'>
+      <td>addr</td>
+      <td>opcode</td>
+      <td>p1</td>
+      <td>p2</td>
+      <td>p3</td>
+      <td>p4</td>
+      <td>p5</td>
+      <td>comment</td>
+    </tr>
+  </th>
+`)
+
+var ExplainEntryHTML ExecutableTemplate = MakeExecutableTemplate(`
+  <tr class='{htmlClass}'>
+    {.section explain}
+    <td>{addr|html}</td>
+    <td>{opcode|html}</td>
+    <td>{p1|html}</td>
+    <td>{p2|html}</td>
+    <td>{p3|html}</td>
+    <td>{p4|html}</td>
+    <td>{p5|html}</td>
+    <td>{comment|html}</td>
+    {.end}
   </tr>
 `)
 

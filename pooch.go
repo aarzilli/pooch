@@ -157,10 +157,9 @@ func CmdSearch(args []string) {
 }
 
 func HelpSearch() {
-	fmt.Fprintf(os.Stderr, "Usage: search [-dtj] <search string>\n\n")
+	fmt.Fprintf(os.Stderr, "Usage: search [-tj] <search string>\n\n")
 	fmt.Fprintf(os.Stderr, "\tReturns a list of matching entries\n")
 	fmt.Fprintf(os.Stderr, "\t-t\tWrites output in tsv format\n")
-	fmt.Fprintf(os.Stderr, "\t-d\tIncludes done entries\n")
 	fmt.Fprintf(os.Stderr, "\t-j\tPrints JSON\n")
 	fmt.Fprintf(os.Stderr, "Using a single - as the search string will make the program read the search string from standard input")
 }
