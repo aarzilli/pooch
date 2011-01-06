@@ -251,6 +251,14 @@ func (pr *ParseResult) AddIncludeClause(expr *SimpleExpr) {
 
 var SELECT_HEADER string = "SELECT tasks.id, title_field, text_field, priority, trigger_at_field, sort, group_concat(columns.name||'\u001f'||columns.value, '\u001f')\nFROM tasks NATURAL JOIN columns "
 
+func ResolveSavedSearch(tl *Tasklist, parser *Parser, pr *ParseResult) (*ParseResult, *Parser) {
+	if parser.savedSearch != "" {
+		parseResult, newParser := tl.ParseEx(tl.GetSavedSearch(parser.savedSearch))
+		return parseResult, newParser
+	}
+	return pr, parser
+}
+
 func (parser *Parser) IntoSelect(tl *Tasklist, pr *ParseResult) (string, os.Error) {
 	if parser.savedSearch != "" {
 		parseResult, newParser := tl.ParseEx(tl.GetSavedSearch(parser.savedSearch))
