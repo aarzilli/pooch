@@ -83,7 +83,10 @@ var CommonHeaderHTML ExecutableTemplate = MakeExecutableTemplate(`
     <a href='/explain?q={query|url}'>[see explanation]</a>
   </span></h2>
 
-  {.section error}
+  {.section parseError}
+    <div class='screrror'>Error while executing search: {@|html} <a href='/errorlog'>Full error log</a></div>
+  {.end}
+  {.section retrieveError}
     <div class='screrror'>Error while executing search: {@|html} <a href='/errorlog'>Full error log</a></div>
   {.end}
 `)
