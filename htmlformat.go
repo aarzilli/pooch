@@ -80,6 +80,7 @@ var CommonHeaderHTML ExecutableTemplate = MakeExecutableTemplate(`
     </span>
     &nbsp;
     <a href="{otherPageName}?q={query|url}">[see as {otherPageLink}]</a>
+    &nbsp;
     <a href="/explain?q={query|url}">[see explanation]</a>
   </span></h2>
 
