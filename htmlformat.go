@@ -79,8 +79,8 @@ var CommonHeaderHTML ExecutableTemplate = MakeExecutableTemplate(`
       </div>
     </span>
     &nbsp;
-    <a href='{otherPageName}?q={query|url}'>[see as {otherPageLink}]</a>
-    <a href='/explain?q={query|url}'>[see explanation]</a>
+    <a href="{otherPageName}?q={query|url}">[see as {otherPageLink}]</a>
+    <a href="/explain?q={query|url}">[see explanation]</a>
   </span></h2>
 
   {.section parseError}
@@ -245,7 +245,7 @@ var ErrorLogEnderHTML ExecutableTemplate = MakeExecutableTemplate(`
 `)
 
 var SubcolEntryHTML ExecutableTemplate = MakeExecutableTemplate(`
-<a href='list?q={dst|url}'>{name|html}</a><br>
+<a href="list?q={dst|url}">{name|html}</a><br>
 `)
 
 var CalendarHeaderHTML ExecutableTemplate = MakeExecutableTemplate(`
