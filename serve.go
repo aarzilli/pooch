@@ -344,6 +344,7 @@ func GetCalendarEvents(tl *Tasklist, query string, r *vector.Vector, start, end 
 	pr.AddIncludeClause(&SimpleExpr{ ":when", "notnull", "", nil, 0, "" })
 	pr.AddIncludeClause(&SimpleExpr{ ":when", ">", start, nil, 0, ""  })
 	pr.AddIncludeClause(&SimpleExpr{ ":when", "<", end, nil, 0, "" })
+	parser.options["w/done"] = "w/done"
 	theselect, _ := parser.IntoSelect(tl, pr)
 	v, _ := tl.Retrieve(theselect, parser.command)
 
