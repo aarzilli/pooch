@@ -15,7 +15,6 @@ import (
 	"strings"
 	"sync"
 	"strconv"
-
 	"gosqlite.googlecode.com/hg/sqlite"
 	"lua51"
 )
@@ -433,7 +432,6 @@ func (tl *Tasklist) ExplainRetrieve(theselect string) []*ExplainEntry {
 	return r
 }
 
-
 func (tl *Tasklist) GetSavedSearches() []string {
 	v := make([]string, 0)
 
@@ -508,28 +506,6 @@ func (tl *Tasklist) SetSettings(settings map[string]string) {
 		Logf(INFO, "Saving %s to %s\n", v, k);
 		tl.MustExec("INSERT OR REPLACE INTO settings(name, value) VALUES (?, ?);", k, v)
 	}
-}
-
-func (tl *Tasklist) GetSubcols(theselect string) []string {
-	v := make([]string, 0)
-
-	stmtStr := "SELECT DISTINCT name FROM columns WHERE value = ''"
-	if theselect != "" { stmtStr += " AND id IN (" + theselect + ")"}
-
-	Logf(DEBUG, "Select for Subcols: [%s]\n", stmtStr)
-
-	stmt, serr := tl.conn.Prepare(stmtStr)
-	must(serr)
-	defer stmt.Finalize()
-	must(stmt.Exec())
-
-	for stmt.Next() {
-		var name string
-		must(stmt.Scan(&name))
-		v = append(v, name)
-	}
-
-	return v
 }
 
 func (tl *Tasklist) RenameTag(src, dst string) {
