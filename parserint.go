@@ -29,8 +29,8 @@ func ExtractColumnsFromSearch(search *ParseResult) Columns {
 	cols := make(Columns)
 
 	for _, expr := range search.include.subExpr {
-		sexpr := expr.(*SimpleExpr)
-		if sexpr == nil { continue }
+		sexpr, ok := expr.(*SimpleExpr)
+		if !ok { continue }
 		if sexpr.name[0] == '!' { continue }
 		switch sexpr.op {
 		case "=":
@@ -59,8 +59,8 @@ func (tl *Tasklist) ParseNew(entryText, queryText string) *Entry {
 	catFound := false
 	
 	for _, expr := range parsed.include.subExpr {
-		sexpr := expr.(*SimpleExpr)
-		if sexpr == nil { continue }
+		sexpr, ok := expr.(*SimpleExpr)
+		if !ok { continue }
 		switch sexpr.name {
 		case ":when": triggerAt = sexpr.valueAsTime
 		case ":priority": priority = sexpr.priority
@@ -189,7 +189,7 @@ func (expr *BoolExpr) IntoClauses(tl *Tasklist, depth string, negate bool, addDo
 	hasPriorityClause := false
 
 	for _, subExpr := range expr.subExpr {
-		if ssubExpr := subExpr.(*SimpleExpr); ssubExpr != nil {
+		if ssubExpr, ok := subExpr.(*SimpleExpr); ok {
 			if ssubExpr.name == ":priority" {
 				hasPriorityClause = true
 			}
@@ -300,7 +300,7 @@ func IntoTrigger(parser *Parser, pr *ParseResult) string {
 	out := make([]string, 0)
 
 	for _, se := range pr.include.subExpr {
-		if sse := se.(*SimpleExpr); sse != nil {
+		if sse, ok := se.(*SimpleExpr); ok {
 			out = append(out, sse.name)
 		}
 	}

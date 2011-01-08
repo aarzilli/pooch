@@ -468,8 +468,8 @@ func GetQueryObject(tl *Tasklist, i int) Clausable {
 	ud := tl.ToGoInterface(i)
 	if ud == nil { return nil }
 	
-	clausable := ud.(Clausable)
-	if clausable == nil { return nil }
+	clausable, ok := ud.(Clausable)
+	if !ok { return nil }
 
 	return clausable
 }
