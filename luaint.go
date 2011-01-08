@@ -446,6 +446,22 @@ func LuaIntColumnQuery(L *lua51.State) int {
 	return 1
 }
 
+func LuaIntPriorityQuery(L *lua51.State) int {
+	if L.GetTop() != 1 {
+		LuaError(L, "Wrong number of arguments to priorityq")
+		return 0
+	}
+
+	priority := L.ToString(1)
+
+	L.CheckStack(1)
+	tl := GetTasklistFromLua(L)
+
+	tl.PushGoInterface(&SimpleExpr{ ":priority", "=", priority, nil, ParsePriority(priority), "" })
+
+	return 1
+}
+
 func GetQueryObject(tl *Tasklist, i int) Clausable {
 	if !tl.luaState.IsLightUserdata(i) { return nil }
 	
@@ -622,6 +638,7 @@ func MakeLuaState() *lua51.State {
 	L.Register("textq", LuaIntTextQuery)
 	L.Register("whenq", LuaIntWhenQuery)
 	L.Register("searchq", LuaIntSearchQuery)
+	L.Register("priorityq", LuaIntPriorityQuery)
 	L.Register("columnq", LuaIntColumnQuery)
 	L.Register("andq", LuaIntAndQuery)
 	L.Register("orq", LuaIntOrQuery)
