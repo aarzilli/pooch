@@ -27,6 +27,8 @@ type Tasklist struct {
 	mutex *sync.Mutex
 	refs int
 	timestamp int64
+	ignoreColumn map[string]bool
+	subcolumns map[string][]string
 }
 
 var enabledCaching bool = true
@@ -86,22 +88,32 @@ func internalTasklistOpenOrCreate(filename string) *Tasklist {
 		MustExec(conn, "CREATE INDEX IF NOT EXISTS columns_id ON columns(id);")
 		
 		MustExec(conn, "CREATE TABLE IF NOT EXISTS saved_searches(name TEXT, value TEXT);")
-
-		if !HasTable(conn, "settings") {
-			MustExec(conn, "CREATE TABLE IF NOT EXISTS settings(name TEXT UNIQUE, value TEXT);")
-			MustExec(conn, "INSERT INTO settings(name, value) VALUES (\"timezone\", \"0\");")
-			MustExec(conn, "INSERT INTO settings(name, value) VALUES (\"theme\", \"list.css\");")
-		}
-
-		MustExec(conn, "CREATE TABLE IF NOT EXISTS errorlog(timestamp TEXT, message TEXT);")
 	}
+
+	MustExec(conn, "CREATE TABLE IF NOT EXISTS settings(name TEXT UNIQUE, value TEXT);")
+	MustExec(conn, "INSERT OR IGNORE INTO settings(name, value) VALUES (\"timezone\", \"0\");")
+	MustExec(conn, "INSERT OR IGNORE INTO settings(name, value) VALUES (\"theme\", \"list.css\");")
+	MustExec(conn, "INSERT OR IGNORE INTO settings(name, value) VALUES (\"setup\", \"\");")
+
+	MustExec(conn, "CREATE TABLE IF NOT EXISTS errorlog(timestamp TEXT, message TEXT);")
 	
-	tasklist := &Tasklist{filename, conn, MakeLuaState(), &LuaFlags{}, &sync.Mutex{}, 1, time.Seconds()}
+	tasklist := &Tasklist{filename, conn, MakeLuaState(), &LuaFlags{}, &sync.Mutex{}, 1, time.Seconds(), make(map[string]bool), make(map[string][]string, 0)}
 	tasklist.RunTimedTriggers()
 	tasklist.MustExec("PRAGMA foreign_keys = ON;")
 	tasklist.MustExec("PRAGMA synchronous = OFF;") // makes inserts many many times faster
 
+	// executing setup code
+	setupCode := tasklist.GetSetting("setup")
+	if setupCode != "" {
+		tasklist.DoString(setupCode, nil) // error is ignored, it will be logged
+	}
+
 	return tasklist
+}
+
+func (tl *Tasklist) ResetSetup() {
+	tl.ignoreColumn = make(map[string]bool)
+	tl.subcolumns = make(map[string][]string)
 }
 
 func (tl *Tasklist) Truncate() {
@@ -492,6 +504,23 @@ func (tl *Tasklist) GetSettings() (r map[string]string) {
 	}
 	
 	return
+}
+
+func (tl *Tasklist) GetTags() []string {
+	r := make([]string, 0)
+	
+	stmt, serr := tl.conn.Prepare("SELECT DISTINCT name FROM columns WHERE value = ''")
+	must(serr)
+	defer stmt.Finalize()
+	must(stmt.Exec())
+
+	for stmt.Next() {
+		name := ""
+		must(stmt.Scan(&name))
+		r = append(r, name)
+	}
+	
+	return r
 }
 
 func (tl *Tasklist) SetSetting(name, value string) {

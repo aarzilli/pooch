@@ -168,7 +168,7 @@ func SaveServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	io.WriteString(c, "saved-at-timestamp: " + time.UTC().Format("2006-01-02 15:04:05"))
 }
 
-func ShowSubcols(c http.ResponseWriter, query string, tl *Tasklist) {
+func ShowSubcols(c http.ResponseWriter, trigger string, tl *Tasklist) {
 	SubcolsHeader(nil, c)
 	SubcolEntryHTML(map[string]string{"name": "index", "dst": ""}, c)
 
@@ -177,6 +177,19 @@ func ShowSubcols(c http.ResponseWriter, query string, tl *Tasklist) {
 	}
 
 	io.WriteString(c, "<hr/>\n")
+
+	subcols := tl.subcolumns[trigger]
+	if subcols == nil {
+		for _, tag := range tl.GetTags() {
+			if !tl.ignoreColumn[tag] {
+				subcols = append(subcols, "@"+tag)
+			}
+		}
+	}
+
+	for _, subcol := range subcols {
+		SubcolEntryHTML(map[string]string{"name": subcol, "dst": subcol}, c)
+	}
 	
 	SubcolsEnder(map[string]string{ }, c)
 }
@@ -205,7 +218,7 @@ func ErrorLogServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 func ExplainServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	css := tl.GetSetting("theme")
 
-	theselect, code, isSavedSearch, err := tl.ParseSearch(req.FormValue("q"))
+	theselect, code, _, isSavedSearch, err := tl.ParseSearch(req.FormValue("q"))
 
 	myexplain := ""
 
@@ -281,7 +294,7 @@ func ListServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	showCols := make(map[string]bool)
 	timezone := tl.GetTimezone()
 
-	theselect, code, isSavedSearch, perr := tl.ParseSearch(query)
+	theselect, code, trigger, isSavedSearch, perr := tl.ParseSearch(query)
 	v, rerr := tl.Retrieve(theselect, code)
 
 	colNames := []string{}
@@ -293,7 +306,7 @@ func ListServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	
 	ListHeaderHTML(headerInfo, c)
 	CommonHeaderHTML(headerInfo, c)
-	ShowSubcols(c, query, tl)
+	ShowSubcols(c, trigger, tl)
 	
 	var curp Priority = INVALID
 	for idx, entry := range v {
@@ -330,7 +343,7 @@ func ListServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 
 func CalendarServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	query := req.FormValue("q")
-	_, _, isSavedSearch, err := tl.ParseSearch(query)
+	_, _, _, isSavedSearch, err := tl.ParseSearch(query)
 
 	CalendarHeaderHTML(map[string]string{ "query": query }, c)
 	CommonHeaderHTML(headerInfo(tl, "/cal", query, isSavedSearch, err, nil), c)
@@ -437,6 +450,10 @@ func RenTagServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	io.WriteString(c, "rename successful")
 }
 
+var LONG_OPTION map[string]bool = map[string]bool{
+	"setup": true,
+}
+
 func OptionServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	if req.FormValue("save") == "save" {
 		must(req.ParseForm())
@@ -445,6 +462,11 @@ func OptionServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 			if k != "save" { settings[k] = v[0] }
 		}
 		tl.SetSettings(settings)
+
+		tl.ResetSetup()
+		if settings["setup"] != "" {
+			tl.DoString(settings["setup"], nil)
+		}
 	}
 	
 	settings := tl.GetSettings()
@@ -452,7 +474,11 @@ func OptionServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	OptionsPageHeader(nil, c)
 	
 	for k, v := range settings {
-		OptionsPageLine(map[string]string{ "name": k, "value": v }, c)
+		if LONG_OPTION[k] {
+			OptionsLongPageLine(map[string]string{ "name": k, "value": v }, c)
+		} else {
+			OptionsPageLine(map[string]string{ "name": k, "value": v }, c)
+		}
 	}
 	
 	OptionsPageEnd(nil, c)

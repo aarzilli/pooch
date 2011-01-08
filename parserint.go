@@ -6,6 +6,7 @@ import (
 	"strings"
 	"os"
 	"io/ioutil"
+	"sort"
 )
 
 // part of the parser that interfaces with the backend
@@ -289,11 +290,30 @@ func (parser *Parser) IntoSelect(tl *Tasklist, pr *ParseResult) (string, os.Erro
 	return SELECT_HEADER + whereStr + "\nGROUP BY tasks.id\nORDER BY priority, trigger_at_field ASC, sort DESC", error
 }
 
+func IntoTrigger(parser *Parser, pr *ParseResult) string {
+	if parser.savedSearch != "" {
+		return "#%" + parser.savedSearch
+	}
 
-func (tl *Tasklist) ParseSearch(queryText string) (string, string, bool, os.Error) {
+	if parser.extra != "" { return "" }
+
+	out := make([]string, 0)
+
+	for _, se := range pr.include.subExpr {
+		if sse := se.(*SimpleExpr); sse != nil {
+			out = append(out, sse.name)
+		}
+	}
+
+	sort.SortStrings(out)
+	return "#" + strings.Join(out, "#")
+}
+
+func (tl *Tasklist) ParseSearch(queryText string) (string, string, string, bool, os.Error) {
 	pr, parser := tl.ParseEx(queryText)
 	theselect, err := parser.IntoSelect(tl, pr)
-	return theselect, parser.command, parser.savedSearch != "", err
+	trigger := IntoTrigger(parser, pr)
+	return theselect, parser.command, trigger, parser.savedSearch != "", err
 }
 
 func (tl *Tasklist) ExtendedAddParse() *Entry {

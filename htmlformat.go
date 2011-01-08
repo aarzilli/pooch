@@ -365,7 +365,11 @@ var OptionsPageHeader ExecutableTemplate = MakeExecutableTemplate(`
 `)
 
 var OptionsPageLine ExecutableTemplate = MakeExecutableTemplate(`
-      <label for='{name|html}'>{name|html}</label><input type='text' name='{name|html}' id='{name|html}' value='{value|html}'/></br>
+      <label for='{name|html}'>{name|html}</label>&nbsp;<input type='text' name='{name|html}' id='{name|html}' value='{value|html}'/></br>
+`)
+
+var OptionsLongPageLine ExecutableTemplate = MakeExecutableTemplate(`
+      <label for='<name|html}'>{name|html}</label>&nbsp;<textarea name='{name|html}' id='{name|html}' rows='20' cols='80'>{value|html}</textarea></br>
 `)
 
 var OptionsPageEnd ExecutableTemplate = MakeExecutableTemplate(`

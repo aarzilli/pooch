@@ -510,6 +510,37 @@ func LuaIntOrQuery(L *lua51.State) int {
 	return LuaIntBoolQuery(L, "OR", "orq")
 }
 
+func LuaIntSubtag(L *lua51.State) int {
+	if L.GetTop() != 2 {
+		LuaError(L, "Wrong number of arguments to subtag")
+		return 0
+	}
+
+	trigger := L.ToString(1)
+	tag := L.ToString(2)
+	
+	tl := GetTasklistFromLua(L)
+
+	tl.subcolumns[trigger] = append(tl.subcolumns[trigger], tag)
+
+	return 0
+}
+
+func LuaIntNotTopTag(L *lua51.State) int {
+	if L.GetTop() != 1 {
+		LuaError(L, "Wrong number of arguments to nottoptag")
+		return 0
+	}
+	
+	tag := L.ToString(1)
+	
+	tl := GetTasklistFromLua(L)
+
+	tl.ignoreColumn[tag] = true
+
+	return 0
+}
+
 func (tl *Tasklist) DoStringNoLock(code string, cursor *Entry) os.Error {
 	if cursor != nil { tl.SetEntryInLua(CURSOR, cursor) }
 	tl.SetTasklistInLua()
@@ -595,6 +626,11 @@ func MakeLuaState() *lua51.State {
 	L.Register("andq", LuaIntAndQuery)
 	L.Register("orq", LuaIntOrQuery)
 	L.Register("notq", LuaIntNotQuery)
+
+	// Setup operations
+
+	L.Register("subtag", LuaIntSubtag)
+	L.Register("nottoptag", LuaIntNotTopTag)
 
 	return L
 }
