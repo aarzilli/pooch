@@ -79,22 +79,22 @@ table {
     background-color: black;
 }
 
-.priorityclass_now {
+.priorityclass_NOW {
     color: #0FD400;
 }
-.priorityclass_later {
+.priorityclass_LATER {
     color: yellow;
 }
-.priorityclass_timed {
+.priorityclass_TIMED {
     color: orange;
 }
-.priorityclass_done {
+.priorityclass_DONE {
     color: lightblue;
 }
-.priorityclass_sticky {
+.priorityclass_STICKY {
     color: lightblue;
 }
-.priorityclass_notes {
+.priorityclass_NOTES {
     color: lightblue;
 }
 
