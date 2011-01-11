@@ -267,7 +267,11 @@ LOOP: for {
 		case p.ParseToken(""):
 			break LOOP
 		case p.ParseToken(" "):
-			// nothing to do
+			if len(query) - 1 >= 0 {
+				if query[len(query) - 1] != " " {
+					query = append(query, " ")
+				}
+			}
 		case p.ParseSavedSearch(simple):
 			p.savedSearch = simple.name
 		case p.ParseOption(simple):
@@ -290,7 +294,7 @@ LOOP: for {
 		}
 	}
 
-	r.text = strings.Join([]string(query), " ")
+	r.text = strings.TrimSpace(strings.Join([]string(query), ""))
 	
 	return r
 }
