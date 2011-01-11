@@ -84,6 +84,7 @@ function remove_entry(name) {
 }
 
 function save_editor(form) {
+    if (form == null) return;
     if (form.elements['edtitle'].disabled != "") return;
     
     obj = new Object();
@@ -143,6 +144,7 @@ function add_entry(query) {
 }
 
 function change_editor_disabled(ed, disabledStatus) {
+    if (ed == null) return;
     ed.elements['edtitle'].disabled = disabledStatus;
     ed.elements['edtext'].disabled = disabledStatus;
     ed.elements['edat'].disabled = disabledStatus;
@@ -240,7 +242,7 @@ function change_priority(name, event) {
 	  priority = priority.substr(2);
 	  var epr = $('#epr_'+name);
 	  epr.val(priority);
-	  epr.attr("class", "priorityclass_" + priority);
+	  epr.attr("class", "prioritybutton priorityclass_" + priority);
 	  
 	  // changes the value saved inside the editor div so that saving the editor contents doesn't revert a changed priority
 	  var ed = $("#ediv_"+name).get(0);

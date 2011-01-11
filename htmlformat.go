@@ -48,32 +48,36 @@ var CommonHeaderHTML ExecutableTemplate = MakeExecutableTemplate(`
   <script>
     thisPage = "{pageName}";
   </script>
-  <div style='float: right'><p align='right'><small><a href='/opts'>options</a>&nbsp;<a href="/advanced.html">advanced operations</a></small><br/><small>Current timezone: {timezone|html}</small></div>
-  <h2>{queryForTitle|html} <span style='font-size: small'>
+  <div class='advmenu'>
+    <a href='/opts'>options</a>
     &nbsp;
-    <span style='position: relative;'>
+    <a href="/advanced.html">advanced operations</a><br/>
+    Current timezone: {timezone|html}
+  </div>
+  <h2>{queryForTitle|html} <span class='mainmenu'>
+    <span class='mainmenu_item'>
       <a href='javascript:toggle_searchpop()'>[change query]</a>
-      <div id='searchpop' class='popup' style='display: none; position: absolute; top: 20px; z-index: 9000'>
+      <div id='searchpop' class='popup' style='display: none'>
          <form id='searchform' method='get' action='{pageName}'>
            <label for='query'>Query:</label>&nbsp;
            <textarea name='q' id='q' cols='50' rows='10'>{query|html}</textarea>
            <input type='submit' value='search'>
            &nbsp;
+           <div class='popbuttons'>
            {.section removeSearch }
-             <input type='button' style='float: right' value='edit query' onClick='javascript:editsearch()'/>
-             <input type='button' style='float: right' value='remove query' onClick='javascript:removesearch()'/>
+             <input type='button' value='Edit query' onClick='javascript:editsearch()'/>
+             <input type='button' value='Remove query' onClick='javascript:removesearch()'/>
            {.or}
-             <input type='button' style='float: right' value='save query' onClick='javascript:savesearch()'/>
+             <input type='button' value='Save query' onClick='javascript:savesearch()'/>
            {.end}
-           <br/>
-           <small>(press alt-enter to search)</small>
+           </div>
+           <div class='keyinfo'>(press alt-enter to search)</div>
          </form>
       </div>
     </span>
-    &nbsp;
-    <span style='position: relative;'>
+    <span class='mainmenu_item'>
       <a href='javascript:toggle_addpop()'>[add entry]</a>
-      <div id='addpop' class='popup' style='display: none; position: absolute; top: 20px; z-index: 9000'>
+      <div id='addpop' class='popup' style='display: none'>
         <form onsubmit='return add_entry("{query|html}")'>
           <label for='text'>New entry:</label>&nbsp;
           <input size='50' type='newentry' id='newentry' name='text'/>
@@ -81,15 +85,15 @@ var CommonHeaderHTML ExecutableTemplate = MakeExecutableTemplate(`
         </form>
       </div>
     </span>
-    &nbsp;
-    <a href="{otherPageName}?q={query|url}">[see as {otherPageLink}]</a>
-    &nbsp;
-    <a href="/explain?q={query|url}">[see explanation]</a>
-    &nbsp;
-    <span style='position: relative;'>
+    <span class='mainmenu_item'>
+      <a href="{otherPageName}?q={query|url}">[see as {otherPageLink}]</a>
+    </span>
+    <span class='mainmenu_item'>
+      <a href="/explain?q={query|url}">[see explanation]</a>
+    </span>
+    <span class='mainmenu_item'>
       <a href='javascript:toggle_navpop()'>[navigation]</a>
-      <div id='navpop' class='popup' style='display: none; position: absolute; top: 20px; z-index: 9000'>
-      </div>
+      <div id='navpop' class='popup' style='display: none'/>
     </span>
   </span></h2>
 
@@ -102,21 +106,21 @@ var CommonHeaderHTML ExecutableTemplate = MakeExecutableTemplate(`
 `)
 
 var NavigationHTML ExecutableTemplate = MakeExecutableTemplate(`
-  <ul style="list-style-image: none; list-style-type: none; list-style-position: inside; padding-left: 0px;">
+  <ul class='navlist'>
     <li><a href='{thisPage}?q='>index</a></li>
     {.repeated section savedSearches}
     <li><a href="{thisPage}?q=%23%25{@|url}">#%{@|html}</a></li>
     {.end}
   </ul>
   <hr/>
-  <ul style="list-style-image: none; list-style-type: none; list-style-position: inside; padding-left: 0px;">
+  <ul class='navlist'>
   {.repeated section subtags}
     <li><a href="{thisPage}?q={@|url}">{@|html}</a></li>
   {.or}
   {.end}
   </ul>
   <hr/>
-  <ul style="list-style-image: none; list-style-type: none; list-style-position: inside; padding-left: 0px;">
+  <ul class='navlist'>
   {.repeated section toplevel}
     <li><a href="{thisPage}?q={@|url}">{@|html}</a></li>
   {.or}
@@ -125,13 +129,15 @@ var NavigationHTML ExecutableTemplate = MakeExecutableTemplate(`
 `)
 
 var EntryListHeaderHTML ExecutableTemplate = MakeExecutableTemplate(`
-  <table width='100%' id='maintable' style='border-collapse: collapse;'>
+  <table class='maintable' id='maintable'>
 `)
 
 var ListHeaderHTML ExecutableTemplate = MakeExecutableTemplate(`
+<!DOCTYPE html>
 <html>
 <head>
   <title>Pooch: {queryForTitle|html}</title>
+  <link type='text/css' rel='stylesheet' href='listcommon.css'>
   <link type='text/css' rel='stylesheet' href='{theme}'>
   <link type='text/css' rel='stylesheet' href='calendar.css'>
   <script src='/json.js'></script>
@@ -140,16 +146,6 @@ var ListHeaderHTML ExecutableTemplate = MakeExecutableTemplate(`
   <script src='/calendar.js'></script>
 </head>
 <body onkeypress='keytable(event)'>
-`)
-
-var SubcolsHeader ExecutableTemplate = MakeExecutableTemplate(`
-  <table width='100%' style='border-collapse: collapse;'><tr>
-  <td valign='top' style='width: 10%'><div style='padding-top: 30px'>
-`)
-
-var SubcolsEnder ExecutableTemplate = MakeExecutableTemplate(`
-  </div></td>
-  <td valign='top'>
 `)
 
 var EntryListPriorityChangeHTML ExecutableTemplate = MakeExecutableTemplate(`
@@ -172,7 +168,7 @@ var EntryListEntryHTML ExecutableTemplate = MakeExecutableTemplate(`
       <td class='etitle' onclick='javascript:toggle_editor("{id|html}", event)'><a href="javascript:toggle_editor("{id|html}", event)'>{title|html}</a></td>
 
       <td class='epr'>
-        <input type='button' class='priorityclass_{priority|priority}' id='epr_{id|html}' value='{priority|priority}' onclick='javascript:change_priority("{id|html}", event)'/>
+        <input type='button' class='prioritybutton priorityclass_{priority|priority}' id='epr_{id|html}' value='{priority|priority}' onclick='javascript:change_priority("{id|html}", event)'/>
       </td>
 
       <td class='etime'>{etime}</td>
@@ -195,12 +191,11 @@ var EntryListEntryEditorHTML ExecutableTemplate = MakeExecutableTemplate(`
     {.section entry}
       <td colspan=4>
         <form id='ediv_{id|html}'>
-          <p><input name='edtilte' id='edtitle' type='text' style='width: 99%; padding-bottom: 5px' disabled='yes'/><br>
-          <textarea style='width: 65%; margin-right: 1%' name='edtext' id='edtext' disabled='yes' rows=20>
+          <input name='edtitle' id='edtitle' type='text' disabled='yes'/><br>
+          <textarea name='edtext' id='edtext' disabled='yes' rows=20>
           </textarea>
-          <textarea style='width: 33%;' float: right' name='edcols' id='edcols' disabled='yes' rows=20>
+          <textarea name='edcols' id='edcols' disabled='yes' rows=20>
           </textarea>
-          </p>
 
 		  <input name='edid' id='edid' type='hidden'/>
 		  <input name='edprio' id='edprio' type='hidden'/>
@@ -209,7 +204,7 @@ var EntryListEntryEditorHTML ExecutableTemplate = MakeExecutableTemplate(`
           <script>calendar.set("edat_{id|html}")</script>
 		  &nbsp; Sort by: <input type='text' id='edsort' name='edsort' size=10 disabled='yes'/>
           &nbsp; ID: {id|html}
-          &nbsp; Timestamp: <img id='loading_{id|html}' style='display: none' src='loading.gif'/> <span id='ts_{id|html}'>-------</span></p>
+          &nbsp; Timestamp: <img id='loading_{id|html}' style='display: none' src='loading.gif'/> <span id='ts_{id|html}'>—</span></p>
 
           <p><input type='button' style='float: right' value='remove' onclick='javascript:remove_entry("{id|html}", event)'/>
           <input type='button' id='savebtn' name='savebtn' value='save' onclick='javascript:save_editor_by_id("{id|html}", event)' disabled='yes'/>
@@ -223,11 +218,12 @@ var EntryListEntryEditorHTML ExecutableTemplate = MakeExecutableTemplate(`
 `)
 
 var ListEnderHTML ExecutableTemplate = MakeExecutableTemplate(`
-</table></td>
-</tr></table></body></html>
+  </table>
+</body></html>
 `)
 
 var ErrorLogHeaderHTML ExecutableTemplate = MakeExecutableTemplate(`
+<!DOCTYPE html>
 <html>
 <head>
   <title>Pooch: {name|html}</title>
@@ -281,13 +277,11 @@ var ErrorLogEnderHTML ExecutableTemplate = MakeExecutableTemplate(`
 </html>
 `)
 
-var SubcolEntryHTML ExecutableTemplate = MakeExecutableTemplate(`
-<a href="list?q={dst|url}">{name|html}</a><br>
-`)
-
 var CalendarHeaderHTML ExecutableTemplate = MakeExecutableTemplate(`
+<!DOCTYPE html>
 <html>
 <head>
+  <link type='text/css' rel='stylesheet' href='listcommon.css'>
   <link rel='stylesheet' type='text/css' href='fullcalendar.css'/>
   <link rel='stylesheet' type='text/css' href='cal.css'/>
   <script src='jquery.js'></script>
@@ -313,6 +307,7 @@ var CalendarHTML ExecutableTemplate = MakeExecutableTemplate(`
 `)
 
 var RegisterHTML ExecutableTemplate = MakeExecutableTemplate(`
+<!DOCTYPE html>
 <html>
   <head>
     <title>Register with pooch2</title>
@@ -329,6 +324,7 @@ var RegisterHTML ExecutableTemplate = MakeExecutableTemplate(`
 `)
 
 var LoginHTML ExecutableTemplate = MakeExecutableTemplate(`
+<!DOCTYPE html>
 <html>
   <head>
     <title>Login with pooch2</title>
@@ -346,6 +342,7 @@ var LoginHTML ExecutableTemplate = MakeExecutableTemplate(`
 
 
 var RegisterOKHTML ExecutableTemplate = MakeExecutableTemplate(`
+<!DOCTYPE html>
 <html>
   <head>
     <title>Register with pooch2</title>
@@ -357,6 +354,7 @@ var RegisterOKHTML ExecutableTemplate = MakeExecutableTemplate(`
 `)
 
 var LoginOKHTML ExecutableTemplate = MakeExecutableTemplate(`
+<!DOCTYPE html>
 <html>
   <head>
     <title>Login with pooch2</title>
@@ -368,6 +366,7 @@ var LoginOKHTML ExecutableTemplate = MakeExecutableTemplate(`
 `)
 
 var WhoAmIHTML ExecutableTemplate = MakeExecutableTemplate(`
+<!DOCTYPE html>
 <html>
   <head>
     <title>Who Am I</title>
@@ -379,6 +378,7 @@ var WhoAmIHTML ExecutableTemplate = MakeExecutableTemplate(`
 `)
 
 var MustLogInHTML ExecutableTemplate = MakeExecutableTemplate(`
+<!DOCTYPE html>
 <html>
   <head>
     <title>Login needed</title>
@@ -390,6 +390,7 @@ var MustLogInHTML ExecutableTemplate = MakeExecutableTemplate(`
 `)
 
 var OptionsPageHeader ExecutableTemplate = MakeExecutableTemplate(`
+<!DOCTYPE html>
 <html>
   <head>
     <title>Options</title>

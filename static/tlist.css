@@ -29,7 +29,6 @@ body {
 
 .popup {
     background-color: black;
-    padding: 8px;
     border: thin solid white;
 }
 
@@ -73,57 +72,33 @@ table {
     color: silver;
 }
 
-.epr {
-}
-
-.etime {
+.prioritybutton {
+    font-weight: bolder;
+    font-size: xx-small;
+    width: 60px; 
+    background-color: black;
 }
 
 .priorityclass_now {
-    width: 60px;
     color: #0FD400;
-    font-weight: bolder;
-    background-color: black;
-    font-size: xx-small;
 }
 .priorityclass_later {
-    width: 60px;
     color: yellow;
-    background-color: black;
-    font-weight: bolder;    
-    font-size: xx-small;
 }
 .priorityclass_timed {
-    width: 60px;
     color: orange;
-    background-color: black;
-    font-weight: bolder;    
-    font-size: xx-small;
 }
 .priorityclass_done {
-    width: 60px;
     color: lightblue;
-    background-color: black;
-    font-weight: bolder;    
-    font-size: xx-small;
 }
 .priorityclass_sticky {
-    width: 60px;
     color: lightblue;
-    background-color: black;
-    font-weight: bolder;    
-    font-size: xx-small;
 }
 .priorityclass_notes {
-    width: 60px;
     color: lightblue;
-    background-color: black;
-    font-weight: bolder;    
-    font-size: xx-small;
 }
 
 .screrror {
-    padding: 15px;
     color: red;
     font-weight: bold;
 }

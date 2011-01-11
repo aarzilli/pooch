@@ -9,7 +9,6 @@
 
 .popup {
     background-color: white;
-    padding: 8px;
 }
 
 table {
@@ -35,49 +34,37 @@ table {
     width: 65%;
     font-weight: bold;
 }
-.epr {
-}
-.etime {
-}
 
 .etitle > a {
     text-decoration: none;
     color: black;
 }
 
-.priorityclass_now {
+.prioritybutton {
     width: 60px;
-    background-color: lightgreen;
-    color: black;
-}
-.priorityclass_later {
-    width: 60px;
-    background-color: yellow;
-    color: black;
-}
-.priorityclass_timed {
-    width: 60px;
-    background-color: orange;
-    color: black;
-}
-.priorityclass_done {
-    width: 60px;
-    background-color: lightgray;
-    color: black;
-}
-.priorityclass_sticky {
-    width: 60px;
-    background-color: lightblue;
-    color: black;
-}
-.priorityclass_notes {
-    width: 60px;
-    background-color: lightblue;
     color: black;
 }
 
+.priorityclass_now {
+    background-color: lightgreen;
+}
+.priorityclass_later {
+    background-color: yellow;
+}
+.priorityclass_timed {
+    background-color: orange;
+}
+.priorityclass_done {
+    background-color: lightgray;
+}
+.priorityclass_sticky {
+    background-color: lightblue;
+}
+.priorityclass_notes {
+    background-color: lightblue;
+}
+
 .screrror {
-    padding: 15px;
     color: red;
     font-weight: bold;
 }
