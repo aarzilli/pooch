@@ -206,7 +206,7 @@ function save_editor_by_id(name, event) {
 function close_editor(row) {
     var ed = editor_from_row(row);
     save_editor(ed);
-    change_editor_disabled(ed, "yes");
+    change_editor_disabled(ed, "disabled");
     row.style['display'] = 'none';
 }
 

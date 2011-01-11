@@ -54,12 +54,13 @@ var CommonHeaderHTML ExecutableTemplate = MakeExecutableTemplate(`
     <a href="/advanced.html">advanced operations</a><br/>
     Current timezone: {timezone|html}
   </div>
-  <h2>{queryForTitle|html} <span class='mainmenu'>
-    <span class='mainmenu_item'>
+  <h2 style='display: inline;'>{queryForTitle|html}</h2>
+  <div class='mainmenu'>
+    <div class='mainmenu_item'>
       <a href='javascript:toggle_searchpop()'>[change query]</a>
       <div id='searchpop' class='popup' style='display: none'>
          <form id='searchform' method='get' action='{pageName}'>
-           <label for='query'>Query:</label>&nbsp;
+           <label for='q'>Query:</label>&nbsp;
            <textarea name='q' id='q' cols='50' rows='10'>{query|html}</textarea>
            <input type='submit' value='search'>
            &nbsp;
@@ -74,28 +75,29 @@ var CommonHeaderHTML ExecutableTemplate = MakeExecutableTemplate(`
            <div class='keyinfo'>(press alt-enter to search)</div>
          </form>
       </div>
-    </span>
-    <span class='mainmenu_item'>
+    </div>
+    <div class='mainmenu_item'>
       <a href='javascript:toggle_addpop()'>[add entry]</a>
       <div id='addpop' class='popup' style='display: none'>
         <form onsubmit='return add_entry("{query|html}")'>
-          <label for='text'>New entry:</label>&nbsp;
-          <input size='50' type='newentry' id='newentry' name='text'/>
+          <label for='newentry'>New entry:</label>&nbsp;
+          <input size='50' type='text' id='newentry' name='text'/>
           <input type='button' value='add' onclick='javascript:add_entry("{query|html}")'/>
         </form>
       </div>
-    </span>
-    <span class='mainmenu_item'>
+    </div>
+    <div class='mainmenu_item'>
       <a href="{otherPageName}?q={query|url}">[see as {otherPageLink}]</a>
-    </span>
-    <span class='mainmenu_item'>
+    </div>
+    <div class='mainmenu_item'>
       <a href="/explain?q={query|url}">[see explanation]</a>
-    </span>
-    <span class='mainmenu_item'>
+    </div>
+    <div class='mainmenu_item'>
       <a href='javascript:toggle_navpop()'>[navigation]</a>
-      <div id='navpop' class='popup' style='display: none'/>
-    </span>
-  </span></h2>
+      <div id='navpop' class='popup' style='display: none'>
+      </div>
+    </div>
+  </div>
 
   {.section parseError}
     <div class='screrror'>Error while executing search: {@|html} <a href='/errorlog'>Full error log</a></div>
@@ -165,7 +167,7 @@ var EntryListEntryHTML ExecutableTemplate = MakeExecutableTemplate(`
     <tr class='{htmlClass}'>
     {.end}
     {.section entry}
-      <td class='etitle' onclick='javascript:toggle_editor("{id|html}", event)'><a href="javascript:toggle_editor("{id|html}", event)'>{title|html}</a></td>
+      <td class='etitle' onclick='javascript:toggle_editor("{id|html}", event)'><a href='javascript:toggle_editor("{id|html}", event)'>{title|html}</a></td>
 
       <td class='epr'>
         <input type='button' class='prioritybutton priorityclass_{priority|priority}' id='epr_{id|html}' value='{priority|priority}' onclick='javascript:change_priority("{id|html}", event)'/>
@@ -191,24 +193,24 @@ var EntryListEntryEditorHTML ExecutableTemplate = MakeExecutableTemplate(`
     {.section entry}
       <td colspan=4>
         <form id='ediv_{id|html}'>
-          <input name='edtitle' id='edtitle' type='text' disabled='yes'/><br>
-          <textarea name='edtext' id='edtext' disabled='yes' rows=20>
+          <input name='edtitle' type='text' disabled='disabled'/><br>
+          <textarea name='edtext' disabled='disabled' rows=20>
           </textarea>
-          <textarea name='edcols' id='edcols' disabled='yes' rows=20>
+          <textarea name='edcols' disabled='disabled' rows=20>
           </textarea>
 
-		  <input name='edid' id='edid' type='hidden'/>
-		  <input name='edprio' id='edprio' type='hidden'/>
+		  <input name='edid' type='hidden'/>
+		  <input name='edprio' type='hidden'/>
 
-		  <p>When: <input type='text' id='edat_{id|html}' name='edat' size=10 disabled='yes'/>
+		  <p>When: <input type='text' id='edat_{id|html}' name='edat' size=10 disabled='disabled'/>
           <script>calendar.set("edat_{id|html}")</script>
-		  &nbsp; Sort by: <input type='text' id='edsort' name='edsort' size=10 disabled='yes'/>
+		  &nbsp; Sort by: <input type='text' name='edsort' size=10 disabled='disabled'/>
           &nbsp; ID: {id|html}
           &nbsp; Timestamp: <img id='loading_{id|html}' style='display: none' src='loading.gif'/> <span id='ts_{id|html}'>—</span></p>
 
           <p><input type='button' style='float: right' value='remove' onclick='javascript:remove_entry("{id|html}", event)'/>
-          <input type='button' id='savebtn' name='savebtn' value='save' onclick='javascript:save_editor_by_id("{id|html}", event)' disabled='yes'/>
-          <input type='button' value='reload', onclick='javascript:fill_editor("{id|html}")'/></p>
+          <input type='button' name='savebtn' value='save' onclick='javascript:save_editor_by_id("{id|html}", event)' disabled='disabled'/>
+          <input type='button' value='reload' onclick='javascript:fill_editor("{id|html}")'/></p>
         </form>
       </td>
     {.end}
