@@ -300,7 +300,10 @@ func CmdTsvUpdate(argv []string) {
 		in := bufio.NewReader(os.Stdin)
 		
 		for line, err := in.ReadString('\n'); err == nil; line, err = in.ReadString('\n') {
-			entry := ParseTsvFormat(strings.Trim(line, "\t\n "), tl, tl.GetTimezone());
+			line = strings.Trim(line, "\t\n ")
+			if line == "" { continue }
+			
+			entry := ParseTsvFormat(line, tl, tl.GetTimezone());
 			if tl.Exists(entry.Id()) {
 				fmt.Printf("UPDATING\t%s\t%s\n", entry.Id(), entry.TriggerAt().Format("2006-01-02"))
 				tl.Update(entry, false)

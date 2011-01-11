@@ -45,6 +45,9 @@ func MakeExecutableTemplate(t string) ExecutableTemplate {
 }
 
 var CommonHeaderHTML ExecutableTemplate = MakeExecutableTemplate(`
+  <script>
+    thisPage = "{pageName}";
+  </script>
   <div style='float: right'><p align='right'><small><a href='/opts'>options</a>&nbsp;<a href="/advanced.html">advanced operations</a></small><br/><small>Current timezone: {timezone|html}</small></div>
   <h2>{queryForTitle|html} <span style='font-size: small'>
     &nbsp;
@@ -82,6 +85,12 @@ var CommonHeaderHTML ExecutableTemplate = MakeExecutableTemplate(`
     <a href="{otherPageName}?q={query|url}">[see as {otherPageLink}]</a>
     &nbsp;
     <a href="/explain?q={query|url}">[see explanation]</a>
+    &nbsp;
+    <span style='position: relative;'>
+      <a href='javascript:toggle_navpop()'>[navigation]</a>
+      <div id='navpop' class='popup' style='display: none; position: absolute; top: 20px; z-index: 9000'>
+      </div>
+    </span>
   </span></h2>
 
   {.section parseError}
@@ -90,6 +99,33 @@ var CommonHeaderHTML ExecutableTemplate = MakeExecutableTemplate(`
   {.section retrieveError}
     <div class='screrror'>Error while executing search: {@|html} <a href='/errorlog'>Full error log</a></div>
   {.end}
+`)
+
+var NavigationHTML ExecutableTemplate = MakeExecutableTemplate(`
+  <ul style="list-style-image: none; list-style-type: none; list-style-position: inside; padding-left: 0px;">
+    <li><a href='{thisPage}?q='>index</a></li>
+    {.repeated section savedSearches}
+    <li><a href="{thisPage}?q=%23%25{@|url}">#%{@|html}</a></li>
+    {.end}
+  </ul>
+  <hr/>
+  <ul style="list-style-image: none; list-style-type: none; list-style-position: inside; padding-left: 0px;">
+  {.repeated section subtags}
+    <li><a href="{thisPage}?q={@|url}">{@|html}</a></li>
+  {.or}
+  {.end}
+  </ul>
+  <hr/>
+  <ul style="list-style-image: none; list-style-type: none; list-style-position: inside; padding-left: 0px;">
+  {.repeated section toplevel}
+    <li><a href="{thisPage}?q={@|url}">{@|html}</a></li>
+  {.or}
+  {.end}
+  </ul>
+`)
+
+var EntryListHeaderHTML ExecutableTemplate = MakeExecutableTemplate(`
+  <table width='100%' id='maintable' style='border-collapse: collapse;'>
 `)
 
 var ListHeaderHTML ExecutableTemplate = MakeExecutableTemplate(`
@@ -113,7 +149,7 @@ var SubcolsHeader ExecutableTemplate = MakeExecutableTemplate(`
 
 var SubcolsEnder ExecutableTemplate = MakeExecutableTemplate(`
   </div></td>
-  <td valign='top'><table width='100%' id='maintable' style='border-collapse: collapse;'>
+  <td valign='top'>
 `)
 
 var EntryListPriorityChangeHTML ExecutableTemplate = MakeExecutableTemplate(`

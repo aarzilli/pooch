@@ -168,30 +168,23 @@ func SaveServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	io.WriteString(c, "saved-at-timestamp: " + time.UTC().Format("2006-01-02 15:04:05"))
 }
 
-func ShowSubcols(c http.ResponseWriter, trigger string, tl *Tasklist) {
-	SubcolsHeader(nil, c)
-	SubcolEntryHTML(map[string]string{"name": "index", "dst": ""}, c)
+func NavigationServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
+	query := strings.Replace(req.FormValue("q"), "\r", "", -1)
+	_, _, trigger, _, _ := tl.ParseSearch(query)
 
-	for _, v := range tl.GetSavedSearches() {
-		SubcolEntryHTML(map[string]string{"name": "@%"+v, "dst": "@%"+v}, c)
+	savedSearches := tl.GetSavedSearches()
+	subtags := tl.subcolumns[trigger]
+	toplevel := make([]string, 0)
+	for _, tag := range tl.GetTags() {
+		toplevel = append(toplevel, "#"+tag)
 	}
 
-	io.WriteString(c, "<hr/>\n")
-
-	subcols := tl.subcolumns[trigger]
-	if subcols == nil {
-		for _, tag := range tl.GetTags() {
-			if !tl.ignoreColumn[tag] {
-				subcols = append(subcols, "@"+tag)
-			}
-		}
-	}
-
-	for _, subcol := range subcols {
-		SubcolEntryHTML(map[string]string{"name": subcol, "dst": subcol}, c)
-	}
-	
-	SubcolsEnder(map[string]string{ }, c)
+	NavigationHTML(map[string]interface{}{
+		"thisPage": req.FormValue("thisPage"),
+		"savedSearches": savedSearches,
+		"subtags": subtags,
+		"toplevel": toplevel,
+	}, c)
 }
 
 func ErrorLogServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
@@ -286,15 +279,12 @@ func headerInfo(tl *Tasklist, pageName string, query string, isSavedSearch bool,
 	};
 }
 
-/*
- * Tasklist
- */
 func ListServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	query := strings.Replace(req.FormValue("q"), "\r", "", -1)
 	showCols := make(map[string]bool)
 	timezone := tl.GetTimezone()
 
-	theselect, code, trigger, isSavedSearch, perr := tl.ParseSearch(query)
+	theselect, code, _, isSavedSearch, perr := tl.ParseSearch(query)
 	v, rerr := tl.Retrieve(theselect, code)
 
 	colNames := []string{}
@@ -306,7 +296,7 @@ func ListServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	
 	ListHeaderHTML(headerInfo, c)
 	CommonHeaderHTML(headerInfo, c)
-	ShowSubcols(c, trigger, tl)
+	EntryListHeaderHTML(nil, c)
 	
 	var curp Priority = INVALID
 	for idx, entry := range v {
@@ -496,6 +486,7 @@ func SetupHandleFunc(wrapperTasklistServer func(TasklistServer)http.HandlerFunc,
 	http.HandleFunc("/explain", WrapperServer(wrapperTasklistServer(ExplainServer)))
 
 	// List ajax urls
+	http.HandleFunc("/navigation", WrapperServer(wrapperTasklistServer(NavigationServer)))
 	http.HandleFunc("/change-priority", WrapperServer(wrapperTasklistWithIdServer(ChangePriorityServer)))
 	http.HandleFunc("/get", WrapperServer(wrapperTasklistWithIdServer(GetServer)))
 	http.HandleFunc("/save", WrapperServer(wrapperTasklistServer(SaveServer)))

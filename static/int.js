@@ -7,8 +7,10 @@ function toggle(query) {
     var div = $(query).get(0);
     if (div.style['display'] == 'none') {
         div.style['display'] = 'block';
+        return true
     } else {
         div.style['display'] = 'none';
+        return false
     }
 }
 
@@ -20,6 +22,14 @@ function toggle_searchpop() {
 function toggle_addpop() {
     toggle("#addpop");
     $("#newentry").get(0).focus();
+}
+
+function toggle_navpop() {
+    if (toggle("#navpop")) {
+        $.ajax({ url: "navigation?q=" + encodeURIComponent($('#q').val()) + "&thisPage=" + thisPage, success: function(data, textStatus, req) {
+                    $("#navpop").get(0).innerHTML = data;
+                }});
+    }
 }
 
 function keytable(e) {
