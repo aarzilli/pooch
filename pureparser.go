@@ -141,6 +141,7 @@ func ParsePriority(prstr string) Priority {
 	case "d", "done": priority = DONE
 	case "$", "N", "Notes", "notes": priority = NOTES
 	case "$$", "StickyNotes", "sticky": priority = STICKY
+	case "timed": priority = TIMED
 	}
 
 	return priority
@@ -373,6 +374,8 @@ func ParseTsvFormat(in string, tl *Tasklist, timezone int) *Entry {
 	entry := tl.ParseNew(fields[1], "")
 
 	priority := ParsePriority(fields[2])
+
+	fmt.Printf("Priority %s %d\n", fields[2], priority)
 
 	var triggerAt *time.Time = nil
 	var sort string
