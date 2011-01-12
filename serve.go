@@ -176,7 +176,9 @@ func NavigationServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	subtags := tl.subcolumns[trigger]
 	toplevel := make([]string, 0)
 	for _, tag := range tl.GetTags() {
-		toplevel = append(toplevel, "#"+tag)
+		if !tl.ignoreColumn[tag] {
+			toplevel = append(toplevel, "#"+tag)
+		}
 	}
 
 	NavigationHTML(map[string]interface{}{
