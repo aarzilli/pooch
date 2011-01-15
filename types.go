@@ -177,6 +177,7 @@ func (e *Entry) ColumnOk(name string) (value string, ok bool) { value, ok = e.co
 func (e *Entry) Column(name string) string { return e.columns[name];  }
 func (e *Entry) SetColumns(cols Columns) *Entry { e.columns = cols; return e }
 func (e *Entry) SetColumn(name, value string) *Entry { e.columns[name] = value; return e }
+func (e *Entry) RemoveColumn(name string) *Entry { e.columns[name] = "", false; return e }
 
 func (e *Entry) MergeColumns(cols Columns) *Entry {
 	for k, v := range cols {

@@ -217,6 +217,25 @@ func LuaIntColumn(L *lua51.State) int {
 	return 0
 }
 
+func LuaIntRmColumn(L *lua51.State) int {
+	if L.GetTop() != 1 {
+		LuaError(L, "Incorrect number of arguments to rmcolumn")
+		return 0
+	}
+
+	name := L.ToString(1)
+	entry := GetEntryFromLua(L, CURSOR)
+	if entry == nil {
+		LuaError(L, "No cursor set, can not use rmcolumn()")
+		return 0
+	}
+
+	entry.RemoveColumn(name)
+	tl := GetTasklistFromLua(L)
+	if !tl.luaFlags.cursorCloned { tl.luaFlags.cursorEdited = true }
+	return 0
+}
+
 func LuaIntFilterOut(L *lua51.State) int {
 	tl := GetTasklistFromLua(L)
 	tl.luaFlags.filterOut = true
@@ -612,6 +631,7 @@ func MakeLuaState() *lua51.State {
 	L.Register("sortfield", LuaIntSortField)
 	
 	L.Register("column", LuaIntColumn)
+	L.Register("rmcolumn", LuaIntRmColumn)
 
 	// search results control functions
 
