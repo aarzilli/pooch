@@ -95,6 +95,7 @@ var CommonHeaderHTML ExecutableTemplate = MakeExecutableTemplate(`
     <div class='mainmenu_item'>
       <a href='javascript:toggle_navpop()'>[navigation]</a>
       <div id='navpop' class='popup' style='display: none'>
+         <img src='loading.gif'/>
       </div>
     </div>
   </div>
