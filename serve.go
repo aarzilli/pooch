@@ -168,27 +168,6 @@ func SaveServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	io.WriteString(c, "saved-at-timestamp: " + time.UTC().Format("2006-01-02 15:04:05"))
 }
 
-func NavigationServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
-	query := strings.Replace(req.FormValue("q"), "\r", "", -1)
-	_, _, trigger, _, _ := tl.ParseSearch(query)
-
-	savedSearches := tl.GetSavedSearches()
-	subtags := tl.subcolumns[trigger]
-	toplevel := make([]string, 0)
-	for _, tag := range tl.GetTags() {
-		if !tl.ignoreColumn[tag] {
-			toplevel = append(toplevel, "#"+tag)
-		}
-	}
-
-	NavigationHTML(map[string]interface{}{
-		"thisPage": req.FormValue("thisPage"),
-		"savedSearches": savedSearches,
-		"subtags": subtags,
-		"toplevel": toplevel,
-	}, c)
-}
-
 func ErrorLogServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	css := tl.GetSetting("theme")
 	errors := tl.RetrieveErrors()
@@ -254,7 +233,7 @@ func queryForTitle(query string) string {
 	return queryForTitle
 }
 
-func headerInfo(tl *Tasklist, pageName string, query string, isSavedSearch bool, parseError, retrieveError os.Error) map[string]interface{} {
+func headerInfo(tl *Tasklist, pageName string, query string, trigger string, isSavedSearch bool, parseError, retrieveError os.Error) map[string]interface{} {
 	css := tl.GetSetting("theme")
 	timezone := tl.GetTimezone()
 	removeSearch := ""; if isSavedSearch { removeSearch = "remove-search" }
@@ -266,7 +245,16 @@ func headerInfo(tl *Tasklist, pageName string, query string, isSavedSearch bool,
 		otherPageName = "/list"
 		otherPageLink = "list"
 	}
-	
+
+	savedSearches := tl.GetSavedSearches()
+	subtags := tl.subcolumns[trigger]
+	toplevel := make([]string, 0)
+	for _, tag := range tl.GetTags() {
+		if !tl.ignoreColumn[tag] {
+			toplevel = append(toplevel, "#"+tag)
+		}
+	}
+
 	return map[string]interface{}{
 		"pageName": pageName,
 		"query": query,
@@ -278,6 +266,10 @@ func headerInfo(tl *Tasklist, pageName string, query string, isSavedSearch bool,
 		"parseError": parseError,
 		"otherPageName": otherPageName,
 		"otherPageLink": otherPageLink,
+		
+		"savedSearches": savedSearches,
+		"subtags": subtags,
+		"toplevel": toplevel,
 	};
 }
 
@@ -286,7 +278,7 @@ func ListServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	showCols := make(map[string]bool)
 	timezone := tl.GetTimezone()
 
-	theselect, code, _, isSavedSearch, perr := tl.ParseSearch(query)
+	theselect, code, trigger, isSavedSearch, perr := tl.ParseSearch(query)
 	v, rerr := tl.Retrieve(theselect, code)
 
 	colNames := []string{}
@@ -294,7 +286,7 @@ func ListServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 		colNames = append(colNames, colName)
 	}
 
-	headerInfo := headerInfo(tl, "/list", query, isSavedSearch, perr, rerr)
+	headerInfo := headerInfo(tl, "/list", query, trigger, isSavedSearch, perr, rerr)
 	
 	ListHeaderHTML(headerInfo, c)
 	CommonHeaderHTML(headerInfo, c)
@@ -335,10 +327,10 @@ func ListServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 
 func CalendarServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	query := req.FormValue("q")
-	_, _, _, isSavedSearch, err := tl.ParseSearch(query)
+	_, _, trigger, isSavedSearch, err := tl.ParseSearch(query)
 
 	CalendarHeaderHTML(map[string]string{ "query": query }, c)
-	CommonHeaderHTML(headerInfo(tl, "/cal", query, isSavedSearch, err, nil), c)
+	CommonHeaderHTML(headerInfo(tl, "/cal", query, trigger, isSavedSearch, err, nil), c)
 	CalendarHTML(map[string]string{ "query": query }, c)
 }
 
@@ -488,7 +480,6 @@ func SetupHandleFunc(wrapperTasklistServer func(TasklistServer)http.HandlerFunc,
 	http.HandleFunc("/explain", WrapperServer(wrapperTasklistServer(ExplainServer)))
 
 	// List ajax urls
-	http.HandleFunc("/navigation", WrapperServer(wrapperTasklistServer(NavigationServer)))
 	http.HandleFunc("/change-priority", WrapperServer(wrapperTasklistWithIdServer(ChangePriorityServer)))
 	http.HandleFunc("/get", WrapperServer(wrapperTasklistWithIdServer(GetServer)))
 	http.HandleFunc("/save", WrapperServer(wrapperTasklistServer(SaveServer)))

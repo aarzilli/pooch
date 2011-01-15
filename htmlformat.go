@@ -95,7 +95,26 @@ var CommonHeaderHTML ExecutableTemplate = MakeExecutableTemplate(`
     <div class='mainmenu_item'>
       <a href='javascript:toggle_navpop()'>[navigation]</a>
       <div id='navpop' class='popup' style='display: none'>
-         <img src='loading.gif'/>
+         <ul class='navlist'>
+           <li><a href='{pageName}?q='>index</a></li>
+           {.repeated section savedSearches}
+           <li><a href="{pageName}?q=%23%25{@|url}">#%{@|html}</a></li>
+           {.end}
+         </ul>
+         <hr/>
+         <ul class='navlist'>
+           {.repeated section subtags}
+           <li><a href="{pageName}?q={@|url}">{@|html}</a></li>
+           {.or}
+           {.end}
+         </ul>
+         <hr/>
+         <ul class='navlist'>
+           {.repeated section toplevel}
+           <li><a href="{pageName}?q={@|url}">{@|html}</a></li>
+           {.or}
+           {.end}
+        </ul>
       </div>
     </div>
   </div>
@@ -106,29 +125,6 @@ var CommonHeaderHTML ExecutableTemplate = MakeExecutableTemplate(`
   {.section retrieveError}
     <div class='screrror'>Error while executing search: {@|html} <a href='/errorlog'>Full error log</a></div>
   {.end}
-`)
-
-var NavigationHTML ExecutableTemplate = MakeExecutableTemplate(`
-  <ul class='navlist'>
-    <li><a href='{thisPage}?q='>index</a></li>
-    {.repeated section savedSearches}
-    <li><a href="{thisPage}?q=%23%25{@|url}">#%{@|html}</a></li>
-    {.end}
-  </ul>
-  <hr/>
-  <ul class='navlist'>
-  {.repeated section subtags}
-    <li><a href="{thisPage}?q={@|url}">{@|html}</a></li>
-  {.or}
-  {.end}
-  </ul>
-  <hr/>
-  <ul class='navlist'>
-  {.repeated section toplevel}
-    <li><a href="{thisPage}?q={@|url}">{@|html}</a></li>
-  {.or}
-  {.end}
-  </ul>
 `)
 
 var EntryListHeaderHTML ExecutableTemplate = MakeExecutableTemplate(`

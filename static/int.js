@@ -25,11 +25,7 @@ function toggle_addpop() {
 }
 
 function toggle_navpop() {
-    if (toggle("#navpop")) {
-        $.ajax({ url: "navigation?q=" + encodeURIComponent($('#q').val()) + "&thisPage=" + thisPage, success: function(data, textStatus, req) {
-                    $("#navpop").get(0).innerHTML = data;
-                }});
-    }
+    toggle("#navpop")
 }
 
 function keytable(e) {
