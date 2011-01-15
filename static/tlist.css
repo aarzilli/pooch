@@ -14,7 +14,7 @@
  */
 
 * {
-    font-family: sans-serif;
+    font-family: ubuntu, sans-serif;
 }
 
 a {
@@ -24,7 +24,7 @@ a {
 body {
     background-color: black;
     color: silver;
-    font-size: 8pt;
+    font-size: 10pt;
 }
 
 .popup {
@@ -33,7 +33,7 @@ body {
 }
 
 table {
-    font-size: 8pt;
+    font-size: 10pt;
 }
 
 .colname {
@@ -101,4 +101,8 @@ table {
 .screrror {
     color: red;
     font-weight: bold;
+}
+
+.code {
+    font-family: ocra10, monospace;
 }

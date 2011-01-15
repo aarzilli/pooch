@@ -232,7 +232,7 @@ var ErrorLogHeaderHTML ExecutableTemplate = MakeExecutableTemplate(`
   <link type='text/css' rel='stylesheet' href='{theme}'>
 </head>
 <body>
-  <p><pre style='font-family: monospace'>{code|html}</pre></p>
+  <p><pre class='code' style='font-family: monospace'>{code|html}</pre></p>
   <table width='100%' id='maintable' style='border-collapse: collapse;'>
 `)
 
