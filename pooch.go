@@ -305,7 +305,7 @@ func CmdTsvUpdate(argv []string) {
 			
 			entry := ParseTsvFormat(line, tl, tl.GetTimezone());
 			if tl.Exists(entry.Id()) {
-				fmt.Printf("UPDATING\t%s\t%s\n", entry.Id(), entry.TriggerAt().Format("2006-01-02"))
+				//fmt.Printf("UPDATING\t%s\t%s\n", entry.Id(), entry.TriggerAt().Format("2006-01-02"))
 				tl.Update(entry, false)
 			} else {
 				fmt.Printf("ADDING\t%s\t%s\n", entry.Id(), entry.TriggerAt().Format("2006-01-02"))
