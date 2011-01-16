@@ -76,6 +76,7 @@ var CommonHeaderHTML ExecutableTemplate = MakeExecutableTemplate(`
          </form>
       </div>
     </div>
+    {.section otherPageName}
     <div class='mainmenu_item'>
       <a href='javascript:toggle_addpop()'>[add entry]</a>
       <div id='addpop' class='popup' style='display: none'>
@@ -87,11 +88,12 @@ var CommonHeaderHTML ExecutableTemplate = MakeExecutableTemplate(`
       </div>
     </div>
     <div class='mainmenu_item'>
-      <a href="{otherPageName}?q={query|url}">[see as {otherPageLink}]</a>
+      <a href="{@}?q={query|url}">[see as {otherPageLink}]</a>
     </div>
     <div class='mainmenu_item'>
       <a href="/explain?q={query|url}">[see explanation]</a>
     </div>
+    {.end}
     <div class='mainmenu_item'>
       <a href='javascript:toggle_navpop()'>[navigation]</a>
       <div id='navpop' class='popup' style='display: none'>
@@ -229,7 +231,7 @@ var ErrorLogHeaderHTML ExecutableTemplate = MakeExecutableTemplate(`
   <link type='text/css' rel='stylesheet' href='{theme}'>
 </head>
 <body>
-  <p><pre class='code' style='font-family: monospace'>{code|html}</pre></p>
+  <p><pre class='code'>{code|html}</pre></p>
   <table width='100%' id='maintable' style='border-collapse: collapse;'>
 `)
 
@@ -253,6 +255,43 @@ var ExplainEntryHeaderHTML ExecutableTemplate = MakeExecutableTemplate(`
       <td>comment</td>
     </tr>
   </th>
+`)
+
+var StatHeaderHTML ExecutableTemplate = MakeExecutableTemplate(`
+  <table class='maintable statstable' id='maintable'>
+  <th>
+    <tr class='entry'>
+      <td>Tag</td>
+      <td>Total</td>
+
+      <td>NOW</td>
+      <td>LATER</td>
+      <td>DONE</td>
+
+      <td>TIMED</td>
+
+      <td>NOTES</td>
+      <td>STICKY</td>
+    </tr>
+  </th>
+`)
+
+var StatEntryHTML ExecutableTemplate = MakeExecutableTemplate(`
+  <tr class='{htmlClass}'>
+    {.section entry}
+    <td>{name|html}</td>
+    <td>{total|html}</td>
+
+    <td>{now|html}</td>
+    <td>{later|html}</td>
+    <td>{done|html}</td>
+
+    <td>{timed|html}</td>
+
+    <td>{notes|html}</td>
+    <td>{sticky|html}</td>
+    {.end}
+  </tr>
 `)
 
 var ExplainEntryHTML ExecutableTemplate = MakeExecutableTemplate(`

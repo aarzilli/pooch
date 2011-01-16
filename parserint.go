@@ -309,11 +309,21 @@ func IntoTrigger(parser *Parser, pr *ParseResult) string {
 	return "#" + strings.Join(out, "#")
 }
 
-func (tl *Tasklist) ParseSearch(queryText string) (string, string, string, bool, os.Error) {
+func IsEmpty(parser *Parser, pr *ParseResult) bool {
+	if parser.savedSearch != "" { return false }
+	if parser.command != "" { return false }
+	if pr.text != "" { return false }
+	if len(pr.exclude.subExpr) > 0 { return false }
+	if len(pr.include.subExpr) > 0 { return false }
+	return true
+}
+
+func (tl *Tasklist) ParseSearch(queryText string) (string, string, string, bool, bool, os.Error) {
 	pr, parser := tl.ParseEx(queryText)
+	isEmpty := IsEmpty(parser, pr)
 	theselect, err := parser.IntoSelect(tl, pr)
 	trigger := IntoTrigger(parser, pr)
-	return theselect, parser.command, trigger, parser.savedSearch != "", err
+	return theselect, parser.command, trigger, parser.savedSearch != "", isEmpty, err
 }
 
 func (tl *Tasklist) ExtendedAddParse() *Entry {

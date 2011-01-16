@@ -105,4 +105,9 @@ table {
 
 .code {
     font-family: ocra10, monospace;
+    -moz-font-feature-settings: "liga=0";
+}
+
+.statstable {
+    margin-top: 40px;
 }

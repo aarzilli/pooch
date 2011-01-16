@@ -604,3 +604,75 @@ func (tl *Tasklist) UpgradePriority(id string, special bool) Priority {
 	tl.Update(entry, true)
 	return entry.Priority()
 }
+
+type Statistic struct {
+	name string
+	total int
+	now, later, done int
+	timed int
+	notes, sticky int
+}
+
+func (tl *Tasklist) GetStatistic(tag string) *Statistic {
+	var stmt *sqlite.Stmt
+	var err os.Error
+	if tag == "" {
+		stmt, err = tl.conn.Prepare("SELECT priority, count(priority) FROM tasks GROUP BY priority")
+	} else {
+		stmt, err = tl.conn.Prepare("SELECT priority, count(priority) FROM tasks WHERE id IN (SELECT id FROM columns WHERE name = ?) GROUP BY priority")
+	}
+	must(err)
+	defer stmt.Finalize()
+	if tag == "" {
+		must(stmt.Exec())
+	} else {
+		must(stmt.Exec(tag))
+	}
+
+	name := "#"+tag
+	if tag == "" {
+		name = "Any"
+	}
+
+	r := &Statistic{name, 0, 0, 0, 0, 0, 0, 0}
+
+	for (stmt.Next()) {
+		var priority, count int
+		
+		stmt.Scan(&priority, &count)
+
+		switch Priority(priority) {
+		case STICKY:
+			r.sticky += count
+		case NOTES:
+			r.notes += count
+		case NOW:
+			r.now += count
+		case LATER:
+			r.later += count
+		case DONE:
+			r.done += count
+		case TIMED:
+			r.timed += count
+		default:
+			r.total += count
+		}
+	}
+
+	r.total += r.sticky + r.notes + r.now + r.later + r.done + r.timed
+
+	return r
+}
+
+func (tl *Tasklist) GetStatistics() []*Statistic {
+	r := make([]*Statistic, 0)
+
+	r = append(r, tl.GetStatistic(""))
+	
+	for _, tag := range tl.GetTags() {
+		if tl.ignoreColumn[tag] { continue }
+		r = append(r, tl.GetStatistic(tag))
+	}
+
+	return r
+}

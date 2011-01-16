@@ -140,7 +140,7 @@ func CmdSearch(args []string) {
 
 		showCols := make(map[string]bool)
 
-		theselect, command, _, _, perr := tl.ParseSearch(input)
+		theselect, command, _, _, _, perr := tl.ParseSearch(input)
 		must(perr)
 		
 		Logf(DEBUG, "Search statement\n%s\n", theselect)
