@@ -606,7 +606,7 @@ func (tl *Tasklist) UpgradePriority(id string, special bool) Priority {
 }
 
 type Statistic struct {
-	name string
+	name, link string
 	total int
 	now, later, done int
 	timed int
@@ -630,11 +630,13 @@ func (tl *Tasklist) GetStatistic(tag string) *Statistic {
 	}
 
 	name := "#"+tag
+	link := name
 	if tag == "" {
 		name = "Any"
+		link = ""
 	}
 
-	r := &Statistic{name, 0, 0, 0, 0, 0, 0, 0}
+	r := &Statistic{name, link, 0, 0, 0, 0, 0, 0, 0}
 
 	for (stmt.Next()) {
 		var priority, count int

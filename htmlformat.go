@@ -279,7 +279,12 @@ var StatHeaderHTML ExecutableTemplate = MakeExecutableTemplate(`
 var StatEntryHTML ExecutableTemplate = MakeExecutableTemplate(`
   <tr class='{htmlClass}'>
     {.section entry}
-    <td>{name|html}</td>
+      {.section link}
+        <td><a href='/list?q={link|url}'>{name|html}</a></td>
+      {.or}
+        <td>{name|html}</td>
+      {.end}
+      
     <td>{total|html}</td>
 
     <td>{now|html}</td>
