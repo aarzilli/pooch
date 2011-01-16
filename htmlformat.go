@@ -261,17 +261,17 @@ var StatHeaderHTML ExecutableTemplate = MakeExecutableTemplate(`
   <table class='maintable statstable' id='maintable'>
   <th>
     <tr class='entry'>
-      <td>Tag</td>
-      <td>Total</td>
+      <td class='stat_tag'>Tag</td>
+      <td class='stat_total'>Total</td>
 
-      <td>NOW</td>
-      <td>LATER</td>
-      <td>DONE</td>
+      <td class='stat_now'>NOW</td>
+      <td class='stat_later'>LATER</td>
+      <td class='stat_done'>DONE</td>
 
-      <td>TIMED</td>
+      <td class='stat_timed'>TIMED</td>
 
-      <td>NOTES</td>
-      <td>STICKY</td>
+      <td class='stat_notes'>NOTES</td>
+      <td class='stat_sticky'>STICKY</td>
     </tr>
   </th>
 `)
@@ -280,21 +280,21 @@ var StatEntryHTML ExecutableTemplate = MakeExecutableTemplate(`
   <tr class='{htmlClass}'>
     {.section entry}
       {.section link}
-        <td><a href='/list?q={link|url}'>{name|html}</a></td>
+        <td class='stat_tag'><a href='/list?q={link|url}'>{name|html}</a></td>
       {.or}
-        <td>{name|html}</td>
+        <td class='stat_tag'>{name|html}</td>
       {.end}
       
-    <td>{total|html}</td>
+    <td class='stat_total'>{total|html}</td>
 
-    <td>{now|html}</td>
-    <td>{later|html}</td>
-    <td>{done|html}</td>
+    <td class='stat_now'>{now|html}</td>
+    <td class='stat_later'>{later|html}</td>
+    <td class='stat_done'>{done|html}</td>
 
-    <td>{timed|html}</td>
+    <td class='stat_timed'>{timed|html}</td>
 
-    <td>{notes|html}</td>
-    <td>{sticky|html}</td>
+    <td class='stat_notes'>{notes|html}</td>
+    <td class='stat_sticky'>{sticky|html}</td>
     {.end}
   </tr>
 `)

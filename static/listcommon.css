@@ -68,3 +68,6 @@
   padding: 15px;
 }
 
+.stat_tag, .stat_total, .stat_done, .stat_timed {
+  border-right: solid thin;
+}
