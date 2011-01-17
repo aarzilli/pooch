@@ -482,15 +482,26 @@ func LuaIntPriorityQuery(L *lua51.State) int {
 }
 
 func GetQueryObject(tl *Tasklist, i int) Clausable {
-	if !tl.luaState.IsLightUserdata(i) { return nil }
-	
-	ud := tl.ToGoInterface(i)
-	if ud == nil { return nil }
-	
-	clausable, ok := ud.(Clausable)
-	if !ok { return nil }
+	if tl.luaState.IsString(i) {
+		parser := NewParser(NewTokenizer(tl.luaState.ToString(i)), tl.GetTimezone())
+		se := &SimpleExpr{}
+		if parser.ParseSimpleExpression(se) {
+			return se
+		} else {
+			LuaError(tl.luaState, "Unparsable string in expression")
+			return nil
+		}
+	} else if tl.luaState.IsLightUserdata(i) { 
+		ud := tl.ToGoInterface(i)
+		if ud == nil { return nil }
+		
+		clausable, ok := ud.(Clausable)
+		if !ok { return nil }
 
-	return clausable
+		return clausable
+	}
+
+	return nil
 }
 
 func LuaIntNotQuery(L *lua51.State) int {
