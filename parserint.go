@@ -114,6 +114,12 @@ var OPERATOR_CHECK map[string]string = map[string]string{
 	"<": "<",
 	">=": ">=",
 	"<=": "<=",
+	"LIKE": "LIKE",
+	"like": "LIKE",
+	"not like": "NOT LIKE",
+	"NOT LIKE": "NOT LIKE",
+	"NOTLIKE": "NOT LIKE",
+	"notlike": "NOT LIKE",
 }
 
 func (expr *SimpleExpr) IntoClauseEx(tl *Tasklist) string {
@@ -312,6 +318,7 @@ func IntoTrigger(parser *Parser, pr *ParseResult) string {
 func IsEmpty(parser *Parser, pr *ParseResult) bool {
 	if parser.savedSearch != "" { return false }
 	if parser.command != "" { return false }
+	if parser.extra != "" { return false }
 	if pr.text != "" { return false }
 	if len(pr.exclude.subExpr) > 0 { return false }
 	if len(pr.include.subExpr) > 0 { return false }
