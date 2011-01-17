@@ -11,10 +11,10 @@ import (
 
 // part of the parser that interfaces with the backend
 
-func (tl *Tasklist) ParseEx(text string) (*ParseResult, *Parser) {
+func (tl *Tasklist) ParseEx(text string) *ParseResult {
 	t := NewTokenizer(text)
 	p := NewParser(t, tl.GetTimezone())
-	return p.ParseEx(), p
+	return p.ParseEx()
 }
 
 func SortFromTriggerAt(triggerAt *time.Time) string {
@@ -46,7 +46,7 @@ func ExtractColumnsFromSearch(search *ParseResult) Columns {
 }
 
 func (tl *Tasklist) ParseNew(entryText, queryText string) *Entry {
-	parsed, p := tl.ParseEx(entryText)
+	parsed := tl.ParseEx(entryText)
 
 	// the following is ignored, we try to always succeed
 	//if p.savedSearch != "" { return nil, MakeParseError("Saved search (@%) expression not allowed in new entry") }
@@ -76,7 +76,7 @@ func (tl *Tasklist) ParseNew(entryText, queryText string) *Entry {
 	}
 
 	// extraction of columns from search expression
-	searchParsed, _ := tl.ParseEx(queryText)
+	searchParsed := tl.ParseEx(queryText)
 	searchCols := ExtractColumnsFromSearch(searchParsed)
 	if searchCols != nil {
 		for k, v := range searchCols {
@@ -86,7 +86,7 @@ func (tl *Tasklist) ParseNew(entryText, queryText string) *Entry {
 	}
 
 	// extra field parsing
-	extraCols, extraCatFound := ParseCols(p.extra, p.timezone)
+	extraCols, extraCatFound := ParseCols(parsed.extra, parsed.timezone)
 	if extraCatFound { catFound = true }
 	for k, v := range extraCols { cols[k] = v }
 
@@ -217,8 +217,8 @@ func (expr *BoolExpr) IntoClause(tl *Tasklist, depth string, negate bool) string
 	
 }
 	
-func (parser *Parser) GetLuaClause(tl *Tasklist, pr *ParseResult) (string, os.Error) {
-	if parser.extra == "" { return "", nil }
+func (pr *ParseResult) GetLuaClause(tl *Tasklist) (string, os.Error) {
+	if pr.extra == "" { return "", nil }
 	
 	tl.mutex.Lock()
 	defer tl.mutex.Unlock()
@@ -226,7 +226,7 @@ func (parser *Parser) GetLuaClause(tl *Tasklist, pr *ParseResult) (string, os.Er
 	tl.SetTasklistInLua()
 	tl.ResetLuaFlags()
 
-	if tl.luaState.LoadString("return " + parser.extra) != 0 {
+	if tl.luaState.LoadString("return " + pr.extra) != 0 {
 		errorMessage := tl.luaState.ToString(-1)
 		tl.LogError(fmt.Sprintf("Error while loading lua code: %s", errorMessage))
 		return "", MakeParseError(fmt.Sprintf("Error while loading lua code: %s", errorMessage))
@@ -258,21 +258,21 @@ func (pr *ParseResult) AddIncludeClause(expr *SimpleExpr) {
 
 var SELECT_HEADER string = "SELECT tasks.id, title_field, text_field, priority, trigger_at_field, sort, group_concat(columns.name||'\u001f'||columns.value, '\u001f')\nFROM tasks NATURAL JOIN columns "
 
-func ResolveSavedSearch(tl *Tasklist, parser *Parser, pr *ParseResult) (*ParseResult, *Parser) {
-	if parser.savedSearch != "" {
-		parseResult, newParser := tl.ParseEx(tl.GetSavedSearch(parser.savedSearch))
-		return parseResult, newParser
+func (pr *ParseResult) ResolveSavedSearch(tl *Tasklist) *ParseResult {
+	if pr.savedSearch != "" {
+		parseResult := tl.ParseEx(tl.GetSavedSearch(pr.savedSearch))
+		return parseResult
 	}
-	return pr, parser
+	return pr
 }
 
-func (parser *Parser) IntoSelect(tl *Tasklist, pr *ParseResult) (string, os.Error) {
-	if parser.savedSearch != "" {
-		parseResult, newParser := tl.ParseEx(tl.GetSavedSearch(parser.savedSearch))
-		return newParser.IntoSelect(tl, parseResult)
+func (pr *ParseResult) IntoSelect(tl *Tasklist) (string, os.Error) {
+	if pr.savedSearch != "" {
+		parseResult := tl.ParseEx(tl.GetSavedSearch(pr.savedSearch))
+		return parseResult.IntoSelect(tl)
 	}
 	
-	_, addDone := parser.options["w/done"]; addDone = !addDone
+	_, addDone := pr.options["w/done"]; addDone = !addDone
 	where := pr.include.IntoClauses(tl, "", false, addDone)
 	whereNot := pr.exclude.IntoClauses(tl, "", true, false)
 
@@ -282,7 +282,7 @@ func (parser *Parser) IntoSelect(tl *Tasklist, pr *ParseResult) (string, os.Erro
 
 	for _, v := range whereNot { where = append(where, v) }
 
-	extraClause, error := parser.GetLuaClause(tl, pr)
+	extraClause, error := pr.GetLuaClause(tl)
 	if extraClause != "" {
 		where = append(where, extraClause)
 	}
@@ -296,12 +296,12 @@ func (parser *Parser) IntoSelect(tl *Tasklist, pr *ParseResult) (string, os.Erro
 	return SELECT_HEADER + whereStr + "\nGROUP BY tasks.id\nORDER BY priority, trigger_at_field ASC, sort DESC", error
 }
 
-func IntoTrigger(parser *Parser, pr *ParseResult) string {
-	if parser.savedSearch != "" {
-		return "#%" + parser.savedSearch
+func (pr *ParseResult) IntoTrigger() string {
+	if pr.savedSearch != "" {
+		return "#%" + pr.savedSearch
 	}
 
-	if parser.extra != "" { return "" }
+	if pr.extra != "" { return "" }
 
 	out := make([]string, 0)
 
@@ -315,10 +315,10 @@ func IntoTrigger(parser *Parser, pr *ParseResult) string {
 	return "#" + strings.Join(out, "#")
 }
 
-func IsEmpty(parser *Parser, pr *ParseResult) bool {
-	if parser.savedSearch != "" { return false }
-	if parser.command != "" { return false }
-	if parser.extra != "" { return false }
+func (pr *ParseResult) IsEmpty() bool {
+	if pr.savedSearch != "" { return false }
+	if pr.command != "" { return false }
+	if pr.extra != "" { return false }
 	if pr.text != "" { return false }
 	if len(pr.exclude.subExpr) > 0 { return false }
 	if len(pr.include.subExpr) > 0 { return false }
@@ -326,11 +326,11 @@ func IsEmpty(parser *Parser, pr *ParseResult) bool {
 }
 
 func (tl *Tasklist) ParseSearch(queryText string) (string, string, string, bool, bool, os.Error) {
-	pr, parser := tl.ParseEx(queryText)
-	isEmpty := IsEmpty(parser, pr)
-	theselect, err := parser.IntoSelect(tl, pr)
-	trigger := IntoTrigger(parser, pr)
-	return theselect, parser.command, trigger, parser.savedSearch != "", isEmpty, err
+	pr := tl.ParseEx(queryText)
+	isEmpty := pr.IsEmpty()
+	theselect, err := pr.IntoSelect(tl)
+	trigger := pr.IntoTrigger()
+	return theselect, pr.command, trigger, pr.savedSearch != "", isEmpty, err
 }
 
 func (tl *Tasklist) ExtendedAddParse() *Entry {

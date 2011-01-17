@@ -9,22 +9,6 @@ import (
 	"fmt"
 )
 
-type Parser struct {
-	tkzer *Tokenizer
-	showCols []string
-	timezone int
-	options map[string]string
-	
-	savedSearch string
-	extra string // text after the #+ separator
-	command string // text after the #! separator
-}
-
-func NewParser(tkzer *Tokenizer, timezone int) *Parser {
-	p := &Parser{tkzer, make([]string, 0), timezone, make(map[string]string), "", "", ""}
-	tkzer.parser = p
-	return p
-}
 
 type SimpleExpr struct {
 	name string
@@ -56,6 +40,13 @@ type ParseResult struct {
 	text string
 	include BoolExpr
 	exclude BoolExpr
+	options map[string]string
+	
+	savedSearch string
+	extra string // text after the #+ separator
+	command string // text after the #! separator
+
+	timezone int
 }
 
 func MakeParseResult() *ParseResult {
@@ -65,8 +56,24 @@ func MakeParseResult() *ParseResult {
 	r.exclude.operator = "AND"
 	r.include.subExpr = make([]Clausable, 0)
 	r.exclude.subExpr = make([]Clausable, 0)
+	
+	r.options = make(map[string]string)
 
 	return r
+}
+
+type Parser struct {
+	tkzer *Tokenizer
+	showCols []string
+	timezone int
+	result *ParseResult
+}
+
+func NewParser(tkzer *Tokenizer, timezone int) *Parser {
+	p := &Parser{tkzer, make([]string, 0), timezone, MakeParseResult()}
+	p.result.timezone = timezone
+	tkzer.parser = p
+	return p
 }
 
 func (p *Parser) ParseSpeculative(fn func()bool) bool {
@@ -258,7 +265,6 @@ func (p *Parser) ParseExclusion(r *SimpleExpr) bool {
 }
 
 func (p *Parser) ParseEx() *ParseResult {
-	r := MakeParseResult()
 	query := make([]string, 0)
 
 LOOP: for {
@@ -273,19 +279,19 @@ LOOP: for {
 				}
 			}
 		case p.ParseSavedSearch(simple):
-			p.savedSearch = simple.name
+			p.result.savedSearch = simple.name
 		case p.ParseOption(simple):
-			p.options[simple.name] = ""
+			p.result.options[simple.name] = ""
 		case p.ParseColumnRequest():
 			// nothing to do
 		case p.ParseExclusion(simple):
-			r.exclude.subExpr = append(r.exclude.subExpr, simple)
+			p.result.exclude.subExpr = append(p.result.exclude.subExpr, simple)
 		case p.ParsePriorityExpression(simple):
-			r.include.subExpr = append(r.include.subExpr, simple)
+			p.result.include.subExpr = append(p.result.include.subExpr, simple)
 		case p.ParseTimeExpression(simple):
-			r.include.subExpr = append(r.include.subExpr, simple)
+			p.result.include.subExpr = append(p.result.include.subExpr, simple)
 		case p.ParseSimpleExpression(simple):
-			r.include.subExpr = append(r.include.subExpr, simple)
+			p.result.include.subExpr = append(p.result.include.subExpr, simple)
 		default:
 			next := p.tkzer.Next()
 			if next == "@@" { next = "@" }
@@ -294,9 +300,9 @@ LOOP: for {
 		}
 	}
 
-	r.text = strings.TrimSpace(strings.Join([]string(query), ""))
+	p.result.text = strings.TrimSpace(strings.Join([]string(query), ""))
 	
-	return r
+	return p.result
 }
 
 var startMultilineRE *regexp.Regexp = regexp.MustCompile("^[ \t\n\r]*{$")

@@ -362,15 +362,15 @@ func CalendarServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 }
 
 func GetCalendarEvents(tl *Tasklist, query string, r *vector.Vector, start, end string, endSecs int64) {
-	pr, parser := tl.ParseEx(query)
-	pr, parser = ResolveSavedSearch(tl, parser, pr) // necessary, to modify the result
+	pr := tl.ParseEx(query)
+	pr = pr.ResolveSavedSearch(tl) // necessary, to modify the result
 	
 	pr.AddIncludeClause(&SimpleExpr{ ":when", "notnull", "", nil, 0, "" })
 	pr.AddIncludeClause(&SimpleExpr{ ":when", ">", start, nil, 0, ""  })
 	pr.AddIncludeClause(&SimpleExpr{ ":when", "<", end, nil, 0, "" })
-	parser.options["w/done"] = "w/done"
-	theselect, _ := parser.IntoSelect(tl, pr)
-	v, _ := tl.Retrieve(theselect, parser.command)
+	pr.options["w/done"] = "w/done"
+	theselect, _ := pr.IntoSelect(tl)
+	v, _ := tl.Retrieve(theselect, pr.command)
 
 	timezone := tl.GetTimezone()
 
@@ -448,9 +448,9 @@ func SaveSearchServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 }
 
 func RemoveSearchServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
-	_, parser := tl.ParseEx(req.FormValue("query"))
-	if parser.savedSearch != "" {
-		tl.RemoveSaveSearch(parser.savedSearch)
+	pr := tl.ParseEx(req.FormValue("query"))
+	if pr.savedSearch != "" {
+		tl.RemoveSaveSearch(pr.savedSearch)
 	}
 }
 

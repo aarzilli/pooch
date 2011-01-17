@@ -176,9 +176,9 @@ func (t *Tokenizer) RealNext() string {
 }
 
 func (t *Tokenizer) PushExtra(extra string) {
-	t.parser.extra = extra
+	t.parser.result.extra = extra
 }
 
 func (t *Tokenizer) PushCommand(command string) {
-	t.parser.command = command
+	t.parser.result.command = command
 }
