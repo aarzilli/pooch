@@ -28,25 +28,7 @@ function toggle_navpop() {
     toggle("#navpop")
 }
 
-function keytable(e) {
-    switch (e.keyCode) {
-    case 27:
-        $("#searchpop").get(0).style['display'] = 'none';
-        $("#addpop").get(0).style['display'] = 'none';
-        break;
-    case 13:
-        if (e.altKey) {
-            if ($("#searchpop").get(0).style['display'] != 'none') {
-                $("#searchform").get(0).submit();
-            }
-        }
-        break;
-    }
-
-    if (document.activeElement.type != null) {
-        return true;
-    }
-
+function perform_toggle_on_keyevent(e) {
     switch(e.which) {
     case 97: // a key
         toggle_addpop();
@@ -56,6 +38,35 @@ function keytable(e) {
         return false;
     default:
         return true;
+    }
+}
+
+function keytable(e) {
+    switch (e.keyCode) {
+    case 27:
+        $("#searchpop").get(0).style['display'] = 'none';
+        $("#addpop").get(0).style['display'] = 'none';
+        return false;
+    case 13:
+        if (e.altKey) {
+            if ($("#searchpop").get(0).style['display'] != 'none') {
+                $("#searchform").get(0).submit();
+            }
+        }
+        return false;
+    }
+
+    if (document.activeElement.type == null) {
+        return perform_toggle_on_keyevent(e)
+    } 
+    nothing_enabled = ($("#searchpop").get(0).style['display'] == 'none') && ($("#addpop").get(0).style['display'] == 'none');
+
+    if (!nothing_enabled) {
+        return true;
+    }
+
+    if ((document.activeElement.id == "q") || (document.activeElement.id == "newentry")) {
+        return perform_toggle_on_keyevent(e);
     }
 }
 
