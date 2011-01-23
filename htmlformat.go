@@ -66,7 +66,7 @@ var CommonHeaderHTML ExecutableTemplate = MakeExecutableTemplate(`
            &nbsp;
            <div class='popbuttons'>
            {.section removeSearch }
-             <input type='button' value='Edit query' onClick='javascript:editsearch()'/>
+             <input type='button' id='editquerybtn' value='Edit query' onClick='javascript:editsearch()'/>
              <input type='button' value='Remove query' onClick='javascript:removesearch()'/>
            {.or}
              <input type='button' value='Save query' onClick='javascript:savesearch()'/>

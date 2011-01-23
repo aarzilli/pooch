@@ -262,14 +262,23 @@ function savesearch() {
     savesearch_ex(name, $('#q').val())
 }
 
+var editingSavedQueryMode = null;
+
 function editsearch() {
-  $.ajax({ url: "save-search?name=" + encodeURIComponent($('#q').val()), success: function(data, textStatus, req) {
-	if (data.match(/^query-saved: /)) {
-	  query = data.substring(13);
-	  newquery = prompt("Edit query for " + $('#q').val(), query);
-	  if ((newquery != "") && (newquery != null)) savesearch_ex($('#q').val(), newquery);
-        }
-      }});
+    if (editingSavedQueryMode == null) {
+        name = $('#q').val();
+        $.ajax({ url: "save-search?name=" + encodeURIComponent(name),
+                    success: function(data, textStatus, req) {
+                    if (data.match(/^query-saved: /)) {
+                        query = data.substring(13);
+                        $("#editquerybtn").val("Save query");
+                        editingSavedQueryMode = name;
+                        $('#q').val(query);
+                    }
+                }});
+    } else {
+        savesearch_ex(editingSavedQueryMode, $("#q").val());
+    }
 }
 
 function removesearch() {
