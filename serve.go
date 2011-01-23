@@ -434,8 +434,10 @@ func SaveSearchServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	name := req.FormValue("name")
 	query := req.FormValue("query")
 
-	if (len(name) > 2) && (name[0] == '@') && (name[1] == '%') {
+	if (len(name) > 2) && isQuickTagStart(int(name[0])) && (name[1] == '%') {
+		Logf(INFO, "Converting: %s\n", name)
 		name = name[2:len(name)]
+		Logf(INFO, "Converting: %s\n", name)
 	}
 	
 	if query != "" {
@@ -443,7 +445,7 @@ func SaveSearchServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	} else {
 		query = tl.GetSavedSearch(name)
 	}
-	Logf(INFO, "Query: %s %s", name, query)
+	Logf(INFO, "Query: [%s] [%s]", name, query)
 	io.WriteString(c, "query-saved: " + query)
 }
 
