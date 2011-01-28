@@ -87,7 +87,7 @@ func StaticInMemoryServer(c http.ResponseWriter, req *http.Request) {
 	if req.URL.Path == "/" {
 		http.Redirect(c, req, "/list", 301)
 	} else if signature := SUMS[req.URL.Path[1:]]; signature == "" {
-		io .WriteString(c, "404, Not found")
+		io.WriteString(c, "404, Not found")
 	} else {
 		if ifNoneMatch := StripQuotes(req.Header["If-None-Match"]); ifNoneMatch == signature {
 			Logf(DEBUG, "Page not modified, replying")

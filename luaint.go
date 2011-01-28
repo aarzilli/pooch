@@ -298,6 +298,7 @@ func PushTime(L *lua51.State, t *time.Time) {
 	SetTableInt(L, "year", int(t.Year))
 	SetTableInt(L, "month", int(t.Month))
 	SetTableInt(L, "day", int(t.Day))
+	SetTableInt(L, "weekday", int(t.Weekday))
 	SetTableInt(L, "hour", int(t.Hour))
 	SetTableInt(L, "minute", int(t.Minute))
 	SetTableInt(L, "second", int(t.Second))
@@ -679,6 +680,9 @@ func MakeLuaState() *lua51.State {
 
 	L.Register("subtag", LuaIntSubtag)
 	L.Register("nottoptag", LuaIntNotTopTag)
+
+	// Loads initialization file
+	L.DoString(decodeStatic("init.lua"))
 
 	return L
 }

@@ -268,6 +268,7 @@ func (tasklist *Tasklist) Add(e *Entry) {
 
 func (tasklist *Tasklist) LogError(error string) {
 	tasklist.MustExec("INSERT INTO errorlog(timestamp, message) VALUES(?, ?)", time.UTC().Seconds(), error)
+	Logf(INFO, "error while executing lua function: %s\n", error)
 }
 
 func (tl *Tasklist) RemoveSaveSearch(name string) {
@@ -571,6 +572,7 @@ func (tl *Tasklist) RunTimedTriggers() {
 			if tl.luaFlags.persist {
 				if tl.luaFlags.cursorCloned {
 					newentry := GetEntryFromLua(tl.luaState, CURSOR)
+					Logf(INFO, "Cloned, the clone id is: %s\n", newentry.Id())
 					tl.Add(newentry)
 					checkFreq = false
 				}
