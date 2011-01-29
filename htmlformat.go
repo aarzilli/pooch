@@ -141,6 +141,7 @@ var ListHeaderHTML ExecutableTemplate = MakeExecutableTemplate(`
   <link type='text/css' rel='stylesheet' href='listcommon.css'>
   <link type='text/css' rel='stylesheet' href='{theme}'>
   <link type='text/css' rel='stylesheet' href='calendar.css'>
+  <link type='image/png' rel='icon' href='animals-dog.png'>
   <script src='/json.js'></script>
   <script src='/jquery.js'></script>
   <script src='/int.js'></script>
@@ -229,6 +230,7 @@ var ErrorLogHeaderHTML ExecutableTemplate = MakeExecutableTemplate(`
 <head>
   <title>Pooch: {name|html}</title>
   <link type='text/css' rel='stylesheet' href='{theme}'>
+  <link type='image/png' rel='icon' href='animals-dog.png'>
 </head>
 <body>
   <p><pre class='code'>{code|html}</pre></p>
@@ -327,6 +329,7 @@ var CalendarHeaderHTML ExecutableTemplate = MakeExecutableTemplate(`
   <link type='text/css' rel='stylesheet' href='listcommon.css'>
   <link rel='stylesheet' type='text/css' href='fullcalendar.css'/>
   <link rel='stylesheet' type='text/css' href='cal.css'/>
+  <link type='image/png' rel='icon' href='animals-dog.png'>
   <script src='jquery.js'></script>
   <script src='jquery-ui-custom.js'></script>
   <script src='fullcalendar.js'></script>
@@ -354,6 +357,7 @@ var RegisterHTML ExecutableTemplate = MakeExecutableTemplate(`
 <html>
   <head>
     <title>Register with pooch2</title>
+    <link type='image/png' rel='icon' href='animals-dog.png'>
   </head>
   <body>
     <div>{problem}</div>
@@ -371,6 +375,7 @@ var LoginHTML ExecutableTemplate = MakeExecutableTemplate(`
 <html>
   <head>
     <title>Login with pooch2</title>
+    <link type='image/png' rel='icon' href='animals-dog.png'>
   </head>
   <body>
     <div>{problem}</div>
@@ -389,6 +394,7 @@ var RegisterOKHTML ExecutableTemplate = MakeExecutableTemplate(`
 <html>
   <head>
     <title>Register with pooch2</title>
+    <link type='image/png' rel='icon' href='animals-dog.png'>
   </head>
   <body>
     Registration successful. <a href="/login">Login</a>.
@@ -401,6 +407,7 @@ var LoginOKHTML ExecutableTemplate = MakeExecutableTemplate(`
 <html>
   <head>
     <title>Login with pooch2</title>
+    <link type='image/png' rel='icon' href='animals-dog.png'>
   </head>
   <body>
     Login successful, go to <a href="/list">index</a>.
@@ -413,6 +420,7 @@ var WhoAmIHTML ExecutableTemplate = MakeExecutableTemplate(`
 <html>
   <head>
     <title>Who Am I</title>
+    <link type='image/png' rel='icon' href='animals-dog.png'>
   </head>
   <body>
     You are: {username|html}
@@ -425,6 +433,7 @@ var MustLogInHTML ExecutableTemplate = MakeExecutableTemplate(`
 <html>
   <head>
     <title>Login needed</title>
+    <link type='image/png' rel='icon' href='animals-dog.png'>
   </head>
   <body>
     You must log in first: <a href="/login">login</a> or <a href="/register">register</a>.
@@ -437,6 +446,7 @@ var OptionsPageHeader ExecutableTemplate = MakeExecutableTemplate(`
 <html>
   <head>
     <title>Options</title>
+    <link type='image/png' rel='icon' href='animals-dog.png'>
   </head>
   <body>
     <h2>Options</h2>

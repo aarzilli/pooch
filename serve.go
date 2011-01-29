@@ -76,12 +76,14 @@ func HelloServer(c http.ResponseWriter, req *http.Request) {
 func StaticInMemoryServer(c http.ResponseWriter, req *http.Request) {
 	var ct string
 	switch {
+	case strings.HasSuffix(req.URL.Path, ".png"):
+		ct = "image/png"
 	case strings.HasSuffix(req.URL.Path, ".js"):
-		ct = "text/javascript"
+		ct = "text/javascript; charset=utf-8"
 	case strings.HasSuffix(req.URL.Path, ".css"):
-		ct = "text/css"
+		ct = "text/css; charset=utf-8"
 	default:
-		ct = "text/html"
+		ct = "text/html; charset=utf-8"
 	}
 	
 	if req.URL.Path == "/" {
@@ -96,7 +98,7 @@ func StaticInMemoryServer(c http.ResponseWriter, req *http.Request) {
 		}
 
 		c.SetHeader("ETag", "\"" + signature + "\"")
-		c.SetHeader("Content-Type", ct + "; charset=utf-8")
+		c.SetHeader("Content-Type", ct)
 
 		io.WriteString(c, decodeStatic(req.URL.Path[1:]));
 	}
