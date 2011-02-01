@@ -128,7 +128,7 @@ func parseNextWeekdayTime(input string, timezone int) *time.Time {
 func ParseDateTime(input string, timezone int) (*time.Time, os.Error) {
 	input = strings.TrimSpace(input)
 
-	if (input == "") { return nil, MakeParseError("No input") }
+	if (input == "") { return nil, nil }
 
 	if datetime := timeParseLoop(input, timezone, DateTimeFormats); datetime != nil {
 		return datetime, nil
