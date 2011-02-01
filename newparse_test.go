@@ -255,6 +255,13 @@ func TestParseTimetag() {
 	if (datetime.Hour != 13) || (datetime.Minute != 40) || (datetime.Year < 2010) {
 		panic("Error parsing hour only time expression")
 	}
+
+	datetime, err = ParseDateTime("Thu", 0)
+	must(err)
+	if (datetime.Year < 2010) || (datetime.Weekday != 4) {
+		panic(fmt.Sprintf("Error parsing day of the week time expression: %s, weekday: %d", datetime.Format(TRIGGER_AT_FORMAT), datetime.Weekday))
+	}
+	fmt.Printf("Parsed: %s\n", datetime.Format(TRIGGER_AT_FORMAT))
 }
 
 func TestShowCols() {

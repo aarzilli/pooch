@@ -11,28 +11,29 @@ type DateTimeFormat struct {
 	format string
 	shouldFixYear bool // the parsed date expression didn't have a year field which will need to be calculated
 	hasTime bool // the parsed date expression had an explicit time
-	shouldFixDate bool // the parsed time expression didn't have a date at all (just hour) the date field should be set to today or tomorrow
-
 }
 
 var DateTimeFormats []DateTimeFormat = []DateTimeFormat{
-	{ "2006-1-2 15:04:05", false, true, false },
-	{ "2006-1-2,15:04:05", false, true, false },
-	{ "2006-1-2 15:04", false, true, false },
-	{ "2006-1-2,15:04", false, true, false },
+	{ "2006-1-2 15:04:05", false, true },
+	{ "2006-1-2,15:04:05", false, true },
+	{ "2006-1-2 15:04", false, true },
+	{ "2006-1-2,15:04", false, true },
 	
-	{ "2/1 15:04:05", true, true, false },
-	{ "2/1,15:04:05", true, true, false },
-	{ "2/1 15:04", true, true, false },
-	{ "2/1,15:04", true, true, false },
-	{ "2/1 15", true, true, false },
-	{ "2/1,15", true, true, false },
+	{ "2/1 15:04:05", true, true },
+	{ "2/1,15:04:05", true, true },
+	{ "2/1 15:04", true, true },
+	{ "2/1,15:04", true, true },
+	{ "2/1 15", true, true },
+	{ "2/1,15", true, true },
 	
-	{ "2/1", true, false, false },
-	{ "2006-1-2", false, false, false },
+	{ "2/1", true, false },
+	{ "2006-1-2", false, false },
 	
-	{ "15:04:05", false, false, true },
-	{ "15:04", false, false, true },
+}
+
+var TimeOnlyFormats []DateTimeFormat = []DateTimeFormat{
+	{ "15:04:05", false, true },
+	{ "15:04", false, true },
 }
 
 func FixYear(datetime *time.Time, withTime bool) {
@@ -46,15 +47,35 @@ func FixYear(datetime *time.Time, withTime bool) {
 	}
 }
 
-func FixDate(datetime *time.Time) {
-	ref := time.UTC()
-	if datetime.Format("15:04:05") < ref.Format("15:04:05") {
-		ref = time.SecondsToUTC(ref.Seconds() + (24 * 60 * 60))
-	}
+func fixDateEx(datetime, ref *time.Time) {
 	datetime.Year = ref.Year
 	datetime.Month = ref.Month
 	datetime.Day = ref.Day
 	datetime.Weekday = ref.Weekday
+}
+
+func nextDay(atime *time.Time) *time.Time {
+	return time.SecondsToUTC(atime.Seconds() + (24 * 60 * 60))
+}
+
+func FixDate(datetime *time.Time) {
+	ref := time.UTC()
+	if datetime.Format("15:04:05") < ref.Format("15:04:05") {
+		ref = nextDay(ref)
+	}
+	fixDateEx(datetime, ref)
+}
+
+func SearchDayOfTheWeek(datetime *time.Time) *time.Time {
+	weekday := datetime.Weekday // thing to search
+	fixDateEx(datetime, time.UTC())
+	for count := 10; count > 0; count-- {
+		datetime = nextDay(datetime)
+		if datetime.Weekday == weekday {
+			return datetime
+		}
+	}
+	return datetime
 }
 
 func TimeParseTimezone(layout, input string, timezone int) (*time.Time, os.Error) {
@@ -65,31 +86,64 @@ func TimeParseTimezone(layout, input string, timezone int) (*time.Time, os.Error
 	return t, nil
 }
 
-func ParseDateTime(input string, timezone int) (datetime *time.Time, error os.Error) {
-	datetime = nil
-	error = nil
-
-	var err os.Error
-	input = strings.TrimSpace(input)
-
-	if (input == "") {
-		return
-	}
-
-	for _, dateTimeFormat := range DateTimeFormats {
-		if datetime, err = TimeParseTimezone(dateTimeFormat.format, input, timezone); err == nil {
+func timeParseLoop(input string, timezone int, formats []DateTimeFormat) *time.Time {
+	for _, dateTimeFormat := range formats {
+		if datetime, err := TimeParseTimezone(dateTimeFormat.format, input, timezone); err == nil {
 			if dateTimeFormat.shouldFixYear {
 				FixYear(datetime, dateTimeFormat.hasTime)
 			}
-			if dateTimeFormat.shouldFixDate {
-				FixDate(datetime)
-			}
-			return
+			return datetime
 		}
 	}
 
-	error = MakeParseError(fmt.Sprintf("Unparsable date: %s", input))
-	return
+	return nil
+}
+
+var weekdayConversion map[string]int = map[string]int{
+	"Mon": 1, "mon": 1,
+	"Tue": 2, "tue": 2,
+	"Wed": 3, "wed": 3,
+	"Thu": 4, "thu": 4,
+	"Fri": 5, "fri": 5,
+	"Sat": 6, "sat": 6,
+	"Sun": 0, "sun": 0,
+}
+
+func parseNextWeekdayTime(input string, timezone int) *time.Time {
+	var datetime *time.Time = &time.Time{}
+	
+	split := strings.Split(input, ",", 2)
+	if len(split) > 1 {
+		datetime = timeParseLoop(split[1], timezone, TimeOnlyFormats)
+		if datetime == nil { return nil }
+	}
+
+	value, ok := weekdayConversion[split[0]]
+	if !ok { return nil }
+	datetime.Weekday = value
+	return SearchDayOfTheWeek(datetime)
+}
+
+
+func ParseDateTime(input string, timezone int) (*time.Time, os.Error) {
+	input = strings.TrimSpace(input)
+
+	if (input == "") { return nil, MakeParseError("No input") }
+
+	if datetime := timeParseLoop(input, timezone, DateTimeFormats); datetime != nil {
+		return datetime, nil
+	}
+
+	if datetime := timeParseLoop(input, timezone, TimeOnlyFormats); datetime != nil {
+		FixDate(datetime)
+		return datetime, nil
+	}
+
+	if datetime := parseNextWeekdayTime(input, timezone); datetime != nil {
+		return datetime, nil
+	}
+
+	return nil, MakeParseError(fmt.Sprintf("Unparsable date: %s", input))
 }
 
 func TimeFormatTimezone(atime *time.Time, format string, timezone int) string {
