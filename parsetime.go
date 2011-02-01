@@ -9,23 +9,30 @@ import (
 
 type DateTimeFormat struct {
 	format string
-	shouldFixYear bool
-	hasTime bool
+	shouldFixYear bool // the parsed date expression didn't have a year field which will need to be calculated
+	hasTime bool // the parsed date expression had an explicit time
+	shouldFixDate bool // the parsed time expression didn't have a date at all (just hour) the date field should be set to today or tomorrow
+
 }
 
 var DateTimeFormats []DateTimeFormat = []DateTimeFormat{
-	{ "2006-1-2 15:04:05", false, true },
-	{ "2006-1-2,15:04:05", false, true },
-	{ "2006-1-2 15:04", false, true },
-	{ "2006-1-2,15:04", false, true },
-	{ "2/1 15:04:05", true, true },
-	{ "2/1,15:04:05", true, true },
-	{ "2/1 15:04", true, true },
-	{ "2/1,15:04", true, true },
-	{ "2/1 15", true, true },
-	{ "2/1,15", true, true },
-	{ "2/1", true, false },
-	{ "2006-1-2", false, false },
+	{ "2006-1-2 15:04:05", false, true, false },
+	{ "2006-1-2,15:04:05", false, true, false },
+	{ "2006-1-2 15:04", false, true, false },
+	{ "2006-1-2,15:04", false, true, false },
+	
+	{ "2/1 15:04:05", true, true, false },
+	{ "2/1,15:04:05", true, true, false },
+	{ "2/1 15:04", true, true, false },
+	{ "2/1,15:04", true, true, false },
+	{ "2/1 15", true, true, false },
+	{ "2/1,15", true, true, false },
+	
+	{ "2/1", true, false, false },
+	{ "2006-1-2", false, false, false },
+	
+	{ "15:04:05", false, false, true },
+	{ "15:04", false, false, true },
 }
 
 func FixYear(datetime *time.Time, withTime bool) {
@@ -37,6 +44,17 @@ func FixYear(datetime *time.Time, withTime bool) {
 	} else {
 		datetime.Year = time.UTC().Year+1
 	}
+}
+
+func FixDate(datetime *time.Time) {
+	ref := time.UTC()
+	if datetime.Format("15:04:05") < ref.Format("15:04:05") {
+		ref = time.SecondsToUTC(ref.Seconds() + (24 * 60 * 60))
+	}
+	datetime.Year = ref.Year
+	datetime.Month = ref.Month
+	datetime.Day = ref.Day
+	datetime.Weekday = ref.Weekday
 }
 
 func TimeParseTimezone(layout, input string, timezone int) (*time.Time, os.Error) {
@@ -63,10 +81,13 @@ func ParseDateTime(input string, timezone int) (datetime *time.Time, error os.Er
 			if dateTimeFormat.shouldFixYear {
 				FixYear(datetime, dateTimeFormat.hasTime)
 			}
+			if dateTimeFormat.shouldFixDate {
+				FixDate(datetime)
+			}
 			return
 		}
 	}
-	
+
 	error = MakeParseError(fmt.Sprintf("Unparsable date: %s", input))
 	return
 }

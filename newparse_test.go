@@ -167,16 +167,16 @@ func tae_showcols(in string, expected []string, showCols []string) {
 }
 
 func tae_options(in string, expected []string, options []string) {
-	p, r := tae_ex(in)
+	_, r := tae_ex(in)
 	check_and_expr(&(r.include), expected, nil, nil)
 
-	if len(p.options) != len(options) {
-		panic(fmt.Sprintf("Different number of options returned [%v] expected [%v]", p.options, options))
+	if len(r.options) != len(options) {
+		panic(fmt.Sprintf("Different number of options returned [%v] expected [%v]", r.options, options))
 	}
 
 	for _, option := range options {
-		if _, ok := p.options[option]; !ok {
-			panic(fmt.Sprintf("Expected option [%v] not found in [%v]\n", option, p.options))
+		if _, ok := r.options[option]; !ok {
+			panic(fmt.Sprintf("Expected option [%v] not found in [%v]\n", option, r.options))
 		}
 	}
 }
@@ -249,6 +249,12 @@ func TestParseTimetag() {
 	tae_wval("#10/2 prova", []string{ ":when" }, []string{ tentwo }, []string{ "" })
 	tae_wval("#10/2 #2010-09-21", []string{ ":when", ":when" }, []string{ tentwo, "2010-09-21 00:00" }, []string{ "", "" })
 	tae_wval("#10/2+weekly #2010-09-21", []string{ ":when", ":when" }, []string{ tentwo, "2010-09-21 00:00" }, []string{ "weekly", "" })
+
+	datetime, err := ParseDateTime("13:40", 0)
+	must(err)
+	if (datetime.Hour != 13) || (datetime.Minute != 40) || (datetime.Year < 2010) {
+		panic("Error parsing hour only time expression")
+	}
 }
 
 func TestShowCols() {
@@ -261,9 +267,9 @@ func TestOptions() {
 }
 
 func TestSavedSearch() {
-	p, r := tae_ex("#%salvata")
+	_, r := tae_ex("#%salvata")
 	check_and_expr(&(r.include), []string{ }, nil, nil)
-	mms(p.savedSearch, "salvata", "")
+	mms(r.savedSearch, "salvata", "")
 }
 
 func TestEscaping() {
@@ -278,8 +284,8 @@ func textra(input string, normal string, extra string, command string) {
 	r := p.ParseEx()
 
 	mms(r.text, normal, "")
-	mms(p.extra, extra, "")
-	mms(p.command, command, "")
+	mms(r.extra, extra, "")
+	mms(r.command, command, "")
 }
 
 func TestExtra() {
@@ -370,7 +376,7 @@ func TestEntryWithSearch(tl *Tasklist) {
 }
 
 func tis(tl *Tasklist, input string, expectedOutput string) {
-	output, _, _, err := tl.ParseSearch(input)
+	output, _, _, _, _, err := tl.ParseSearch(input)
 	must(err)
 	mms_large(output, SELECT_HEADER + expectedOutput + "\nGROUP BY tasks.id\nORDER BY priority, trigger_at_field ASC, sort DESC", "")
 	stmt, err := tl.conn.Prepare("EXPLAIN " + output)
@@ -432,7 +438,7 @@ func tsearch(tl *Tasklist, queryText string, expectedIds []string) {
 
 	for _, id := range expectedIds { ids[id] = "" }
 
-	theselect, code, _, err := tl.ParseSearch(queryText)
+	theselect, code, _, _, _, err := tl.ParseSearch(queryText)
 	must(err)
 	entries, err := tl.Retrieve(theselect, code)
 	must(err)
@@ -478,7 +484,7 @@ func TestLuaSelect(tl *Tasklist) {
 	
 	tsearch(tl, "bung #+ notq(orq(columnq('bza'), columnq('bzo')))", []string{ "17" })
 
-	theselect, _, _, err := tl.ParseSearch("prova #+ orq(columnq('blap', '>', 'burp'), whenq('>', 1275775200))")
+	theselect, _, _, _, _, err := tl.ParseSearch("prova #+ orq(columnq('blap', '>', 'burp'), whenq('>', 1275775200))")
 	must(err)
 	fmt.Printf("%s \n", theselect)
 }
