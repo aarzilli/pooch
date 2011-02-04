@@ -608,11 +608,11 @@ func (tl *Tasklist) UpgradePriority(id string, special bool) Priority {
 }
 
 type Statistic struct {
-	name, link string
-	total int
-	now, later, done int
-	timed int
-	notes, sticky int
+	Name, Link string
+	Total int
+	Now, Later, Done int
+	Timed int
+	Notes, Sticky int
 }
 
 func (tl *Tasklist) GetStatistic(tag string) *Statistic {
@@ -647,23 +647,23 @@ func (tl *Tasklist) GetStatistic(tag string) *Statistic {
 
 		switch Priority(priority) {
 		case STICKY:
-			r.sticky += count
+			r.Sticky += count
 		case NOTES:
-			r.notes += count
+			r.Notes += count
 		case NOW:
-			r.now += count
+			r.Now += count
 		case LATER:
-			r.later += count
+			r.Later += count
 		case DONE:
-			r.done += count
+			r.Done += count
 		case TIMED:
-			r.timed += count
+			r.Timed += count
 		default:
-			r.total += count
+			r.Total += count
 		}
 	}
 
-	r.total += r.sticky + r.notes + r.now + r.later + r.done + r.timed
+	r.Total += r.Sticky + r.Notes + r.Now + r.Later + r.Done + r.Timed
 
 	return r
 }

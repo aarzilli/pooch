@@ -13,13 +13,13 @@ import (
 	"http"
 )
 
-func PriorityFormatter(w io.Writer, value interface{}, format string) {
-	v := value.(Priority)
+func PriorityFormatter(w io.Writer, format string, value ...interface{}) {
+	v := value[0].(Priority)
 	io.WriteString(w, strings.ToUpper(v.String()))
 }
 
-func URLFormatter(w io.Writer, value interface{}, format string) {
-	v := value.(string)
+func URLFormatter(w io.Writer, format string, value ...interface{}) {
+	v := value[0].(string)
 	io.WriteString(w, http.URLEscape(v))
 }
 
@@ -153,7 +153,7 @@ var ListHeaderHTML ExecutableTemplate = MakeExecutableTemplate(`
 var EntryListPriorityChangeHTML ExecutableTemplate = MakeExecutableTemplate(`
     <tr>
       {.section entry}
-      <td class='prchange' colspan=4>{priority|priority}</td>
+      <td class='prchange' colspan=4>{Priority|priority}</td>
       {.end}
       {.repeated section colNames}
       <td class='colname'>{@|html}</td>
@@ -163,24 +163,24 @@ var EntryListPriorityChangeHTML ExecutableTemplate = MakeExecutableTemplate(`
 
 
 var EntryListEntryHTML ExecutableTemplate = MakeExecutableTemplate(`
-    {.section heading}
+   {.section heading}
     <tr class='{htmlClass}'>
-    {.end}
+   {.end}
     {.section entry}
-      <td class='etitle' onclick='javascript:toggle_editor("{id|html}", event)'><a href='javascript:toggle_editor("{id|html}", event)'>{title|html}</a></td>
+      <td class='etitle' onclick='javascript:toggle_editor("{Id|html}", event)'><a href='javascript:toggle_editor("{Id|html}", event)'>{Title|html}</a></td>
 
       <td class='epr'>
-        <input type='button' class='prioritybutton priorityclass_{priority|priority}' id='epr_{id|html}' value='{priority|priority}' onclick='javascript:change_priority("{id|html}", event)'/>
+        <input type='button' class='prioritybutton priorityclass_{Priority|priority}' id='epr_{Id|html}' value='{Priority|priority}' onclick='javascript:change_priority("{Id|html}", event)'/>
       </td>
+    {.end}
 
-      <td class='etime'>{etime}</td>
+    <td class='etime'>{etime}</td>
 
-      <td class='ecats'>{ecats}</td>
+    <td class='ecats'>{ecats}</td>
 
-      {.repeated section cols}
+    {.repeated section cols}
       <td class='ecol'>{@|html}</td>
-      {.end}
-   {.end}
+    {.end}
    {.section heading}
    </tr>
    {.end}
@@ -192,7 +192,7 @@ var EntryListEntryEditorHTML ExecutableTemplate = MakeExecutableTemplate(`
     {.end}
     {.section entry}
       <td colspan=4>
-        <form id='ediv_{id|html}'>
+        <form id='ediv_{Id|html}'>
           <input name='edtitle' type='text' disabled='disabled'/><br>
           <textarea name='edtext' disabled='disabled' rows=20>
           </textarea>
@@ -202,15 +202,15 @@ var EntryListEntryEditorHTML ExecutableTemplate = MakeExecutableTemplate(`
 		  <input name='edid' type='hidden'/>
 		  <input name='edprio' type='hidden'/>
 
-		  <p>When: <input type='text' id='edat_{id|html}' name='edat' size=10 disabled='disabled'/>
-          <script>calendar.set("edat_{id|html}")</script>
+		  <p>When: <input type='text' id='edat_{Id|html}' name='edat' size=10 disabled='disabled'/>
+          <script>calendar.set("edat_{Id|html}")</script>
 		  &nbsp; Sort by: <input type='text' name='edsort' size=10 disabled='disabled'/>
-          &nbsp; ID: {id|html}
-          &nbsp; Timestamp: <img id='loading_{id|html}' style='display: none' src='loading.gif'/> <span id='ts_{id|html}'>—</span></p>
+          &nbsp; ID: {Id|html}
+          &nbsp; Timestamp: <img id='loading_{Id|html}' style='display: none' src='loading.gif'/> <span id='ts_{Id|html}'>—</span></p>
 
-          <p><input type='button' style='float: right' value='remove' onclick='javascript:remove_entry("{id|html}", event)'/>
-          <input type='button' name='savebtn' value='save' onclick='javascript:save_editor_by_id("{id|html}", event)' disabled='disabled'/>
-          <input type='button' value='reload' onclick='javascript:fill_editor("{id|html}")'/></p>
+          <p><input type='button' style='float: right' value='remove' onclick='javascript:remove_entry("{Id|html}", event)'/>
+          <input type='button' name='savebtn' value='save' onclick='javascript:save_editor_by_id("{Id|html}", event)' disabled='disabled'/>
+          <input type='button' value='reload' onclick='javascript:fill_editor("{Id|html}")'/></p>
         </form>
       </td>
     {.end}
@@ -281,22 +281,22 @@ var StatHeaderHTML ExecutableTemplate = MakeExecutableTemplate(`
 var StatEntryHTML ExecutableTemplate = MakeExecutableTemplate(`
   <tr class='{htmlClass}'>
     {.section entry}
-      {.section link}
-        <td class='stat_tag'><a href='/list?q={link|url}'>{name|html}</a></td>
+      {.section Link}
+        <td class='stat_tag'><a href='/list?q={Link|url}'>{Name|html}</a></td>
       {.or}
-        <td class='stat_tag'>{name|html}</td>
+        <td class='stat_tag'>{Name|html}</td>
       {.end}
       
-    <td class='stat_total'>{total|html}</td>
+    <td class='stat_total'>{Total|html}</td>
 
-    <td class='stat_now'>{now|html}</td>
-    <td class='stat_later'>{later|html}</td>
-    <td class='stat_done'>{done|html}</td>
+    <td class='stat_now'>{Now|html}</td>
+    <td class='stat_later'>{Later|html}</td>
+    <td class='stat_done'>{Done|html}</td>
 
-    <td class='stat_timed'>{timed|html}</td>
+    <td class='stat_timed'>{Timed|html}</td>
 
-    <td class='stat_notes'>{notes|html}</td>
-    <td class='stat_sticky'>{sticky|html}</td>
+    <td class='stat_notes'>{Notes|html}</td>
+    <td class='stat_sticky'>{Sticky|html}</td>
     {.end}
   </tr>
 `)

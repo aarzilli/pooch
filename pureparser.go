@@ -308,9 +308,9 @@ LOOP: for {
 var startMultilineRE *regexp.Regexp = regexp.MustCompile("^[ \t\n\r]*{$")
 var numberRE *regexp.Regexp = regexp.MustCompile("^[0-9.]+$")
 
-func isNumber(tk string) (n float, ok bool) {
+func isNumber(tk string) (n float64, ok bool) {
 	if !numberRE.MatchString(tk) { return -1, false }
-	n, err := strconv.Atof(tk)
+	n, err := strconv.Atof64(tk)
 	if err != nil { return -1, false }
 	return n, true
 }
