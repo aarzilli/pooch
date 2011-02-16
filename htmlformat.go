@@ -304,14 +304,14 @@ var StatEntryHTML ExecutableTemplate = MakeExecutableTemplate(`
 var ExplainEntryHTML ExecutableTemplate = MakeExecutableTemplate(`
   <tr class='{htmlClass}'>
     {.section explain}
-    <td>{addr|html}</td>
-    <td>{opcode|html}</td>
-    <td>{p1|html}</td>
-    <td>{p2|html}</td>
-    <td>{p3|html}</td>
-    <td>{p4|html}</td>
-    <td>{p5|html}</td>
-    <td>{comment|html}</td>
+    <td>{Addr|html}</td>
+    <td>{Opcode|html}</td>
+    <td>{P1|html}</td>
+    <td>{P2|html}</td>
+    <td>{P3|html}</td>
+    <td>{P4|html}</td>
+    <td>{P5|html}</td>
+    <td>{Comment|html}</td>
     {.end}
   </tr>
 `)

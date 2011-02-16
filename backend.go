@@ -421,10 +421,10 @@ func (tl *Tasklist) RetrieveErrors() []*ErrorEntry {
 }
 
 type ExplainEntry struct {
-	addr string
-	opcode string
-	p1, p2, p3, p4, p5 string
-	comment string
+	Addr string
+	Opcode string
+	P1, P2, P3, P4, P5 string
+	Comment string
 }
 
 func (tl *Tasklist) ExplainRetrieve(theselect string) []*ExplainEntry {
@@ -436,9 +436,9 @@ func (tl *Tasklist) ExplainRetrieve(theselect string) []*ExplainEntry {
 	r := make([]*ExplainEntry, 0)
 	for stmt.Next() {
 		ee := &ExplainEntry{}
-		must(stmt.Scan(&(ee.addr), &(ee.opcode),
-			&(ee.p1), &(ee.p2), &(ee.p3), &(ee.p4), &(ee.p5),
-			&(ee.comment)))
+		must(stmt.Scan(&(ee.Addr), &(ee.Opcode),
+			&(ee.P1), &(ee.P2), &(ee.P3), &(ee.P4), &(ee.P5),
+			&(ee.Comment)))
 		r = append(r, ee)
 	}
 
