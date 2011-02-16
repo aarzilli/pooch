@@ -256,7 +256,11 @@ func (e *Entry) ColString() string {
 	var r vector.StringVector
 
 	for k, v := range e.Columns() {
-		r.Push(k + ": " + v)
+		if strings.IndexAny(v, "\r\n") != -1 {
+			r.Push(k + ": {\n" + v + "}")
+		} else {
+			r.Push(k + ": " + v)
+		}
 	}
 
 	return strings.Join(([]string)(r), "\n") + "\n"
