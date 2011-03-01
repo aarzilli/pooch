@@ -156,8 +156,10 @@ func AddCookies(c http.ResponseWriter, cookies map[string]string) {
 }
 
 func GetCookies(c *http.Request) map[string]string {
-	cookies := c.Header["Cookie"]
-	cookiev := strings.Split(cookies, "=", 2)
+	cookieses := c.Header["Cookie"]
+	if len(cookieses) <= 0 { return make(map[string]string) }
+	
+	cookiev := strings.Split(cookieses[0], "=", 2)
 	
 	r := make(map[string]string)
 	if len(cookiev) > 1 {

@@ -33,7 +33,7 @@ type ExecutableTemplate func(interface{}, io.Writer)
 
 func WrapTemplate(t *template.Template) ExecutableTemplate {
 	return func(data interface{}, wr io.Writer) {
-		err := t.Execute(data, wr)
+		err := t.Execute(wr, data)
 		if err != nil {
 			panic(fmt.Sprintf("Error while formatting: %s\n", err))
 		}
