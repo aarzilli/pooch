@@ -85,17 +85,25 @@ func StaticInMemoryServer(c http.ResponseWriter, req *http.Request) {
 	default:
 		ct = "text/html; charset=utf-8"
 	}
+
+	Logf(ERROR, "Checkpoint 1\n")
 	
 	if req.URL.Path == "/" {
 		http.Redirect(c, req, "/list", 301)
 	} else if signature := SUMS[req.URL.Path[1:]]; signature == "" {
+		Logf(ERROR, "404 Not found\n")
 		io.WriteString(c, "404, Not found")
-	} else if len(req.Header["If-None-Match"]) > 0 {
-		if ifNoneMatch := StripQuotes(req.Header["If-None-Match"][0]); ifNoneMatch == signature {
-			Logf(DEBUG, "Page not modified, replying")
-			c.WriteHeader(http.StatusNotModified)
-			return
+	} else {
+		Logf(ERROR, "Serving")
+		if len(req.Header["If-None-Match"]) > 0 {
+			if ifNoneMatch := StripQuotes(req.Header["If-None-Match"][0]); ifNoneMatch == signature {
+				Logf(DEBUG, "Page not modified, replying")
+				c.WriteHeader(http.StatusNotModified)
+				return
+			}
 		}
+
+		Logf(ERROR, "Sending response\n")
 
 		c.SetHeader("ETag", "\"" + signature + "\"")
 		c.SetHeader("Content-Type", ct)
