@@ -49,9 +49,9 @@ func WrapperServer(sub http.HandlerFunc) http.HandlerFunc {
 			}
 		}()
 		
-		if !strings.HasPrefix(c.RemoteAddr(), "127.0.0.1:") { Log(ERROR, "Rejected request from:", c.RemoteAddr()); return }
+		if !strings.HasPrefix(req.RemoteAddr, "127.0.0.1") { Log(ERROR, "Rejected request from:", req.RemoteAddr); return }
 		
-		Logf(INFO, "REQ\t%s\t%s\n", c.RemoteAddr(), req)
+		Logf(INFO, "REQ\t%s\t%s\n", req.RemoteAddr, req)
 		
 		if req.Method == "HEAD" {
 			//do nothing
@@ -59,7 +59,7 @@ func WrapperServer(sub http.HandlerFunc) http.HandlerFunc {
 			sub(c, req)
 		}
 		
-		Logf(INFO, "QER\t%s\t%s\n", c.RemoteAddr(), req)
+		Logf(INFO, "QER\t%s\t%s\n", req.RemoteAddr, req)
 	}
 }
 
@@ -105,8 +105,8 @@ func StaticInMemoryServer(c http.ResponseWriter, req *http.Request) {
 
 		Logf(ERROR, "Sending response\n")
 
-		c.SetHeader("ETag", "\"" + signature + "\"")
-		c.SetHeader("Content-Type", ct)
+		c.Header().Set("ETag", "\"" + signature + "\"")
+		c.Header().Set("Content-Type", ct)
 
 		io.WriteString(c, decodeStatic(req.URL.Path[1:]));
 	}
