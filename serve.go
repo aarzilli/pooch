@@ -86,8 +86,6 @@ func StaticInMemoryServer(c http.ResponseWriter, req *http.Request) {
 		ct = "text/html; charset=utf-8"
 	}
 
-	Logf(ERROR, "Checkpoint 1\n")
-	
 	if req.URL.Path == "/" {
 		http.Redirect(c, req, "/list", 301)
 	} else if signature := SUMS[req.URL.Path[1:]]; signature == "" {
@@ -102,8 +100,6 @@ func StaticInMemoryServer(c http.ResponseWriter, req *http.Request) {
 				return
 			}
 		}
-
-		Logf(ERROR, "Sending response\n")
 
 		c.Header().Set("ETag", "\"" + signature + "\"")
 		c.Header().Set("Content-Type", ct)
