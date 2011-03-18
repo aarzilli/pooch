@@ -382,7 +382,7 @@ var LoginHTML ExecutableTemplate = MakeExecutableTemplate(`
     <form method="post" action="/login">
       Username:&nbsp;<input type='text' name='user'/><br/>
       Password:&nbsp;<input type='password' name='password'/><br/>
-      <input type='submit' value='register'/>
+      <input type='submit' value='login'/>
     </form>
   </body>
 </html>

@@ -8,7 +8,6 @@ package main
 import (
 	"http"
 	"fmt"
-	"strings"
 	"gosqlite.googlecode.com/hg/sqlite"
 	"path"
 	"regexp"
@@ -152,18 +151,15 @@ var multiuserDb *MultiuserDb
 func AddCookies(c http.ResponseWriter, cookies map[string]string) {
 	for k, v := range cookies {
 		c.Header().Set("Set-Cookie", fmt.Sprintf("%s=%s; Max-Age=2592000; path=/; Secure", k, v))
+		//c.Header().Set("Set-Cookie", fmt.Sprintf("%s=%s; Max-Age=10; path=/", k, v))
 	}
 }
 
 func GetCookies(c *http.Request) map[string]string {
-	cookieses := c.Header["Cookie"]
-	if len(cookieses) <= 0 { return make(map[string]string) }
-	
-	cookiev := strings.Split(cookieses[0], "=", 2)
-	
 	r := make(map[string]string)
-	if len(cookiev) > 1 {
-		r[cookiev[0]] = cookiev[1]
+
+	for _, cookie := range c.Cookie {
+		r[cookie.Name] = cookie.Value
 	}
 	
 	return r
