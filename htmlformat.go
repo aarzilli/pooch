@@ -329,10 +329,12 @@ var CalendarHeaderHTML ExecutableTemplate = MakeExecutableTemplate(`
 <!DOCTYPE html>
 <html>
 <head>
+  <link rel='stylesheet' type='text/css' href='dot-luv/jquery-ui.custom.css'>
   <link type='text/css' rel='stylesheet' href='listcommon.css'>
   <link rel='stylesheet' type='text/css' href='fullcalendar.css'/>
   <link rel='stylesheet' type='text/css' href='cal.css'/>
   <link type='image/png' rel='icon' href='animals-dog.png'>
+  <link rel='stylesheet' type='text/css' href='{theme}'/>
   <script src='jquery.js'></script>
   <script src='jquery-ui-custom.js'></script>
   <script src='fullcalendar.js'></script>

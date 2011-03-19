@@ -12,7 +12,7 @@ GOFILES=\
 
 include $(GOROOT)/src/Make.cmd
 
-staticservedeps = static/*
+staticservedeps = static/* static/dot-luv/* static/dot-luv/images/*
 staticserve.go: $(staticservedeps)
 	perl make-staticserve.pl $(staticservedeps) > staticserve.go
 

@@ -15,11 +15,15 @@ print "var FILES map[string]string = map[string]string{\n";
 my %sums = ();
 
 for my $curarg (@ARGV) {
+    next if -d $curarg;
     open my $in, '<', $curarg or die "Couldn't read $curarg: $!";
     my $text = do { local $/; <$in> };
     close $in;
 
-    my $name = basename($curarg);
+    #my $name = basename($curarg);
+    my ($first_piece, $name) = split '/', $curarg, 2;
+
+    print STDERR "Adding $name\n";
 
     print "\t\"$name\": \"".encode_base64($text, "")."\",\n";
 

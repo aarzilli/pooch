@@ -363,7 +363,9 @@ func CalendarServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	query := req.FormValue("q")
 	_, _, trigger, isSavedSearch, _, err := tl.ParseSearch(query)
 
-	CalendarHeaderHTML(map[string]string{ "query": query }, c)
+	theme := tl.GetSetting("theme")
+
+	CalendarHeaderHTML(map[string]string{ "query": query, "theme": theme  }, c)
 	CommonHeaderHTML(headerInfo(tl, "/cal", query, trigger, isSavedSearch, true, err, nil), c)
 	CalendarHTML(map[string]string{ "query": query }, c)
 }
