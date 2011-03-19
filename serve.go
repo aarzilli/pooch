@@ -307,10 +307,11 @@ func ListServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 
 	theselect, code, trigger, isSavedSearch, isEmpty, perr := tl.ParseSearch(query)
 
+	/* Will not allow adding elements to an empty page
 	if isEmpty {
 		http.Redirect(c, req, "/stat", 301)
 		return
-	}
+	}*/
 	
 	v, rerr := tl.Retrieve(theselect, code)
 
