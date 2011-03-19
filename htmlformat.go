@@ -175,9 +175,10 @@ var EntryListEntryHTML ExecutableTemplate = MakeExecutableTemplate(`
       <td class='epr'>
         <input type='button' class='prioritybutton priorityclass_{Priority|priority}' id='epr_{Id|html}' value='{Priority|priority}' onclick='javascript:change_priority("{Id|html}", event)'/>
       </td>
-    {.end}
 
-    <td class='etime'>{etime}</td>
+      <td class='eloading'><img id='ploading_{Id|html}' style='visibility: hidden' src='loading.gif'/></td>
+
+      <td class='etime' id='etime_{Id|html}'>{.end}{etime}</td>
 
     <td class='ecats'>{ecats}</td>
 

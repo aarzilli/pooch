@@ -241,23 +241,76 @@ function toggle_editor(name, event) {
     }
 }
 
+function change_priority_to(name, priorityNum, priority) {
+    var epr = $('#epr_'+name);
+    epr.val(priority);
+    epr.attr("class", "prioritybutton priorityclass_" + priority);
+    
+    // changes the value saved inside the editor div so that saving the editor contents doesn't revert a changed priority
+    var ed = $("#ediv_"+name).get(0);
+    ed.elements["edprio"].value = priorityNum;
+}
+
+function guess_next_priority(name, special) {
+    var current = $('#epr_'+name).val();
+    var etime_initial_char = $('#etime_'+name).get(0).innerHTML[0];
+
+    if (etime_initial_char == "@") {
+        if (current == "NOW") {
+            change_priority_to(name, 5, "DONE")
+        } else if (current == "TIMED") {
+            change_priority_to(name, 5, "DONE");
+        } else {
+            change_priority_to(name, 6, "UNKW");
+        }
+    } else if (current == "NOTES") {
+        if (special) {
+            change_priority_to(name, 1, "NOW");
+        } else {
+            change_priority_to(name, 0, "STICKY");
+        }
+    } else if (current == "STICKY") {
+        if (special) {
+            change_priority_to(name, 1, "NOW");
+        } else {
+            change_priority_to(name, 3, "NOTES");
+        }
+    } else {
+        if (special) {
+            change_priority_to(name, 3, "NOTES");
+        } else {
+            if (current == "TIMED") {
+                change_priority_to(name, 2, "LATER");
+            } else if (current == "DONE") {
+                change_priority_to(name, 2, "LATER");
+            } else if (current == "LATER") {
+                change_priority_to(name, 1, "NOW");
+            } else if (current == "NOW") {
+                change_priority_to(name, 5, "DONE");
+            }
+        }
+    }
+
+    return "";
+}
+
 function change_priority(name, event) {
-  $.ajax({ url: "change-priority?id=" + encodeURIComponent(name) + "&special=" + event.shiftKey, success: function(data, textStatus, req) {
-	if (data.match(/^priority-change-to: /)) {
-	  priority = data.substr("priority-change-to: ".length);
-	  priorityNum = priority[0];
-	  priority = priority.substr(2);
-	  var epr = $('#epr_'+name);
-	  epr.val(priority);
-	  epr.attr("class", "prioritybutton priorityclass_" + priority);
-	  
-	  // changes the value saved inside the editor div so that saving the editor contents doesn't revert a changed priority
-	  var ed = $("#ediv_"+name).get(0);
-	  ed.elements["edprio"].value = priorityNum;
-	} else {
-	  alert(data);
-	}
-      }});
+    $("#ploading_"+name).get(0).style['visibility'] = 'visible';
+
+    guess_next_priority(name, event.shiftKey);
+    
+    $.ajax({ url: "change-priority?id=" + encodeURIComponent(name) + "&special=" + event.shiftKey, success:
+            function(data, textStatus, req) {
+                if (data.match(/^priority-change-to: /)) {
+                    priority = data.substr("priority-change-to: ".length);
+                    priorityNum = priority[0];
+                    priority = priority.substr(2);
+                    change_priority_to(name, priorityNum, priority);
+                    $("#ploading_"+name).get(0).style['visibility'] = 'hidden';
+                } else {
+                    alert(data);
+                }
+            }});
 }
 
 function savesearch_ex(name, query) {
