@@ -137,16 +137,16 @@ function add_row(id) {
 function add_entry(query) {
     var netext = $('#newentry').val();
     $.ajax({ url: "qadd?q=" + encodeURIComponent(query) + "&text=" + encodeURIComponent(netext), success: function(data, textStatus, req) {
-	  if (data.match(/^added: /)) {
-	    newid = data.substr("added: ".length);
-	    add_row(newid);
-	    
-	    $('#newentry').val("");
-        $("#addpop").get(0).style["display"] = "none";
-	  } else {
-	    alert("ADD FAILED: " + data);
-	  }
-	}});
+                if (data.match(/^added: /)) {
+                    newid = data.substr("added: ".length);
+                    add_row(newid);
+                    
+                    $('#newentry').val("");
+                    $("#addpop").get(0).style["display"] = "none";
+                } else {
+                    alert("ADD FAILED: " + data);
+                }
+            }});
     return false;
 }
 
