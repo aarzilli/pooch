@@ -119,6 +119,9 @@ var CommonHeaderHTML ExecutableTemplate = MakeExecutableTemplate(`
         </ul>
       </div>
     </div>
+    <div class='mainmenu_item'>
+       <a href='/stat'>[statistics]</a>
+    </div>
   </div>
 
   {.section parseError}
