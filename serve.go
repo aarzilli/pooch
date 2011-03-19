@@ -305,7 +305,7 @@ func ListServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	showCols := make(map[string]bool)
 	timezone := tl.GetTimezone()
 
-	theselect, code, trigger, isSavedSearch, isEmpty, perr := tl.ParseSearch(query)
+	theselect, code, trigger, isSavedSearch, _, perr := tl.ParseSearch(query)
 
 	/* Will not allow adding elements to an empty page
 	if isEmpty {
