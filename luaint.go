@@ -17,6 +17,7 @@ import (
 var CURSOR string = "cursor"
 var TASKLIST string = "tasklist"
 var SEARCHFUNCTION string = "searchfn"
+var LUA_EXECUTION_LIMIT = 1000
 
 type LuaIntError struct {
 	message string
@@ -597,6 +598,7 @@ func (tl *Tasklist) DoStringNoLock(code string, cursor *Entry) os.Error {
 	if cursor != nil { tl.SetEntryInLua(CURSOR, cursor) }
 	tl.SetTasklistInLua()
 	tl.ResetLuaFlags()
+	tl.luaState.SetExecutionLimit(LUA_EXECUTION_LIMIT)
 	
 	if !tl.luaState.DoString(code) {
 		errorMessage := tl.luaState.ToString(-1)
@@ -620,6 +622,7 @@ func (tl *Tasklist) CallLuaFunction(fname string, cursor *Entry) os.Error {
 	tl.SetEntryInLua(CURSOR, cursor)
 	tl.SetTasklistInLua()
 	tl.ResetLuaFlags()
+	tl.luaState.SetExecutionLimit(LUA_EXECUTION_LIMIT)
 
 	tl.luaState.CheckStack(1)
 	tl.luaState.GetGlobal(fname)
