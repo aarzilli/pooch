@@ -632,11 +632,35 @@ func (tl *Tasklist) CallLuaFunction(fname string, cursor *Entry) os.Error {
 	return nil
 }
 
+func NilGlobal(L *lua51.State, name string) {
+	L.PushNil()
+	L.SetGlobal(name)
+}
+
 func MakeLuaState() *lua51.State {
 	L := lua51.NewState()
-	L.OpenLibs()
-
 	L.CheckStack(1)
+	
+	//L.OpenLibs()
+	L.OpenBase()
+	L.OpenString()
+	L.OpenTable()
+	L.OpenMath()
+	NilGlobal(L, "collectgarbage")
+	NilGlobal(L, "dofile")
+	NilGlobal(L, "_G")
+	NilGlobal(L, "getfenv")
+	NilGlobal(L, "getmetatable")
+	NilGlobal(L, "load")
+	NilGlobal(L, "loadfile")
+	NilGlobal(L, "loadstring")
+	NilGlobal(L, "print")
+	NilGlobal(L, "rawequal")
+	NilGlobal(L, "rawget")
+	NilGlobal(L, "rawset")
+	NilGlobal(L, "setfenv")
+	NilGlobal(L, "setmetatable")
+	NilGlobal(L, "coroutine")
 
 	// cursor examination functions
 	
