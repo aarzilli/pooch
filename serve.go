@@ -198,11 +198,11 @@ func ErrorLogServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 func ExplainServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	css := tl.GetSetting("theme")
 
-	theselect, code, _, isSavedSearch, isEmpty, showCols, err := tl.ParseSearch(req.FormValue("q"))
+	theselect, code, _, isSavedSearch, isEmpty, showCols, options, err := tl.ParseSearch(req.FormValue("q"))
 
 	myexplain := ""
 
-	myexplain += fmt.Sprintf("Errors: %s\nSaved Search: %v\n\nEmpty: %v\n\nShow Cols: %v\n\nSQL:\n%s\n\nCODE:\n%s\n\nSQLITE OPCODES:\n", err, isSavedSearch, isEmpty, showCols, theselect, code)
+	myexplain += fmt.Sprintf("Errors: %s\nSaved Search: %v\n\nEmpty: %v\n\nShow Cols: %v\n\nOptions: %v\n\nSQL:\n%s\n\nCODE:\n%s\n\nSQLITE OPCODES:\n", err, isSavedSearch, isEmpty, showCols, options, theselect, code)
 	
 	ErrorLogHeaderHTML(map[string]string{ "name": "explanation", "theme": css, "code": myexplain }, c)
 	ExplainEntryHeaderHTML(nil, c)
@@ -239,7 +239,7 @@ func queryForTitle(query string) string {
 	return queryForTitle
 }
 
-func headerInfo(tl *Tasklist, pageName string, query string, trigger string, isSavedSearch bool, showOtherLink bool, parseError, retrieveError os.Error) map[string]interface{} {
+func headerInfo(tl *Tasklist, pageName string, query string, trigger string, isSavedSearch bool, showOtherLink bool, parseError, retrieveError os.Error, options map[string]string) map[string]interface{} {
 	css := tl.GetSetting("theme")
 	timezone := tl.GetTimezone()
 	removeSearch := ""; if isSavedSearch { removeSearch = "remove-search" }
@@ -263,7 +263,7 @@ func headerInfo(tl *Tasklist, pageName string, query string, trigger string, isS
 		}
 	}
 
-	return map[string]interface{}{
+	r := map[string]interface{}{
 		"pageName": pageName,
 		"query": query,
 		"queryForTitle": queryForTitle(query),
@@ -279,10 +279,24 @@ func headerInfo(tl *Tasklist, pageName string, query string, trigger string, isS
 		"subtags": subtags,
 		"toplevel": toplevel,
 	};
+
+	if options != nil {
+		if _, ok := options["hidetimecol"]; ok {
+			r["hide_etime"] = "do"
+		}
+		if _, ok := options["hideprioritycol"]; ok {
+			r["hide_epr"] = "do"
+		}
+		if _, ok := options["hidecatscol"]; ok {
+			r["hide_ecats"] = "do"
+		}
+	}
+
+	return r
 }
 
 func StatServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
-	headerInfo := headerInfo(tl, "/list", "", "", false, false, nil, nil)
+	headerInfo := headerInfo(tl, "/list", "", "", false, false, nil, nil, nil)
 	
 	ListHeaderHTML(headerInfo, c)
 	CommonHeaderHTML(headerInfo, c)
@@ -304,7 +318,7 @@ func ListServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	query := strings.Replace(req.FormValue("q"), "\r", "", -1)
 	timezone := tl.GetTimezone()
 
-	theselect, code, trigger, isSavedSearch, _, showCols, perr := tl.ParseSearch(query)
+	theselect, code, trigger, isSavedSearch, _, showCols, options, perr := tl.ParseSearch(query)
 
 	/* Will not allow adding elements to an empty page
 	if isEmpty {
@@ -314,7 +328,13 @@ func ListServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	
 	v, rerr := tl.Retrieve(theselect, code)
 
-	headerInfo := headerInfo(tl, "/list", query, trigger, isSavedSearch, true, perr, rerr)
+	prioritySize := 5
+
+	if _, ok := options["hidetimecol"]; ok { prioritySize-- }
+	if _, ok := options["hideprioritycol"]; ok { prioritySize-- }
+	if _, ok := options["hidecatscol"]; ok { prioritySize-- }
+
+	headerInfo := headerInfo(tl, "/list", query, trigger, isSavedSearch, true, perr, rerr, options)
 	
 	ListHeaderHTML(headerInfo, c)
 	CommonHeaderHTML(headerInfo, c)
@@ -323,7 +343,7 @@ func ListServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	var curp Priority = INVALID
 	for idx, entry := range v {
 		if curp != entry.Priority() {
-			EntryListPriorityChangeHTML(map[string]interface{}{ "entry": entry, "colNames": showCols }, c)
+			EntryListPriorityChangeHTML(map[string]interface{}{ "entry": entry, "colNames": showCols, "PrioritySize": prioritySize }, c)
 			curp = entry.Priority()
 		}
 
@@ -355,12 +375,12 @@ func ListServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 
 func CalendarServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	query := req.FormValue("q")
-	_, _, trigger, isSavedSearch, _, _, err := tl.ParseSearch(query)
+	_, _, trigger, isSavedSearch, _, _, _, err := tl.ParseSearch(query)
 
 	theme := tl.GetSetting("theme")
 
 	CalendarHeaderHTML(map[string]string{ "query": query, "theme": theme  }, c)
-	CommonHeaderHTML(headerInfo(tl, "/cal", query, trigger, isSavedSearch, true, err, nil), c)
+	CommonHeaderHTML(headerInfo(tl, "/cal", query, trigger, isSavedSearch, true, err, nil, nil), c)
 	CalendarHTML(map[string]string{ "query": query }, c)
 }
 

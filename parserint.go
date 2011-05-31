@@ -330,12 +330,12 @@ func (pr *ParseResult) IsEmpty() bool {
 	return true
 }
 
-func (tl *Tasklist) ParseSearch(queryText string) (string, string, string, bool, bool, []string, os.Error) {
+func (tl *Tasklist) ParseSearch(queryText string) (string, string, string, bool, bool, []string, map[string]string, os.Error) {
 	pr := tl.ParseEx(queryText)
 	isEmpty := pr.IsEmpty()
 	theselect, err := pr.IntoSelect(tl)
 	trigger := pr.IntoTrigger()
-	return theselect, pr.command, trigger, pr.savedSearch != "", isEmpty, pr.showCols, err
+	return theselect, pr.command, trigger, pr.savedSearch != "", isEmpty, pr.showCols, pr.options, err
 }
 
 func (tl *Tasklist) ExtendedAddParse() *Entry {

@@ -138,7 +138,7 @@ func CmdSearch(args []string) {
 		timezone := tl.GetTimezone()
 		tsv := flags["t"]; js := flags["j"]
 
-		theselect, command, _, _, _, showCols, perr := tl.ParseSearch(input)
+		theselect, command, _, _, _, showCols, _, perr := tl.ParseSearch(input)
 		must(perr)
 		
 		Logf(DEBUG, "Search statement\n%s\n", theselect)

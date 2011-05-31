@@ -149,6 +149,23 @@ var ListHeaderHTML ExecutableTemplate = MakeExecutableTemplate(`
   <script src='/jquery.js'></script>
   <script src='/int.js'></script>
   <script src='/calendar.js'></script>
+  <style>
+     {.section hide_etime}
+        .etime {.meta-left}
+            display: none;
+        {.meta-right}
+     {.end}
+     {.section hide_epr}
+        .epr {.meta-left}
+            display: none;
+        {.meta-right}
+     {.end}
+     {.section hide_ecats}
+        .ecats {.meta-left}
+            display: none;
+        {.meta-right}
+     {.end}
+  </style>
 </head>
 <body onkeypress='keytable(event)'>
 `)
@@ -156,7 +173,7 @@ var ListHeaderHTML ExecutableTemplate = MakeExecutableTemplate(`
 var EntryListPriorityChangeHTML ExecutableTemplate = MakeExecutableTemplate(`
     <tr>
       {.section entry}
-      <td class='prchange' colspan='5'>{Priority|priority}</td>
+      <td class='prchange' colspan='{PrioritySize|html}'>{Priority|priority}</td>
       {.end}
       {.repeated section colNames}
       <td class='colname'>{@|html}</td>
