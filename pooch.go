@@ -281,7 +281,7 @@ func CmdMultiServe(args []string) {
 	CheckArgs(args, map[string]bool{}, 3, 3, "multiserve")
 	_, converr := strconv.Atoi(args[0])
 	CheckCondition(converr != nil, "Invalid port number %s: %s\n", args[0], converr)
-	logfile, err := os.Open(args[2], os.O_WRONLY|os.O_CREAT|os.O_APPEND, 0666)
+	logfile, err := os.OpenFile(args[2], os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
 	CheckCondition(err != nil, "Couldn't open logfile %s: %s\n", logfile, err)
 	defer logfile.Close()
 	
