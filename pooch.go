@@ -138,9 +138,7 @@ func CmdSearch(args []string) {
 		timezone := tl.GetTimezone()
 		tsv := flags["t"]; js := flags["j"]
 
-		showCols := make(map[string]bool)
-
-		theselect, command, _, _, _, perr := tl.ParseSearch(input)
+		theselect, command, _, _, _, showCols, perr := tl.ParseSearch(input)
 		must(perr)
 		
 		Logf(DEBUG, "Search statement\n%s\n", theselect)
@@ -187,10 +185,10 @@ func HelpRemove() {
 	fmt.Fprintf(os.Stderr, "\tRemoves specified entry from <db>\n")
 }
 
-func GetSizesForList(v []*Entry, showCols map[string]bool) (id_size, title_size, cat_size int, colSizes map[string]int) {
+func GetSizesForList(v []*Entry, showCols []string) (id_size, title_size, cat_size int, colSizes map[string]int) {
 	title_size, id_size, cat_size = 0, 0, 0
 	colSizes = make(map[string]int)
-	for showCol, _ := range showCols {
+	for _, showCol := range showCols {
 		colSizes[showCol] = len(showCol)
 	}
 	for _, e := range v {
@@ -198,7 +196,7 @@ func GetSizesForList(v []*Entry, showCols map[string]bool) (id_size, title_size,
 		if len(e.Id())+1 > id_size { id_size = len(e.Id())+1 }
 		if len(e.CatString())+1 > cat_size { cat_size = len(e.CatString())+1 }
 
-		for showCol, _ := range showCols {
+		for _, showCol := range showCols {
 			if len(e.Columns()[showCol])+1 > colSizes[showCol] { colSizes[showCol] = len(e.Columns()[showCol])+1 }
 		}
 	}
@@ -208,7 +206,7 @@ func GetSizesForList(v []*Entry, showCols map[string]bool) (id_size, title_size,
 
 var LINE_SIZE int = 80
 
-func CmdListExTsv(v []*Entry, showCols map[string]bool, timezone int) {
+func CmdListExTsv(v []*Entry, showCols []string, timezone int) {
 	fmt.Printf("\t\t")
 	for showCol, _ := range showCols {
 		fmt.Printf("\t%s", showCol)
@@ -218,21 +216,21 @@ func CmdListExTsv(v []*Entry, showCols map[string]bool, timezone int) {
 	for _, entry := range v {
 		timeString := TimeString(entry.TriggerAt(), entry.Sort(), timezone)
 		fmt.Printf("%s\t%s\t%s", entry.Id(), entry.Title(), timeString)
-		for showCol, _ := range showCols {
+		for _, showCol := range showCols {
 			fmt.Printf("\t%s", entry.Columns()[showCol])
 		}
 		fmt.Printf("\n")
 	}
 }
 
-func CmdListEx(v []*Entry, showCols map[string]bool, timezone int) {
+func CmdListEx(v []*Entry, showCols []string, timezone int) {
 	id_size, title_size, cat_size, col_sizes := GetSizesForList(v, showCols)
 
 	var curp Priority = INVALID
 
 	fmt.Printf("%s %s %s %s", RepeatString(" ", id_size), RepeatString(" ", title_size), RepeatString(" ", 19), RepeatString(" ", cat_size))
-	for showCol, colSize := range col_sizes {
-		fmt.Printf(" %s%s", showCol, RepeatString(" ", colSize - len(showCol)))
+	for _, colName := range showCols {
+		fmt.Printf(" %s%s", colName, RepeatString(" ", col_sizes[colName] - len(colName)))
 	}
 	fmt.Printf("\n")
 	
@@ -250,8 +248,8 @@ func CmdListEx(v []*Entry, showCols map[string]bool, timezone int) {
 			timeString, RepeatString(" ", 19 - len(timeString)),
 			entry.CatString(), RepeatString(" ", cat_size - len(entry.CatString())))
 
-		for showCol, colSize := range col_sizes {
-			fmt.Printf(" %s%s", entry.Columns()[showCol], RepeatString(" ", colSize - len(entry.Columns()[showCol])))
+		for _, colName := range showCols {
+			fmt.Printf(" %s%s", entry.Columns()[colName], RepeatString(" ", col_sizes[colName] - len(entry.Columns()[colName])))
 		}
 
 		fmt.Printf("\n")

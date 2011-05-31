@@ -51,6 +51,8 @@ type ParseResult struct {
 	extra string // text after the #+ separator
 	command string // text after the #! separator
 
+	showCols []string
+
 	timezone int
 }
 
@@ -69,13 +71,12 @@ func MakeParseResult() *ParseResult {
 
 type Parser struct {
 	tkzer *Tokenizer
-	showCols []string
 	timezone int
 	result *ParseResult
 }
 
 func NewParser(tkzer *Tokenizer, timezone int) *Parser {
-	p := &Parser{tkzer, make([]string, 0), timezone, MakeParseResult()}
+	p := &Parser{tkzer, timezone, MakeParseResult()}
 	p.result.timezone = timezone
 	tkzer.parser = p
 	return p
@@ -183,7 +184,7 @@ func (p *Parser) ParseColumnRequest() bool {
 		if !isTagChar(([]int(colName))[0]) { return false }
 
 		if p.tkzer.Next() != "?" { return false }
-		p.showCols = append(p.showCols, colName)
+		p.result.showCols = append(p.result.showCols, colName)
 		
 		return true
 	})
@@ -254,7 +255,7 @@ func (p *Parser) ParseSimpleExpression(r *SimpleExpr) bool {
 		r.name = tagName
 		
 		if isShowCols {
-			p.showCols = append(p.showCols, tagName)
+			p.result.showCols = append(p.result.showCols, tagName)
 		}
 
 		return true

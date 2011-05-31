@@ -198,11 +198,11 @@ func ErrorLogServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 func ExplainServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	css := tl.GetSetting("theme")
 
-	theselect, code, _, isSavedSearch, isEmpty, err := tl.ParseSearch(req.FormValue("q"))
+	theselect, code, _, isSavedSearch, isEmpty, showCols, err := tl.ParseSearch(req.FormValue("q"))
 
 	myexplain := ""
 
-	myexplain += fmt.Sprintf("Errors: %s\nSaved Search: %v\n\nEmpty: %v\n\nSQL:\n%s\n\nCODE:\n%s\n\nSQLITE OPCODES:\n", err, isSavedSearch, isEmpty, theselect, code)
+	myexplain += fmt.Sprintf("Errors: %s\nSaved Search: %v\n\nEmpty: %v\n\nShow Cols: %v\n\nSQL:\n%s\n\nCODE:\n%s\n\nSQLITE OPCODES:\n", err, isSavedSearch, isEmpty, showCols, theselect, code)
 	
 	ErrorLogHeaderHTML(map[string]string{ "name": "explanation", "theme": css, "code": myexplain }, c)
 	ExplainEntryHeaderHTML(nil, c)
@@ -302,10 +302,9 @@ func StatServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 
 func ListServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	query := strings.Replace(req.FormValue("q"), "\r", "", -1)
-	showCols := make(map[string]bool)
 	timezone := tl.GetTimezone()
 
-	theselect, code, trigger, isSavedSearch, _, perr := tl.ParseSearch(query)
+	theselect, code, trigger, isSavedSearch, _, showCols, perr := tl.ParseSearch(query)
 
 	/* Will not allow adding elements to an empty page
 	if isEmpty {
@@ -314,11 +313,6 @@ func ListServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	}*/
 	
 	v, rerr := tl.Retrieve(theselect, code)
-
-	colNames := []string{}
-	for colName, _ := range showCols {
-		colNames = append(colNames, colName)
-	}
 
 	headerInfo := headerInfo(tl, "/list", query, trigger, isSavedSearch, true, perr, rerr)
 	
@@ -329,7 +323,7 @@ func ListServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	var curp Priority = INVALID
 	for idx, entry := range v {
 		if curp != entry.Priority() {
-			EntryListPriorityChangeHTML(map[string]interface{}{ "entry": entry, "colNames": colNames }, c)
+			EntryListPriorityChangeHTML(map[string]interface{}{ "entry": entry, "colNames": showCols }, c)
 			curp = entry.Priority()
 		}
 
@@ -339,10 +333,10 @@ func ListServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 		}
 
 		cols := []string{}
-		for colName,  _ := range showCols {
+		for _,  colName := range showCols {
 			cols = append(cols, entry.Columns()[colName])
-		}
-		
+		}		
+
 		entryEntry := map[string](interface{}){
 			"heading": entry.Id(),
 			"entry": entry,
@@ -361,7 +355,7 @@ func ListServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 
 func CalendarServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	query := req.FormValue("q")
-	_, _, trigger, isSavedSearch, _, err := tl.ParseSearch(query)
+	_, _, trigger, isSavedSearch, _, _, err := tl.ParseSearch(query)
 
 	theme := tl.GetSetting("theme")
 

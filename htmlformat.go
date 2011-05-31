@@ -156,7 +156,7 @@ var ListHeaderHTML ExecutableTemplate = MakeExecutableTemplate(`
 var EntryListPriorityChangeHTML ExecutableTemplate = MakeExecutableTemplate(`
     <tr>
       {.section entry}
-      <td class='prchange' colspan=4>{Priority|priority}</td>
+      <td class='prchange' colspan='5'>{Priority|priority}</td>
       {.end}
       {.repeated section colNames}
       <td class='colname'>{@|html}</td>
