@@ -150,6 +150,11 @@ var ListHeaderHTML ExecutableTemplate = MakeExecutableTemplate(`
   <script src='/int.js'></script>
   <script src='/calendar.js'></script>
   <style>
+     {.section hide_eid}
+        .eid {.meta-left}
+           display: none;
+        {.meta-right}
+     {.end}
      {.section hide_etime}
         .etime {.meta-left}
             display: none;
@@ -158,6 +163,11 @@ var ListHeaderHTML ExecutableTemplate = MakeExecutableTemplate(`
      {.section hide_epr}
         .epr {.meta-left}
             display: none;
+        {.meta-right}
+     {.end}
+     {.section hide_prchange}
+        .prchange {.meta-left}
+            visibility: hidden;
         {.meta-right}
      {.end}
      {.section hide_ecats}
@@ -187,6 +197,8 @@ var EntryListEntryHTML ExecutableTemplate = MakeExecutableTemplate(`
     <tr class='{htmlClass}'>
    {.end}
     {.section entry}
+      <td class='eid'>{Id|html}</td>
+
       <td class='etitle' onclick='javascript:toggle_editor("{Id|html}", event)'><a href='javascript:toggle_editor("{Id|html}", event)'>{Title|html}</a></td>
 
       <td class='epr'>

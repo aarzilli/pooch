@@ -290,6 +290,12 @@ func headerInfo(tl *Tasklist, pageName string, query string, trigger string, isS
 		if _, ok := options["hidecatscol"]; ok {
 			r["hide_ecats"] = "do"
 		}
+		if _, ok := options["showidcol"]; !ok {
+			r["hide_eid"] = "do"
+		}
+		if _, ok := options["hideprioritychange"]; ok {
+			r["hide_prchange"] = "do"
+		}
 	}
 
 	return r
@@ -333,6 +339,7 @@ func ListServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	if _, ok := options["hidetimecol"]; ok { prioritySize-- }
 	if _, ok := options["hideprioritycol"]; ok { prioritySize-- }
 	if _, ok := options["hidecatscol"]; ok { prioritySize-- }
+	if _, ok := options["showidcol"]; ok { prioritySize++ }
 
 	headerInfo := headerInfo(tl, "/list", query, trigger, isSavedSearch, true, perr, rerr, options)
 	
