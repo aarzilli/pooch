@@ -29,6 +29,7 @@ type Tasklist struct {
 	timestamp int64
 	ignoreColumn map[string]bool
 	subcolumns map[string][]string
+	executionLimitEnabled bool
 }
 
 var enabledCaching bool = true
@@ -96,8 +97,11 @@ func internalTasklistOpenOrCreate(filename string) *Tasklist {
 	MustExec(conn, "INSERT OR IGNORE INTO settings(name, value) VALUES (\"setup\", \"\");")
 
 	MustExec(conn, "CREATE TABLE IF NOT EXISTS errorlog(timestamp TEXT, message TEXT);")
+
+	MustExec(conn, "CREATE TABLE IF NOT EXISTS private_settings(name TEXT UNIQUE, value TEXT);")
+	MustExec(conn, "INSERT OR IGNORE INTO private_settings(name, value) VALUES (\"enable_lua_execution_limit\", \"1\")")
 	
-	tasklist := &Tasklist{filename, conn, MakeLuaState(), &LuaFlags{}, &sync.Mutex{}, 1, time.Seconds(), make(map[string]bool), make(map[string][]string, 0)}
+	tasklist := &Tasklist{filename, conn, MakeLuaState(), &LuaFlags{}, &sync.Mutex{}, 1, time.Seconds(), make(map[string]bool), make(map[string][]string, 0), true}
 	tasklist.RunTimedTriggers()
 	tasklist.MustExec("PRAGMA foreign_keys = ON;")
 	tasklist.MustExec("PRAGMA synchronous = OFF;") // makes inserts many many times faster
@@ -107,6 +111,11 @@ func internalTasklistOpenOrCreate(filename string) *Tasklist {
 	if setupCode != "" {
 		tasklist.DoString(setupCode, nil) // error is ignored, it will be logged
 	}
+
+	if tasklist.GetPrivateSetting("enable_lua_execution_limit") == "0" {
+		Logf(INFO, "Tasklist '%s' runs without lua execution limits", filename)
+		tasklist.executionLimitEnabled = false
+	} 
 
 	return tasklist
 }
@@ -475,6 +484,19 @@ func (tl *Tasklist) GetSavedSearch(name string) string {
 
 func (tl *Tasklist) GetSetting(name string) string {
 	stmt, serr := tl.conn.Prepare("SELECT value FROM settings WHERE name = ?;")
+	must(serr)
+	defer stmt.Finalize()
+	must(stmt.Exec(name))
+
+	if !stmt.Next() { return "" }
+
+	var value string
+	must(stmt.Scan(&value))
+	return value
+}
+
+func (tl *Tasklist) GetPrivateSetting(name string) string {
+	stmt, serr := tl.conn.Prepare("SELECT value FROM private_settings WHERE name = ?;")
 	must(serr)
 	defer stmt.Finalize()
 	must(stmt.Exec(name))

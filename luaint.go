@@ -598,7 +598,9 @@ func (tl *Tasklist) DoStringNoLock(code string, cursor *Entry) os.Error {
 	if cursor != nil { tl.SetEntryInLua(CURSOR, cursor) }
 	tl.SetTasklistInLua()
 	tl.ResetLuaFlags()
-	tl.luaState.SetExecutionLimit(LUA_EXECUTION_LIMIT)
+	if tl.executionLimitEnabled {
+		tl.luaState.SetExecutionLimit(LUA_EXECUTION_LIMIT)
+	}
 	
 	if !tl.luaState.DoString(code) {
 		errorMessage := tl.luaState.ToString(-1)
