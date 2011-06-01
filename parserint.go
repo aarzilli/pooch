@@ -22,9 +22,13 @@ func (tl *Tasklist) ParseEx(text string) *ParseResult {
 	return p.ParseEx()
 }
 
-func SortFromTriggerAt(triggerAt *time.Time) string {
+func SortFromTriggerAt(triggerAt *time.Time, defaultWithTime bool) string {
 	if triggerAt != nil {
 		return triggerAt.Format("2006-01-02")
+	}
+
+	if defaultWithTime {
+		return time.UTC().Format("2006-01-02_15:04:05")
 	}
 	
 	return time.UTC().Format("2006-01-02")
@@ -97,7 +101,7 @@ func (tl *Tasklist) ParseNew(entryText, queryText string) *Entry {
 
 	if id == "" { id = tl.MakeRandomId() }
 	if !catFound { cols["uncat"] = "" }
-	sort := SortFromTriggerAt(triggerAt)
+	sort := SortFromTriggerAt(triggerAt, tl.GetSetting("defaultsorttime") == "1")
 
 	if triggerAt != nil { priority = TIMED }
 

@@ -138,7 +138,7 @@ func DemarshalEntry(umentry *UnmarshalEntry, timezone int) *Entry {
 	must(err)
 	
 	sort := umentry.Sort
-	if sort == "" { sort = SortFromTriggerAt(triggerAt) }
+	if sort == "" { sort = SortFromTriggerAt(triggerAt, false) }
 
 	cols, foundcat := ParseCols(umentry.Cols, timezone)
 

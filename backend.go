@@ -95,6 +95,7 @@ func internalTasklistOpenOrCreate(filename string) *Tasklist {
 	MustExec(conn, "INSERT OR IGNORE INTO settings(name, value) VALUES (\"timezone\", \"0\");")
 	MustExec(conn, "INSERT OR IGNORE INTO settings(name, value) VALUES (\"theme\", \"tlist.css\");")
 	MustExec(conn, "INSERT OR IGNORE INTO settings(name, value) VALUES (\"setup\", \"\");")
+	MustExec(conn, "INSERT OR IGNORE INTO settings(name, value) VALUES (\"defaultsorttime\", \"0\");")
 
 	MustExec(conn, "CREATE TABLE IF NOT EXISTS errorlog(timestamp TEXT, message TEXT);")
 

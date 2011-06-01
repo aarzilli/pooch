@@ -397,7 +397,7 @@ func ParseTsvFormat(in string, tl *Tasklist, timezone int) *Entry {
 		var dterr os.Error
 		triggerAt, dterr = ParseDateTime(fields[3], timezone)
 		must(dterr)
-		sort = SortFromTriggerAt(triggerAt)
+		sort = SortFromTriggerAt(triggerAt, tl.GetSetting("defaultsorttime") == "1")
 	} else {
 		sort = fields[3]
 	}
