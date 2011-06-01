@@ -548,10 +548,11 @@ func (tl *Tasklist) GetTags() []string {
 }
 
 func (tl *Tasklist) SetSetting(name, value string) {
-	stmt, serr := tl.conn.Prepare("INSERT OR REPLACE INTO settings(name, value) VALUES (?, ?);")
-	must(serr)
-	defer stmt.Finalize()
-	must(stmt.Exec(name, value))
+	tl.MustExec("INSERT OR REPLACE INTO settings(name, value) VALUES (?, ?);", name, value)
+}
+
+func (tl *Tasklist) SetPrivateSetting(name, value string) {
+	tl.MustExec("INSERT OR REPLACE INTO private_settings(name, value) VALUES (?, ?);", name, value)
 }
 
 func (tl *Tasklist) SetSettings(settings map[string]string) {
