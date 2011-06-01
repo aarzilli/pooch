@@ -35,6 +35,8 @@ var commands map[string](func (args []string)) = map[string](func (args []string
 	"errlog": CmdErrorLog,
 	
 	"multiserve": CmdMultiServe,
+
+	"setopt": CmdSetOption,
 }
 
 var help_commands map[string](func ()) = map[string](func ()){
@@ -53,6 +55,7 @@ var help_commands map[string](func ()) = map[string](func ()){
 	"errlog": HelpErrorLog,
 	"compat": CompatHelp,
 	"multiserve": HelpMultiServe,
+	"setopt": HelpSetOption,
 }
 
 func CheckCondition(cond bool, format string, a ...interface{}) {
@@ -381,6 +384,32 @@ func HelpGet() {
 	fmt.Fprintf(os.Stderr, "\tPrints the entry associated with <id> inside <db>\n")
 }
 
+func CmdSetOption(args []string) {
+	CheckArgsOpenDb(args, map[string]bool{}, 2, 2, "setopt", func(tl *Tasklist, args []string, flags map[string]bool) {
+		name := args[0]
+		value := args[1]
+
+		private := false
+
+		if strings.Index(name, "private:") == 0 {
+			name = name[len("private:"):len(name)]
+			private = true
+		}
+
+		Logf(INFO, "Setting %s to %s", name, value);
+		
+		if private {
+			tl.SetPrivateSetting(name, value)
+		} else {
+			tl.SetSetting(name, value)
+		}
+	})
+}
+
+func HelpSetOption() {
+	fmt.Fprintf(os.Stderr, "Usage: setopt <name> <value>\n\n")
+	fmt.Fprintf(os.Stderr, "\tSets <name> option to <value>. Prefix <name> with 'private:' if you want to change a private option")
+}
 
 func CmdHelp(args []string) {
 	CheckArgs(args, map[string]bool{}, 0, 1, "help")
@@ -421,6 +450,8 @@ func main() {
 		w.WriteString("\tremove\tRemove entry\n")
 		w.WriteString("\trename\tRename entry\n")
 		w.WriteString("\trentag\tRename tags\n")
+		w.WriteString("\n")
+		w.WriteString("\tsetopt\tSets options\n")
 		w.WriteString("\n")
 		w.WriteString("\tserve\tStart http server\n")
 		w.WriteString("\tmultiserve\tStart multiuser http server\n")
