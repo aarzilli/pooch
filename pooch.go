@@ -37,6 +37,7 @@ var commands map[string](func (args []string)) = map[string](func (args []string
 	"multiserve": CmdMultiServe,
 
 	"setopt": CmdSetOption,
+	"getopt": CmdGetOption,
 }
 
 var help_commands map[string](func ()) = map[string](func ()){
@@ -55,7 +56,9 @@ var help_commands map[string](func ()) = map[string](func ()){
 	"errlog": HelpErrorLog,
 	"compat": CompatHelp,
 	"multiserve": HelpMultiServe,
+	
 	"setopt": HelpSetOption,
+	"getopt": HelpGetOption,
 }
 
 func CheckCondition(cond bool, format string, a ...interface{}) {
@@ -108,7 +111,7 @@ func CmdQuickAdd(args []string) {
 
 func HelpQuickAdd() {
 	fmt.Fprintf(os.Stderr, "Usage: add <quickadd string>\n\n")
-	fmt.Fprintf(os.Stderr, "\tInterprets the quickadd string and adds it to the db. Using a single - as the quickadd string makes the program read the quickadd string from stdin, in a special format that allows easier setting of columns")
+	fmt.Fprintf(os.Stderr, "\tInterprets the quickadd string and adds it to the db. Using a single - as the quickadd string makes the program read the quickadd string from stdin, in a special format that allows easier setting of columns\n")
 }
 
 func CmdQuickUpdate(args []string) {
@@ -396,7 +399,11 @@ func CmdSetOption(args []string) {
 			private = true
 		}
 
-		Logf(INFO, "Setting %s to %s", name, value);
+		if value == "-" {
+			buf, err := ioutil.ReadAll(os.Stdin)
+			must(err)
+			value = string(buf)
+		}
 		
 		if private {
 			tl.SetPrivateSetting(name, value)
@@ -408,7 +415,33 @@ func CmdSetOption(args []string) {
 
 func HelpSetOption() {
 	fmt.Fprintf(os.Stderr, "Usage: setopt <name> <value>\n\n")
-	fmt.Fprintf(os.Stderr, "\tSets <name> option to <value>. Prefix <name> with 'private:' if you want to change a private option")
+	fmt.Fprintf(os.Stderr, "\tSets <name> option to <value>. Prefix <name> with 'private:' if you want to change a private option\n")
+	fmt.Fprintf(os.Stderr, "If <value> is '-' will read from standard input.\n")
+}
+
+func CmdGetOption(args []string) {
+	CheckArgsOpenDb(args, map[string]bool{}, 1, 1, "getopt", func(tl *Tasklist, args []string, flags map[string]bool) {
+		name := args[0]
+
+		private := false
+
+		if strings.Index(name, "private:") == 0 {
+			name = name[len("private:"):len(name)]
+			private = true
+		}
+
+		if private {
+			fmt.Printf("%s\n", tl.GetPrivateSetting(name))
+		} else {
+			fmt.Printf("%s\n", tl.GetSetting(name))
+		}
+	})
+}
+
+
+func HelpGetOption() {
+	fmt.Fprintf(os.Stderr, "Usage: getopt <name>\n\n")
+	fmt.Fprintf(os.Stderr, "\tReturns value of option <name>. Prefix <name> with 'private:' if you want to see a private option\n")
 }
 
 func CmdHelp(args []string) {
