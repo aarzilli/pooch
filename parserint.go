@@ -280,10 +280,11 @@ func (pr *ParseResult) ResolveSavedSearch(tl *Tasklist) *ParseResult {
 	return pr
 }
 
-func (pr *ParseResult) IntoSelect(tl *Tasklist) (string, os.Error) {
+func (pr *ParseResult) IntoSelect(tl *Tasklist) (string, map[string]string, os.Error) {
 	if pr.savedSearch != "" {
 		parseResult := tl.ParseEx(tl.GetSavedSearch(pr.savedSearch))
-		return parseResult.IntoSelect(tl)
+		r, _, err := parseResult.IntoSelect(tl)
+		return r, parseResult.options, err
 	}
 	
 	_, addDone := pr.options["w/done"]; addDone = !addDone
@@ -307,7 +308,7 @@ func (pr *ParseResult) IntoSelect(tl *Tasklist) (string, os.Error) {
 		whereStr = "\nWHERE\n" + strings.Join(where, "\nAND\n")
 	}
 
-	return SELECT_HEADER + whereStr + "\nGROUP BY tasks.id\nORDER BY priority, trigger_at_field ASC, sort DESC", error
+	return SELECT_HEADER + whereStr + "\nGROUP BY tasks.id\nORDER BY priority, trigger_at_field ASC, sort DESC", nil, error
 }
 
 func (pr *ParseResult) IntoTrigger() string {
@@ -342,9 +343,18 @@ func (pr *ParseResult) IsEmpty() bool {
 func (tl *Tasklist) ParseSearch(queryText string) (string, string, string, bool, bool, []string, map[string]string, os.Error) {
 	pr := tl.ParseEx(queryText)
 	isEmpty := pr.IsEmpty()
-	theselect, err := pr.IntoSelect(tl)
+	theselect, extraOptions, err := pr.IntoSelect(tl)
 	trigger := pr.IntoTrigger()
-	return theselect, pr.command, trigger, pr.savedSearch != "", isEmpty, pr.showCols, pr.options, err
+
+	options := make(map[string]string)
+	for k, v := range extraOptions {
+		options[k] = v
+	}
+	for k, v := range pr.options {
+		options[k] = v
+	}
+	
+	return theselect, pr.command, trigger, pr.savedSearch != "", isEmpty, pr.showCols, options, err
 }
 
 func (tl *Tasklist) ExtendedAddParse() *Entry {
@@ -355,7 +365,13 @@ func (tl *Tasklist) ExtendedAddParse() *Entry {
 	split1 := strings.Split(input, "\n", 2)
 	split2 := strings.Split(split1[1], "\n@+\n", 2)
 
-	e := tl.ParseNew(split1[0] + "\n@+\n" + split2[1], "")
+	toParse := split1[0]
+
+	if len(split2) > 1 {
+		toParse += "\n@+\n" + split2[1]
+	}
+
+	e := tl.ParseNew(toParse, "")
 	e.SetText(split2[0])
 
 	return e;

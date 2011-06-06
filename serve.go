@@ -399,7 +399,7 @@ func GetCalendarEvents(tl *Tasklist, query string, r *vector.Vector, start, end 
 	pr.AddIncludeClause(&SimpleExpr{ ":when", ">", start, nil, 0, ""  })
 	pr.AddIncludeClause(&SimpleExpr{ ":when", "<", end, nil, 0, "" })
 	pr.options["w/done"] = "w/done"
-	theselect, _ := pr.IntoSelect(tl)
+	theselect, _, _ := pr.IntoSelect(tl)
 	v, _ := tl.Retrieve(theselect, pr.command)
 
 	timezone := tl.GetTimezone()
