@@ -12,6 +12,7 @@ import (
 	"time"
 	"os"
 	"strconv"
+	"strings"
 )
 
 var CURSOR string = "cursor"
@@ -387,7 +388,7 @@ func PushStringVec(L *lua51.State, v []string) {
 	L.CreateTable(len(v), 0)
 
 	for idx, val := range v {
-		SetTableIntString(L, idx, val)
+		SetTableIntString(L, idx+1, val)
 	}
 }
 
@@ -467,6 +468,31 @@ func LuaIntParseDateTime(L *lua51.State) int {
 		L.PushInteger(0)
 	}
 
+	return 1
+}
+
+func LuaIntSplit(L *lua51.State) int {
+	if L.GetTop() < 2 {
+		LuaError(L, "Wron number of arguments to split()")
+		return 0
+	}
+
+	instr := L.ToString(1)
+	sepstr := L.ToString(2)
+
+	n := -1
+
+	if L.GetTop() == 3 {
+		n = L.ToInteger(3)
+	}
+		
+	if L.GetTop() > 3 {
+		LuaError(L, "Wron number of arguments to split()")
+		return 0
+	}
+
+	PushStringVec(L, strings.Split(instr, sepstr, n))
+	
 	return 1
 }
 
@@ -714,7 +740,9 @@ func (tl *Tasklist) CallLuaFunction(fname string, cursor *Entry) os.Error {
 	tl.SetEntryInLua(CURSOR, cursor)
 	tl.SetTasklistInLua()
 	tl.ResetLuaFlags()
-	tl.luaState.SetExecutionLimit(LUA_EXECUTION_LIMIT)
+	if tl.executionLimitEnabled {
+		tl.luaState.SetExecutionLimit(LUA_EXECUTION_LIMIT)
+	}
 
 	tl.luaState.CheckStack(1)
 	tl.luaState.GetGlobal(fname)
@@ -791,6 +819,9 @@ func MakeLuaState() *lua51.State {
 	L.Register("localtime", LuaIntLocalTime)
 	L.Register("timestamp", LuaIntTimestamp)
 	L.Register("parsedatetime", LuaIntParseDateTime)
+
+	// string utility functions
+	L.Register("split", LuaIntSplit)
 
 	// query construction functions
 
