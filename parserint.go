@@ -64,6 +64,7 @@ func (tl *Tasklist) ParseNew(entryText, queryText string) *Entry {
 	priority := NOW
 	cols := make(Columns)
 	id := ""
+	prioritySet := false
 
 	catFound := false
 	
@@ -72,7 +73,9 @@ func (tl *Tasklist) ParseNew(entryText, queryText string) *Entry {
 		if !ok { continue }
 		switch sexpr.name {
 		case ":when": triggerAt = sexpr.valueAsTime
-		case ":priority": priority = sexpr.priority
+		case ":priority":
+			priority = sexpr.priority
+			prioritySet = true
 		case "id": id = sexpr.value
 		default:
 			if sexpr.op == "" {
@@ -103,7 +106,9 @@ func (tl *Tasklist) ParseNew(entryText, queryText string) *Entry {
 	if !catFound { cols["uncat"] = "" }
 	sort := SortFromTriggerAt(triggerAt, tl.GetSetting("defaultsorttime") == "1")
 
-	if triggerAt != nil { priority = TIMED }
+	if !prioritySet {
+		if triggerAt != nil { priority = TIMED }
+	}
 
 	return MakeEntry(id, parsed.text, "", priority, triggerAt, sort, cols)
 }
