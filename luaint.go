@@ -18,6 +18,7 @@ var CURSOR string = "cursor"
 var TASKLIST string = "tasklist"
 var SEARCHFUNCTION string = "searchfn"
 var LUA_EXECUTION_LIMIT = 1000
+var RUN_ARGUMENTS_VAR = "args"
 
 type LuaIntError struct {
 	message string
@@ -33,6 +34,8 @@ type LuaFlags struct {
 	persist bool // changes are persisted
 	filterOut bool // during search filters out the current result
 	remove bool // removes the current entry
+	
+	freeCursor bool // function is free of moving the cursor around
 
 	objects []interface{}
 }
@@ -43,6 +46,7 @@ func (tl *Tasklist) ResetLuaFlags() {
 	tl.luaFlags.persist = false
 	tl.luaFlags.filterOut = false
 	tl.luaFlags.remove = false
+	tl.luaFlags.freeCursor = false
 	tl.luaFlags.objects = make([]interface{}, 0)
 }
 
@@ -256,18 +260,30 @@ func LuaIntFilterIn(L *lua51.State) int {
 
 func LuaIntPersist(L *lua51.State) int {
 	tl := GetTasklistFromLua(L)
+	if tl.luaFlags.freeCursor {
+		LuaError(L, "Can not use persist() on free cursor")
+		return 0
+	}
 	tl.luaFlags.persist = true
 	return 0
 }
 
 func LuaIntRemove(L *lua51.State) int {
 	tl := GetTasklistFromLua(L)
+	if tl.luaFlags.freeCursor {
+		LuaError(L, "Can not use persist() on free cursor")
+		return 0
+	}
 	tl.luaFlags.remove = true
 	return 0
 }
 
 func LuaIntCloneCursor(L *lua51.State) int {
 	tl := GetTasklistFromLua(L)
+	if tl.luaFlags.freeCursor {
+		LuaError(L, "Can not use persist() on free cursor")
+		return 0
+	}
 	cursor := GetEntryFromLua(L, CURSOR)
 	if cursor == nil {
 		LuaError(L, "No cursor set, can not use clone()")
@@ -279,11 +295,66 @@ func LuaIntCloneCursor(L *lua51.State) int {
 	return 0
 }
 
+func LuaIntWriteCursor(L *lua51.State) int {
+	Logf(INFO, "Writing cursor")
+	L.CheckStack(1)
+	tl := GetTasklistFromLua(L)
+	if !tl.luaFlags.freeCursor {
+		LuaError(L, "Can not use writecursor() when not on free cursor mode")
+		return 0
+	}
+	cursor := GetEntryFromLua(L, CURSOR)
+	if cursor == nil {
+		LuaError(L, "No cursor set, can not use writecurosr()")
+		return 0
+	}
+	tl.Update(cursor, false, true) 
+	return 0
+}
+
+func LuaIntVisit(L *lua51.State) int {
+	L.CheckStack(1)
+	
+	tl := GetTasklistFromLua(L)
+	if !tl.luaFlags.freeCursor {
+		LuaError(L, "Cursor isn't free to move, can not use visit()")
+		return 0
+	}
+
+	id := L.ToString(1)
+
+	Logf(INFO, "Lua visiting: <%s>\n", id)
+
+	var error interface{} = nil
+	
+	{
+		defer func() {
+			if rerr := recover(); rerr != nil {
+				error = rerr
+			}
+		}()
+		cursor := tl.Get(id)
+		tl.SetEntryInLua(CURSOR, cursor);		
+	}
+
+	if error != nil {
+		LuaError(L, fmt.Sprintf("Error during visit: %v", error))
+	}
+	
+	return 0
+}
+
 func SetTableInt(L *lua51.State, name string, value int) {
 	// Remember to check stack for 2 extra locations
 	
 	L.PushString(name)
 	L.PushInteger(value)
+	L.SetTable(-3)
+}
+
+func SetTableIntString(L *lua51.State, idx int, value string) {
+	L.PushInteger(idx)
+	L.PushString(value)
 	L.SetTable(-3)
 }
 
@@ -309,6 +380,15 @@ func PushTime(L *lua51.State, t *time.Time) {
 	SetTableInt(L, "minute", int(t.Minute))
 	SetTableInt(L, "second", int(t.Second))
 	SetTableInt(L, "offset", int(t.ZoneOffset))
+}
+
+func PushStringVec(L *lua51.State, v []string) {
+	L.CheckStack(3)
+	L.CreateTable(len(v), 0)
+
+	for idx, val := range v {
+		SetTableIntString(L, idx, val)
+	}
 }
 
 func LuaIntUTCTime(L *lua51.State) int {
@@ -594,10 +674,11 @@ func LuaIntNotTopTag(L *lua51.State) int {
 	return 0
 }
 
-func (tl *Tasklist) DoStringNoLock(code string, cursor *Entry) os.Error {
+func (tl *Tasklist) DoStringNoLock(code string, cursor *Entry, freeCursor bool) os.Error {
 	if cursor != nil { tl.SetEntryInLua(CURSOR, cursor) }
 	tl.SetTasklistInLua()
 	tl.ResetLuaFlags()
+	tl.luaFlags.freeCursor = freeCursor
 	if tl.executionLimitEnabled {
 		tl.luaState.SetExecutionLimit(LUA_EXECUTION_LIMIT)
 	}
@@ -614,7 +695,16 @@ func (tl *Tasklist) DoStringNoLock(code string, cursor *Entry) os.Error {
 func (tl *Tasklist) DoString(code string, cursor *Entry) os.Error {
 	tl.mutex.Lock()
 	defer tl.mutex.Unlock()
-	return tl.DoStringNoLock(code, cursor)
+	return tl.DoStringNoLock(code, cursor, false)
+}
+
+func (tl *Tasklist) DoRunString(code string, args []string) os.Error {
+	tl.mutex.Lock()
+	defer tl.mutex.Unlock()
+	
+	PushStringVec(tl.luaState, args)
+	tl.luaState.SetGlobal(RUN_ARGUMENTS_VAR)
+	return tl.DoStringNoLock(code, nil, true)
 }
 
 func (tl *Tasklist) CallLuaFunction(fname string, cursor *Entry) os.Error {
@@ -684,11 +774,16 @@ func MakeLuaState() *lua51.State {
 	L.Register("filterout", LuaIntFilterOut)
 	L.Register("filterin", LuaIntFilterIn)
 
+	// cursor control functions
+
+	L.Register("visit", LuaIntVisit)
+
 	// editing functions
 	
 	L.Register("persist", LuaIntPersist)
 	L.Register("remove", LuaIntRemove)
 	L.Register("clonecursor", LuaIntCloneCursor)
+	L.Register("writecursor", LuaIntWriteCursor)
 
 	// time utility functions
 

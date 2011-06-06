@@ -38,6 +38,8 @@ var commands map[string](func (args []string)) = map[string](func (args []string
 
 	"setopt": CmdSetOption,
 	"getopt": CmdGetOption,
+
+	"run": CmdRun,
 }
 
 var help_commands map[string](func ()) = map[string](func ()){
@@ -56,9 +58,9 @@ var help_commands map[string](func ()) = map[string](func ()){
 	"errlog": HelpErrorLog,
 	"compat": CompatHelp,
 	"multiserve": HelpMultiServe,
-	
 	"setopt": HelpSetOption,
 	"getopt": HelpGetOption,
+	"run": HelpRun,
 }
 
 func CheckCondition(cond bool, format string, a ...interface{}) {
@@ -121,7 +123,7 @@ func CmdQuickUpdate(args []string) {
 		entry := tl.ParseNew(strings.Join(args[1:], " "), "")
 		
 		entry.SetId(args[0])
-		tl.Update(entry, false)
+		tl.Update(entry, false, false)
 	})
 }
 
@@ -310,7 +312,7 @@ func CmdTsvUpdate(argv []string) {
 			entry := ParseTsvFormat(line, tl, tl.GetTimezone());
 			if tl.Exists(entry.Id()) {
 				//fmt.Printf("UPDATING\t%s\t%s\n", entry.Id(), entry.TriggerAt().Format("2006-01-02"))
-				tl.Update(entry, false)
+				tl.Update(entry, false, false)
 			} else {
 				fmt.Printf("ADDING\t%s\t%s\n", entry.Id(), entry.TriggerAt().Format("2006-01-02"))
 				tl.Add(entry)
@@ -444,6 +446,20 @@ func HelpGetOption() {
 	fmt.Fprintf(os.Stderr, "\tReturns value of option <name>. Prefix <name> with 'private:' if you want to see a private option\n")
 }
 
+func CmdRun(args []string) {
+	CheckArgsOpenDb(args, map[string]bool{}, 1, 1000, "run", func(tl *Tasklist, args []string, flags map[string]bool) {
+		fname := args[0]
+
+		fentry := tl.Get(fname)
+		tl.DoRunString(fentry.Text(), args[1:len(args)])
+	})
+}
+
+func HelpRun() {
+	fmt.Fprintf(os.Stderr, "Usage: run <function id> <args>\n\n")
+	fmt.Fprintf(os.Stderr, "\tRuns function passing arguments\n")
+}
+
 func CmdHelp(args []string) {
 	CheckArgs(args, map[string]bool{}, 0, 1, "help")
 	if len(args) <= 0 {
@@ -488,6 +504,11 @@ func main() {
 		w.WriteString("\n")
 		w.WriteString("\tserve\tStart http server\n")
 		w.WriteString("\tmultiserve\tStart multiuser http server\n")
+		w.WriteString("\n")
+		w.WriteString("\tsetopt\tSets option\n")
+		w.WriteString("\tgetopt\tGets option value\n")
+		w.WriteString("\n")
+		w.WriteString("\trun\tRuns functions\n")
 
 		w.Flush()
 		tw.Flush()
