@@ -105,6 +105,12 @@ func internalTasklistOpenOrCreate(filename string) *Tasklist {
 	MustExec(conn, "INSERT OR IGNORE INTO private_settings(name, value) VALUES (\"enable_lua_execution_limit\", \"1\")")
 	
 	tasklist := &Tasklist{filename, conn, MakeLuaState(), &LuaFlags{}, &sync.Mutex{}, 1, time.Seconds(), make(map[string]bool), make(map[string][]string, 0), true}
+	
+	if tasklist.GetPrivateSetting("enable_lua_execution_limit") == "0" {
+		Logf(INFO, "Tasklist '%s' runs without lua execution limits", filename)
+		tasklist.executionLimitEnabled = false
+	}
+
 	tasklist.RunTimedTriggers()
 	tasklist.MustExec("PRAGMA foreign_keys = ON;")
 	tasklist.MustExec("PRAGMA synchronous = OFF;") // makes inserts many many times faster
@@ -115,10 +121,6 @@ func internalTasklistOpenOrCreate(filename string) *Tasklist {
 		tasklist.DoString(setupCode, nil) // error is ignored, it will be logged
 	}
 
-	if tasklist.GetPrivateSetting("enable_lua_execution_limit") == "0" {
-		Logf(INFO, "Tasklist '%s' runs without lua execution limits", filename)
-		tasklist.executionLimitEnabled = false
-	} 
 
 	return tasklist
 }
