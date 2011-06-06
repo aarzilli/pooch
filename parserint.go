@@ -347,5 +347,11 @@ func (tl *Tasklist) ExtendedAddParse() *Entry {
 	must(err)
 	input := string(buf)
 
-	return tl.ParseNew(input, "")
+	split1 := strings.Split(input, "\n", 2)
+	split2 := strings.Split(split1[1], "\n@+\n", 2)
+
+	e := tl.ParseNew(split1[0] + "\n@+\n" + split2[1], "")
+	e.SetText(split2[0])
+
+	return e;
 }

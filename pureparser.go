@@ -10,7 +10,6 @@ import (
 	"strconv"
 	"time"
 	"regexp"
-	"os"
 	"fmt"
 )
 
@@ -394,9 +393,7 @@ func ParseTsvFormat(in string, tl *Tasklist, timezone int) *Entry {
 	var triggerAt *time.Time = nil
 	var sort string
 	if priority == TIMED {
-		var dterr os.Error
-		triggerAt, dterr = ParseDateTime(fields[3], timezone)
-		must(dterr)
+		triggerAt, _ = ParseDateTime(fields[3], timezone)
 		sort = SortFromTriggerAt(triggerAt, tl.GetSetting("defaultsorttime") == "1")
 	} else {
 		sort = fields[3]

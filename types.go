@@ -134,8 +134,7 @@ func MarshalEntry(entry *Entry, timezone int) *UnmarshalEntry {
 }
 
 func DemarshalEntry(umentry *UnmarshalEntry, timezone int) *Entry {
-	triggerAt, err := ParseDateTime(umentry.TriggerAt, timezone)
-	must(err)
+	triggerAt, _ := ParseDateTime(umentry.TriggerAt, timezone)
 	
 	sort := umentry.Sort
 	if sort == "" { sort = SortFromTriggerAt(triggerAt, false) }
