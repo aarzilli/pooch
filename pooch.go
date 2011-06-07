@@ -452,6 +452,11 @@ func CmdRun(args []string) {
 
 		fentry := tl.Get(fname)
 		tl.DoRunString(fentry.Text(), args[1:len(args)])
+
+		if tl.luaFlags.showReturnValue {
+			entries, cols := tl.LuaResultToEntries()
+			CmdListEx(entries, cols, tl.GetTimezone())
+		}
 	})
 }
 

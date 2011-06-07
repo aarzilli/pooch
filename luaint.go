@@ -326,7 +326,7 @@ func LuaIntVisit(L *lua51.State) int {
 
 	id := L.ToString(1)
 
-	Logf(INFO, "Lua visiting: <%s>\n", id)
+	Logf(DEBUG, "Lua visiting: <%s>\n", id)
 
 	var error interface{} = nil
 	
@@ -746,6 +746,92 @@ func LuaIntShowRet(L *lua51.State) int {
 	tl.luaFlags.showReturnValue = true
 
 	return 0
+}
+
+func LuaIntDebulog(L *lua51.State) int {
+	if (L.GetTop() != 1) {
+		LuaError(L, "Wrong number of arguments to debulog");
+		return 0;
+	}
+	Logf(INFO, "Log from lua: <%s>", L.ToString(1))
+	return 0;
+}
+
+func LuaTableGetString(L *lua51.State, key string) string {
+	L.PushString(key)
+	L.GetTable(-2)
+	r := ""
+	if !L.IsNil(-1) {
+		r = L.ToString(-1)
+	}
+	L.Pop(1)
+	return r
+}
+
+func (tl *Tasklist) LuaResultToEntries() ([]*Entry, []string) {
+	r := []*Entry{}
+	cols := []string{}
+
+	if !tl.luaState.IsTable(-1) {
+		panic("Lua function requested to show result but didn't return anything");
+	}
+
+	tl.luaState.CheckStack(5)
+
+	tl.luaState.PushString("columns")
+	tl.luaState.GetTable(-2)
+	if !tl.luaState.IsNil(-1) {
+		for j := 1; ; j++ {
+			tl.luaState.PushInteger(j)
+			tl.luaState.GetTable(-2)
+			if tl.luaState.IsNil(-1) {
+				tl.luaState.Pop(1)
+				break
+			}
+
+			cols = append(cols, tl.luaState.ToString(-1))
+
+			tl.luaState.Pop(1)
+		}
+	}
+	tl.luaState.Pop(1)
+
+	fmt.Printf("Columns: %v", cols)
+
+	for j := 1; ; j++ {
+		tl.luaState.PushInteger(j)
+		tl.luaState.GetTable(-2)
+		if tl.luaState.IsNil(-1) {
+			tl.luaState.Pop(1)
+			break
+		}
+
+		id := LuaTableGetString(tl.luaState, "id")
+		title := LuaTableGetString(tl.luaState, "title")
+		text := LuaTableGetString(tl.luaState, "text")
+		sort := LuaTableGetString(tl.luaState, "sort")
+
+		curcols := make(Columns)
+
+		for _, col := range cols {
+			tl.luaState.PushString(col)
+			tl.luaState.GetTable(-2)
+			if !tl.luaState.IsNil(-1) {
+				curcols[col] = tl.luaState.ToString(-1)
+			}
+			tl.luaState.Pop(1)
+		}
+
+		e := MakeEntry(id, title, text, NOTES, nil, sort, curcols)
+
+		r = append(r, e)
+
+		tl.luaState.Pop(1)
+	}
+
+	tl.luaState.Pop(1)
+
+	return r, cols
 }
 
 func (tl *Tasklist) DoStringNoLock(code string, cursor *Entry, freeCursor bool) os.Error {
