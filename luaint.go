@@ -37,6 +37,7 @@ type LuaFlags struct {
 	remove bool // removes the current entry
 	
 	freeCursor bool // function is free of moving the cursor around
+	showReturnValue bool // show return value of this function
 
 	objects []interface{}
 }
@@ -49,6 +50,7 @@ func (tl *Tasklist) ResetLuaFlags() {
 	tl.luaFlags.remove = false
 	tl.luaFlags.freeCursor = false
 	tl.luaFlags.objects = make([]interface{}, 0)
+	tl.luaFlags.showReturnValue = false
 }
 
 func (tl *Tasklist) SetEntryInLua(name string, entry *Entry) {
@@ -339,7 +341,7 @@ func LuaIntVisit(L *lua51.State) int {
 	}
 
 	if error != nil {
-		LuaError(L, fmt.Sprintf("Error during visit: %v", error))
+		tl.SetEntryInLua(CURSOR, nil);
 	}
 	
 	return 0
@@ -700,6 +702,52 @@ func LuaIntNotTopTag(L *lua51.State) int {
 	return 0
 }
 
+func LuaIntSearch(L *lua51.State) int {
+	if (L.GetTop() < 1) || (L.GetTop() > 2) {
+		LuaError(L, "Wrong number of arguments to search()")
+		return 0
+	}
+
+	L.CheckStack(2)
+	tl := GetTasklistFromLua(L)
+
+	if !tl.luaFlags.freeCursor {
+		LuaError(L, "search() function only available on a free cursor")
+		return 0
+	}
+
+	query := L.ToString(1)
+	var luaClausable Clausable = nil
+	if L.GetTop() == 2 {
+		luaClausable = GetQueryObject(tl, 2)
+	}
+
+	theselect, _, _, _, _, _, _, perr := tl.ParseSearch(query, luaClausable)
+	must(perr)
+
+	entries, serr := tl.Retrieve(theselect, "")
+	must(serr)
+
+	Logf(INFO, "Searching from lua interface <%s> clausable: <%v> yields %d results\n", query, luaClausable, len(entries))
+
+	r := []string{}
+	for _, entry := range entries {
+		r = append(r, entry.Id())
+	}
+
+	PushStringVec(L, r)
+	return 1
+}
+
+func LuaIntShowRet(L *lua51.State) int {
+	L.CheckStack(2)
+	tl := GetTasklistFromLua(L)
+
+	tl.luaFlags.showReturnValue = true
+
+	return 0
+}
+
 func (tl *Tasklist) DoStringNoLock(code string, cursor *Entry, freeCursor bool) os.Error {
 	if cursor != nil { tl.SetEntryInLua(CURSOR, cursor) }
 	tl.SetTasklistInLua()
@@ -843,6 +891,11 @@ func MakeLuaState() *lua51.State {
 
 	// Loads initialization file
 	L.DoString(decodeStatic("init.lua"))
+
+	// advanced interface functions
+	L.Register("search", LuaIntSearch)
+	L.Register("showreturnvalue", LuaIntShowRet)
+	//L.Register("debulog", LuaIntDebulog)
 
 	return L
 }
