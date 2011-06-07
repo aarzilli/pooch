@@ -280,10 +280,10 @@ func (pr *ParseResult) ResolveSavedSearch(tl *Tasklist) *ParseResult {
 	return pr
 }
 
-func (pr *ParseResult) IntoSelect(tl *Tasklist) (string, map[string]string, os.Error) {
+func (pr *ParseResult) IntoSelect(tl *Tasklist, luaClausable Clausable) (string, map[string]string, os.Error) {
 	if pr.savedSearch != "" {
 		parseResult := tl.ParseEx(tl.GetSavedSearch(pr.savedSearch))
-		r, _, err := parseResult.IntoSelect(tl)
+		r, _, err := parseResult.IntoSelect(tl, luaClausable)
 		return r, parseResult.options, err
 	}
 	
@@ -297,9 +297,19 @@ func (pr *ParseResult) IntoSelect(tl *Tasklist) (string, map[string]string, os.E
 
 	for _, v := range whereNot { where = append(where, v) }
 
-	extraClause, error := pr.GetLuaClause(tl)
-	if extraClause != "" {
-		where = append(where, extraClause)
+	var error os.Error
+	if luaClausable == nil {
+		var extraClause string
+		extraClause, error = pr.GetLuaClause(tl)
+		if extraClause != "" {
+			where = append(where, extraClause)
+		}
+	} else {
+		var extraClause string
+		extraClause, error = luaClausable.IntoClause(tl, "   ", false), nil
+		if extraClause != "" {
+			where = append(where, extraClause)
+		}
 	}
 
 	whereStr := ""
@@ -340,10 +350,10 @@ func (pr *ParseResult) IsEmpty() bool {
 	return true
 }
 
-func (tl *Tasklist) ParseSearch(queryText string) (string, string, string, bool, bool, []string, map[string]string, os.Error) {
+func (tl *Tasklist) ParseSearch(queryText string, luaClausable Clausable) (string, string, string, bool, bool, []string, map[string]string, os.Error) {
 	pr := tl.ParseEx(queryText)
 	isEmpty := pr.IsEmpty()
-	theselect, extraOptions, err := pr.IntoSelect(tl)
+	theselect, extraOptions, err := pr.IntoSelect(tl, luaClausable)
 	trigger := pr.IntoTrigger()
 
 	options := make(map[string]string)

@@ -198,7 +198,7 @@ func ErrorLogServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 func ExplainServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	css := tl.GetSetting("theme")
 
-	theselect, code, _, isSavedSearch, isEmpty, showCols, options, err := tl.ParseSearch(req.FormValue("q"))
+	theselect, code, _, isSavedSearch, isEmpty, showCols, options, err := tl.ParseSearch(req.FormValue("q"), nil)
 
 	myexplain := ""
 
@@ -324,7 +324,7 @@ func ListServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	query := strings.Replace(req.FormValue("q"), "\r", "", -1)
 	timezone := tl.GetTimezone()
 
-	theselect, code, trigger, isSavedSearch, _, showCols, options, perr := tl.ParseSearch(query)
+	theselect, code, trigger, isSavedSearch, _, showCols, options, perr := tl.ParseSearch(query, nil)
 
 	/* Will not allow adding elements to an empty page
 	if isEmpty {
@@ -382,7 +382,7 @@ func ListServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 
 func CalendarServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	query := req.FormValue("q")
-	_, _, trigger, isSavedSearch, _, _, _, err := tl.ParseSearch(query)
+	_, _, trigger, isSavedSearch, _, _, _, err := tl.ParseSearch(query, nil)
 
 	theme := tl.GetSetting("theme")
 
@@ -399,7 +399,7 @@ func GetCalendarEvents(tl *Tasklist, query string, r *vector.Vector, start, end 
 	pr.AddIncludeClause(&SimpleExpr{ ":when", ">", start, nil, 0, ""  })
 	pr.AddIncludeClause(&SimpleExpr{ ":when", "<", end, nil, 0, "" })
 	pr.options["w/done"] = "w/done"
-	theselect, _, _ := pr.IntoSelect(tl)
+	theselect, _, _ := pr.IntoSelect(tl, nil)
 	v, _ := tl.Retrieve(theselect, pr.command)
 
 	timezone := tl.GetTimezone()
