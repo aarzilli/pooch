@@ -364,18 +364,20 @@ func (tl *Tasklist) Get(id string) *Entry {
 
 func (tl *Tasklist) GetListEx(stmt *sqlite.Stmt, code string) ([]*Entry, os.Error) {
 	var err os.Error
-	
-	tl.luaState.CheckStack(1)
-	tl.luaState.PushNil()
-	tl.luaState.SetGlobal(SEARCHFUNCTION)
-	tl.luaState.DoString(fmt.Sprintf("function %s()\n%s\nend", SEARCHFUNCTION, code))
-	tl.luaState.GetGlobal(SEARCHFUNCTION)
-	if tl.luaState.IsNil(-1) {
-		tl.LogError("Syntax error in search function definition")
-		code = ""
-		err = &LuaIntError{"Syntax error in search function definition"}
+
+	if code != "" {
+		tl.luaState.CheckStack(1)
+		tl.luaState.PushNil()
+		tl.luaState.SetGlobal(SEARCHFUNCTION)
+		tl.luaState.DoString(fmt.Sprintf("function %s()\n%s\nend", SEARCHFUNCTION, code))
+		tl.luaState.GetGlobal(SEARCHFUNCTION)
+		if tl.luaState.IsNil(-1) {
+			tl.LogError("Syntax error in search function definition")
+			code = ""
+			err = &LuaIntError{"Syntax error in search function definition"}
+		}
+		tl.luaState.Pop(1)
 	}
-	tl.luaState.Pop(1)
 	
 	v := []*Entry{}
 	for (stmt.Next()) {
