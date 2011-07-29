@@ -120,6 +120,16 @@ var CommonHeaderHTML ExecutableTemplate = MakeExecutableTemplate(`
       </div>
     </div>
     <div class='mainmenu_item'>
+      <a href='javascript:toggle_runpop()'>[run]</a>
+      <div id='runpop' class='popup' style='display: none'>
+        <form method='get' action='/run'>
+          <label for='runcmd'>Command:</label>&nbsp;
+          <input size='50' type='text' id='runcmd' name='text'/>
+          <input type='submit' value='run'/>
+        </form>
+      </div>
+    </div>
+    <div class='mainmenu_item'>
        <a href='/stat'>[statistics]</a>
     </div>
   </div>

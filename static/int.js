@@ -25,7 +25,11 @@ function toggle_addpop() {
 }
 
 function toggle_navpop() {
-    toggle("#navpop")
+    toggle("#navpop");
+}
+
+function toggle_runpop() {
+    toggle("#runpop");
 }
 
 function perform_toggle_on_keyevent(e) {

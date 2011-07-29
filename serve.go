@@ -195,6 +195,9 @@ func ErrorLogServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	ErrorLogEnderHTML(nil, c)
 }
 
+
+
+
 func ExplainServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	css := tl.GetSetting("theme")
 
@@ -319,6 +322,59 @@ func StatServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 
 	ListEnderHTML(nil, c)
 }
+
+func RunServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
+	commandstr := strings.Replace(req.FormValue("text"), "\r", "", -1)
+	command := strings.Split(commandstr, " ", -1)
+
+	Logf(INFO, "Running command: " + command[0])
+
+	fentry := tl.Get(command[0])
+	tl.DoRunString(fentry.Text(), command[1:len(command)])
+	
+	headerInfo := headerInfo(tl, "/list", commandstr, "", false, false, nil, nil, map[string]string{ "hideprioritycol": "", "showidcol": "", "hidecatscol": "" })
+
+	//TODO: options?
+
+	ListHeaderHTML(headerInfo, c)
+	CommonHeaderHTML(headerInfo, c)
+	EntryListHeaderHTML(nil, c)
+
+	if tl.luaFlags.showReturnValue {
+		v, showCols := tl.LuaResultToEntries()
+		timezone := tl.GetTimezone()
+
+		if len(v) > 0 {
+			EntryListPriorityChangeHTML(map[string]interface{}{ "entry": v[0], "colNames": showCols, "PrioritySize": 4 }, c)
+		}
+		
+		for idx, entry := range v {
+			htmlClass := "entry"
+			if idx % 2 != 0 {
+				htmlClass += " oddentry"
+			}
+			
+			cols := []string{}
+			for _,  colName := range showCols {
+				cols = append(cols, entry.Columns()[colName])
+			}
+
+			entryEntry := map[string](interface{}){
+				"heading": entry.Id(),
+				"entry": entry,
+				"etime": TimeString(entry.TriggerAt(), entry.Sort(), timezone),
+				"ecats": "",
+				"htmlClass": htmlClass,
+				"cols": cols,
+			}
+			
+			EntryListEntryHTML(entryEntry, c)
+		}
+	} 
+
+	ListEnderHTML(nil, c)
+}
+
 
 func ListServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	query := strings.Replace(req.FormValue("q"), "\r", "", -1)
@@ -533,6 +589,7 @@ func SetupHandleFunc(wrapperTasklistServer func(TasklistServer)http.HandlerFunc,
 
 	// Entry point urls
 	http.HandleFunc("/list", WrapperServer(wrapperTasklistServer(ListServer)))
+	http.HandleFunc("/run", WrapperServer(wrapperTasklistServer(RunServer)))
 	http.HandleFunc("/stat", WrapperServer(wrapperTasklistServer(StatServer)))
 	http.HandleFunc("/cal", WrapperServer(wrapperTasklistServer(CalendarServer)))
 	http.HandleFunc("/opts", WrapperServer(wrapperTasklistServer(OptionServer)))
