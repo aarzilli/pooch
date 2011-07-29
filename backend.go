@@ -632,8 +632,8 @@ func (tl *Tasklist) RunTimedTriggers() {
 
 func (tl *Tasklist) UpgradePriority(id string, special bool) Priority {
 	entry := tl.Get(id)
-	entry.UpgradePriority(special)
-	tl.Update(entry, true, false)
+	simpleUpdate := entry.UpgradePriority(special)
+	tl.Update(entry, simpleUpdate, false)
 	return entry.Priority()
 }
 

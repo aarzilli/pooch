@@ -303,19 +303,24 @@ func StripQuotes(in string) string {
 
 
  */
-func (e *Entry) UpgradePriority(special bool) {
+func (e *Entry) UpgradePriority(special bool) bool {
 	if e.TriggerAt() != nil {
 		switch e.Priority() {
 		case NOW:
 			e.priority = DONE
+			e.columns["done-at"] = time.UTC().Format("2006-01-02_15:04:05")
+			return false
 		case TIMED:
 			e.priority = DONE
+			e.columns["done-at"] = time.UTC().Format("2006-01-02_15:04:05")
+			return false
 		default:
 			if e.TriggerAt().Seconds() > time.UTC().Seconds() { // trigger time is in the future
 				e.priority = TIMED
 			} else {
 				e.priority = NOW
 			}
+			return true
 		}
 	} else if (e.priority == NOTES) || (e.priority == STICKY) {
 		if special {
@@ -326,6 +331,7 @@ func (e *Entry) UpgradePriority(special bool) {
 			case NOTES: e.priority = STICKY
 			}
 		}
+		return true
 	} else { // anything else
 		if special {
 			e.priority = NOTES
@@ -339,9 +345,14 @@ func (e *Entry) UpgradePriority(special bool) {
 				e.priority = NOW
 			case NOW:
 				e.priority = DONE
+				e.columns["done-at"] = time.UTC().Format("2006-01-02_15:04:05")
+				return false
 			}
+			return true
 		}
 	}
+	
+	return true
 }
 
 func RepeatString(ch string, num int) string {
