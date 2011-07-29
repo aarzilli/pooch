@@ -209,7 +209,6 @@ func RegisterServer(c http.ResponseWriter, req *http.Request) {
 	if req.FormValue("user") == "" {
 		RegisterHTML(map[string]string{ "problem": "" }, c)
 	} else {
-		//TODO: controllare che user non abbia strani caratteri
 		if multiuserDb.Exists(req.FormValue("user")) {
 			RegisterHTML(map[string]string{ "problem": "Username " + req.FormValue("user") + " already exists" }, c)
 		} else if !ValidUserName(req.FormValue("user")) {
