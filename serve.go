@@ -229,7 +229,7 @@ func ExplainServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 }
 
 func queryForTitle(query string) string {
-	split := strings.Split(query, "\n", 2)
+	split := strings.SplitN(query, "\n", 2)
 	queryForTitle := split[0]
 	if len(split) > 1 {
 		queryForTitle += "…"
@@ -325,7 +325,7 @@ func StatServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 
 func RunServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	commandstr := strings.Replace(req.FormValue("text"), "\r", "", -1)
-	command := strings.Split(commandstr, " ", -1)
+	command := strings.SplitN(commandstr, " ", -1)
 
 	Logf(INFO, "Running command: " + command[0])
 

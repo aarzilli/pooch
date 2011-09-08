@@ -336,7 +336,7 @@ func (pr *ParseResult) IntoTrigger() string {
 		}
 	}
 
-	sort.SortStrings(out)
+	sort.Strings(out)
 	return "#" + strings.Join(out, "#")
 }
 
@@ -372,8 +372,8 @@ func (tl *Tasklist) ExtendedAddParse() *Entry {
 	must(err)
 	input := string(buf)
 
-	split1 := strings.Split(input, "\n", 2)
-	split2 := strings.Split(split1[1], "\n@+\n", 2)
+	split1 := strings.SplitN(input, "\n", 2)
+	split2 := strings.SplitN(split1[1], "\n@+\n", 2)
 
 	toParse := split1[0]
 

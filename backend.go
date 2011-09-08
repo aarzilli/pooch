@@ -332,7 +332,7 @@ func StatementScan(stmt *sqlite.Stmt, hasCols bool) (*Entry, os.Error) {
 
 	cols := make(Columns)
 	if hasCols {
-		pieces := strings.Split(columns, "\u001f", -1)
+		pieces := strings.Split(columns, "\u001f")
 		for i := 0; i+1 < len(pieces); i += 2 {
 			Logf(DEBUG, "   col: [%s] [%s]\n", pieces[0], pieces[1])
 			cols[pieces[i]] = pieces[i+1]

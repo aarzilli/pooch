@@ -493,7 +493,7 @@ func LuaIntSplit(L *lua51.State) int {
 		return 0
 	}
 
-	PushStringVec(L, strings.Split(instr, sepstr, n))
+	PushStringVec(L, strings.SplitN(instr, sepstr, n))
 	
 	return 1
 }

@@ -31,7 +31,7 @@ func SearchFile(name string) (outname string, found bool) {
 	outname = name
 	found = false
 
-	poochpaths := strings.Split(os.Getenv("POOCHPATH"), ":", -1)
+	poochpaths := strings.Split(os.Getenv("POOCHPATH"), ":")
 	for _, curpath := range poochpaths {
 		attempt := path.Join(curpath, outname)
 		_, err := os.Stat(attempt)

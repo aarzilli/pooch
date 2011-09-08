@@ -213,7 +213,7 @@ func (p *Parser) ParseTimeExpression(r *SimpleExpr) bool {
 
 		timeExpr := p.tkzer.Next()
 		
-		split := strings.Split(timeExpr, "+", 2)
+		split := strings.SplitN(timeExpr, "+", 2)
 		
 		parsed, err := ParseDateTime(split[0], p.timezone)
 		if err != nil { return false }
@@ -338,7 +338,7 @@ func ParseCols(colStr string, timezone int) (Columns, bool) {
 	multilineValue := ""
 	
 	foundcat := false
-	for _, v := range strings.Split(colStr, "\n", -1) {
+	for _, v := range strings.Split(colStr, "\n") {
 		if multilineKey != "" {
 			if v == "}" {
 				cols[multilineKey] = multilineValue
@@ -348,7 +348,7 @@ func ParseCols(colStr string, timezone int) (Columns, bool) {
 				multilineValue += v + "\n"
 			}
 		} else {
-			vs := strings.Split(v, ":", 2)
+			vs := strings.SplitN(v, ":", 2)
 			
 			if len(vs) == 0 { continue }
 			
@@ -384,7 +384,7 @@ func ParseCols(colStr string, timezone int) (Columns, bool) {
 }
 
 func ParseTsvFormat(in string, tl *Tasklist, timezone int) *Entry {
-	fields := strings.Split(in, "\t", 4)
+	fields := strings.SplitN(in, "\t", 4)
 
 	entry := tl.ParseNew(fields[1], "")
 

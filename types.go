@@ -241,7 +241,7 @@ func (e *Entry) CatHash() uint32 {
 
 	cats := ([]string)(catsVector)
 
-	sort.SortStrings(cats)
+	sort.Strings(cats)
 
 	catstring := strings.Join(cats, "#")
 

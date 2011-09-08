@@ -117,7 +117,7 @@ var weekdayConversion map[string]int = map[string]int{
 func parseNextWeekdayTime(input string, timezone int) *time.Time {
 	var datetime *time.Time = &time.Time{}
 	
-	split := strings.Split(input, ",", 2)
+	split := strings.SplitN(input, ",", 2)
 	if len(split) > 1 {
 		datetime = timeParseLoop(split[1], timezone, TimeOnlyFormats)
 		if datetime == nil { return nil }

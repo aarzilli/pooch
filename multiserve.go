@@ -158,7 +158,7 @@ func AddCookies(c http.ResponseWriter, cookies map[string]string) {
 func GetCookies(c *http.Request) map[string]string {
 	r := make(map[string]string)
 
-	for _, cookie := range c.Cookie {
+	for _, cookie := range c.Cookies() {
 		r[cookie.Name] = cookie.Value
 	}
 	

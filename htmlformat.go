@@ -6,11 +6,11 @@
 package main
 
 import (
-	"template"
+	"old/template"
 	"fmt"
 	"io"
 	"strings"
-	"http"
+	"url"
 )
 
 func PriorityFormatter(w io.Writer, format string, value ...interface{}) {
@@ -20,7 +20,7 @@ func PriorityFormatter(w io.Writer, format string, value ...interface{}) {
 
 func URLFormatter(w io.Writer, format string, value ...interface{}) {
 	v := value[0].(string)
-	io.WriteString(w, http.URLEscape(v))
+	io.WriteString(w, url.QueryEscape(v))
 }
 
 var formatters template.FormatterMap = template.FormatterMap{
