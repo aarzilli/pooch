@@ -6,7 +6,7 @@ It was inspired by the Chandler Project and Microsoft Entourage.
 
 # Usage (web interface)
 
-Pooch is available online at [https://ddzuk.dyndns.info/list](https://ddzuk.dyndns.info/list). See the command line description for how to start your own private pooch server.
+See the command line description for how to start your own private pooch server.
 
 To use the online pooch you must register and then login. No email is required to register an account at the moment. Once you are logged in you can proceed to the index: [Task list](https://ddzuk.dyndns.info/list).
 
@@ -38,9 +38,3 @@ By clicking "see as calendar" you will see all the entries matching the current 
 ## Seeing "DONE" entries
 
 If you want your search to return "DONE" entries too add to the query the special tag `#:w/done`
-
-
-
-
-
-
