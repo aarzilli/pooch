@@ -12,16 +12,12 @@ import (
 	"url"
 )
 
-func PriorityFormatter(input string) string {
-	return strings.ToUpper(input)
-}
-
-func URLFormatter(input string) string {
-	return url.QueryEscape(input)
+func PriorityFormatter(input Priority) string {
+	return strings.ToUpper(input.String())
 }
 
 var formatters template.FuncMap = template.FuncMap{
-	"priority": strings.ToUpper,
+	"priority": PriorityFormatter,
 	"url": url.QueryEscape,
 }
 
@@ -72,7 +68,7 @@ var CommonHeaderHTML ExecutableTemplate = MakeExecutableTemplate("CommonHeader",
          </form>
       </div>
     </div>
-    {{with .otherPageName}}
+    {{if .otherPageName}}
 	    <div class='mainmenu_item'>
 	      <a href='javascript:toggle_addpop()'>[add entry]</a>
 	      <div id='addpop' class='popup' style='display: none'>
@@ -84,7 +80,7 @@ var CommonHeaderHTML ExecutableTemplate = MakeExecutableTemplate("CommonHeader",
 	      </div>
 	    </div>
 	    <div class='mainmenu_item'>
-	      <a href="{{.}}?q={{.query|url}}">[see as {otherPageLink}]</a>
+	      <a href="{{.otherPageName}}?q={{.query|url}}">[see as {{.otherPageLink}}]</a>
 	    </div>
 	    <div class='mainmenu_item'>
 	      <a href="/explain?q={{.query|url}}">[see explanation]</a>
@@ -95,22 +91,28 @@ var CommonHeaderHTML ExecutableTemplate = MakeExecutableTemplate("CommonHeader",
       <div id='navpop' class='popup' style='display: none'>
          <ul class='navlist'>
            <li><a href='{{.pageName}}?q='>index</a></li>
-           {{range .savedSearches}}
-           <li><a href="{{.pageName}}?q=%23%25{{.|url}}">#%{{.|html}}</a></li>
+           {{with $parent := .}}
+              {{range .savedSearches}}
+              <li><a href="{{$parent.pageName}}?q=%23%25{{.|url}}">#%{{.|html}}</a></li>
+              {{end}}
            {{end}}
          </ul>
          <hr/>
          <ul class='navlist'>
-           {{range .subtags}}
-           <li><a href="{{.pageName}}?q={{.|url}}">{{.|html}}</a></li>
-           {{else}}
+           {{with $parent := .}}
+             {{range .subtags}}
+                <li><a href="{{$parent.pageName}}?q={{.|url}}">{{.|html}}</a></li>
+             {{else}}
+             {{end}}
            {{end}}
          </ul>
          <hr/>
          <ul class='navlist'>
-           {{range .toplevel}}
-           <li><a href="{{.pageName}}?q={{.|url}}">{{.|html}}</a></li>
-           {{else}}
+           {{with $parent := .}}
+             {{range .toplevel}}
+               <li><a href="{{$parent.pageName}}?q={{.|url}}">{{.|html}}</a></li>
+             {{else}}
+             {{end}}
            {{end}}
         </ul>
       </div>
@@ -186,20 +188,18 @@ var ListHeaderHTML ExecutableTemplate = MakeExecutableTemplate("ListHeader", `
 <body onkeypress='keytable(event)'>
 `)
 
-var EntryListPriorityChangeHTML ExecutableTemplate = MakeExecutableTemplate("EntryListPriority", `
+var EntryListPriorityChangeHTML ExecutableTemplate = MakeExecutableTemplate("EntryListPriorityChange", `
     <tr>
-      {{with .entry}}
-      <td class='prchange' colspan='{{.PrioritySize|html}}'>{{.Priority|priority}}</td>
-      {{end}}
+      <td class='prchange' colspan='{{.PrioritySize|html}}'>{{.entry.Priority|priority}}</td>
       {{range .colNames}}
       <td class='colname'>{{.|html}}</td>
+      {{else}}
       {{end}}
     </tr>
 `)
 
-
 var EntryListEntryHTML ExecutableTemplate = MakeExecutableTemplate("EntryListEntry", `
-   {{with .heading}}
+   {{if .heading}}
     <tr class='{{.htmlClass}}'>
    {{end}}
     {{with .entry}}

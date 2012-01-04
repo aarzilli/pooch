@@ -48,17 +48,17 @@ func WrapperServer(sub http.HandlerFunc) http.HandlerFunc {
 				io.WriteString(c, fmt.Sprintf("Internal server error: %s", rerr))
 			}
 		}()
-		
+
 		if !strings.HasPrefix(req.RemoteAddr, "127.0.0.1") { Log(ERROR, "Rejected request from:", req.RemoteAddr); return }
-		
+
 		Logf(INFO, "REQ\t%s\t%s\n", req.RemoteAddr, req)
-		
+
 		if req.Method == "HEAD" {
 			//do nothing
 		} else {
 			sub(c, req)
 		}
-		
+
 		Logf(INFO, "QER\t%s\t%s\n", req.RemoteAddr, req)
 	}
 }
@@ -124,16 +124,16 @@ func CheckBool(in string, name string) bool {
 	} else {
 		panic(fmt.Sprintf("Parameter %s not in true or false", name))
 	}
-	
+
 	return false
 }
 
 
 func ChangePriorityServer(c http.ResponseWriter, req *http.Request, tl *Tasklist, id string) {
 	special := CheckBool(CheckFormValue(req, "special"), "special")
-	
+
 	priority := tl.UpgradePriority(id, special)
-	
+
 	io.WriteString(c, fmt.Sprintf("priority-change-to: %d %s", priority, strings.ToUpper(priority.String())))
 }
 
@@ -150,27 +150,27 @@ func RemoveServer(c http.ResponseWriter, req *http.Request, tl *Tasklist, id str
 
 func QaddServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	entry := tl.ParseNew(CheckFormValue(req, "text"), req.FormValue("q"))
-	
+
 	tl.Add(entry)
 	io.WriteString(c, "added: " + entry.Id())
 }
 
 func SaveServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	umentry := &UnmarshalEntry{}
-	
+
 	if err := json.NewDecoder(req.Body).Decode(umentry); err != nil { panic(err) }
-	
+
 	if !tl.Exists(umentry.Id) { panic("Specified id does not exists") }
-	
+
 	entry := DemarshalEntry(umentry, tl.GetTimezone())
-	
+
 	if CurrentLogLevel <= DEBUG {
 		Log(DEBUG, "Saving entry:\n")
 		entry.Print()
 	}
-	
+
 	tl.Update(entry, false, false);
-	
+
 	io.WriteString(c, "saved-at-timestamp: " + time.UTC().Format("2006-01-02 15:04:05"))
 }
 
