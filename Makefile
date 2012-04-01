@@ -1,5 +1,8 @@
 all: pooch
 
+clean:
+	rm pooch
+
 GOFILES=\
 	dbg.go types.go dbname.go compat.go\
 	parsetime.go tokenizer.go pureparser.go parserint.go\
@@ -12,5 +15,5 @@ staticserve.go: $(staticservedeps)
 	perl make-staticserve.pl $(staticservedeps) > staticserve.go
 
 pooch: $(GOFILES)
-	go build
+	go build && mv pooch2 pooch
 
