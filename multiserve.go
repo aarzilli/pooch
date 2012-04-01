@@ -6,9 +6,9 @@
 package main
 
 import (
-	"http"
+	"net/http"
 	"fmt"
-	"gosqlite.googlecode.com/hg/sqlite"
+	"gosqlite/sqlite" // temp change while gosqlite repo is broken with go1
 	"path"
 	"regexp"
 	"crypto/sha512"
@@ -35,16 +35,16 @@ func (mdb *MultiuserDb) Exists(username string) bool {
 	stmt, err := mdb.conn.Prepare("SELECT username FROM users WHERE username = ?")
 	must(err)
 	defer stmt.Finalize()
-	
+
 	must(stmt.Exec(username))
-	
+
 	return stmt.Next()
 }
 
 func PasswordHashing(salt, password string) []byte {
 	hasher := sha512.New()
 	hasher.Write(([]uint8)(salt + password))
-	hashedPassword := hasher.Sum()
+	hashedPassword := hasher.Sum(nil)
 	return hashedPassword
 }
 
@@ -60,9 +60,9 @@ func (mdb *MultiuserDb) Verify(username, password string) bool {
 	stmt, err := mdb.conn.Prepare("SELECT salt, passhash FROM users WHERE username = ?")
 	must(err)
 	defer stmt.Finalize()
-	
+
 	must(stmt.Exec(username))
-	
+
 	if !stmt.Next() { return false }
 
 	var salt string
@@ -70,7 +70,7 @@ func (mdb *MultiuserDb) Verify(username, password string) bool {
 	must(stmt.Scan(&salt, &passhash))
 
 	hashedPassword := PasswordHashing(salt, password)
-	
+
 	Logf(DEBUG, "Salt for %s is %s, passhash: %v, password to identify is hashed to: %v\n", username, salt, passhash, hashedPassword)
 
 	if len(hashedPassword) != len(passhash) { return false }
@@ -92,14 +92,14 @@ func (mdb *MultiuserDb) UsernameFromCookie(req *http.Request) string {
 	stmt, err := mdb.conn.Prepare("SELECT username FROM cookies WHERE cookie = ?")
 	must(err)
 	defer stmt.Finalize()
-	
+
 	must(stmt.Exec(GetIdCookie(req)))
-	
+
 	if !stmt.Next() { return "" }
 
 	var username string
 	must(stmt.Scan(&username))
-	
+
 	return username
 }
 
@@ -116,7 +116,7 @@ func (mdb *MultiuserDb) WithOpenUser(req *http.Request, fn func(tl *Tasklist)) b
 		defer tl.Close()
 		fn(tl)
 		return true
-	} 
+	}
 	return false
 }
 
@@ -161,7 +161,7 @@ func GetCookies(c *http.Request) map[string]string {
 	for _, cookie := range c.Cookies() {
 		r[cookie.Name] = cookie.Value
 	}
-	
+
 	return r
 }
 
@@ -184,7 +184,7 @@ func LoginServer(c http.ResponseWriter, req *http.Request) {
 			panic(r)
 		}
 	}()
-	
+
 	if req.FormValue("user") == "" {
 		LoginHTML(map[string]string{ "problem": "" }, c)
 	} else {

@@ -13,7 +13,7 @@ import (
 type TokenizerFunc func(t *Tokenizer) (string, int);
 
 type Tokenizer struct {
-	input []int
+	input []rune
 	i int
 	rewindBuffer []string
 	next int
@@ -57,17 +57,17 @@ var standardTokTable []TokenizerFunc = []TokenizerFunc{
 	// anything else
 	RepeatedTokenizer(isTagChar),
 	RepeatedTokenizer(anyChar),
-}	
-
-func NewTokenizer(input string) *Tokenizer {
-	return &Tokenizer{ []int(input), 0, make([]string, 0), 0, standardTokTable, nil }
 }
 
-func anyChar(ch int) bool {
+func NewTokenizer(input string) *Tokenizer {
+	return &Tokenizer{ []rune(input), 0, make([]string, 0), 0, standardTokTable, nil }
+}
+
+func anyChar(ch rune) bool {
 	return !unicode.IsSpace(ch)
 }
 
-func isTagChar(ch int) bool {
+func isTagChar(ch rune) bool {
 	if unicode.IsLetter(ch) { return true }
 	if unicode.IsDigit(ch) { return true }
 	if ch == '+' { return true }
@@ -80,7 +80,7 @@ func isTagChar(ch int) bool {
 }
 
 func StrTokenizerTo(match string, translation string) TokenizerFunc {
-	umatch := []int(match)
+	umatch := []rune(match)
 	return func(t *Tokenizer) (string, int) {
 		var j int
 		for j = 0; (j < len(match)) && (t.i+j < len(t.input)) && (t.input[t.i+j] == umatch[j]); j++ { }
@@ -91,7 +91,7 @@ func StrTokenizerTo(match string, translation string) TokenizerFunc {
 	}
 }
 
-func isQuickTagStart(ch int) bool {
+func isQuickTagStart(ch rune) bool {
 	return ch == '#' || ch == '@'
 }
 
@@ -131,7 +131,7 @@ func StrTokenizer(match string) TokenizerFunc {
 	return StrTokenizerTo(match, match)
 }
 
-func RepeatedTokenizer(fn func(int)bool) TokenizerFunc {
+func RepeatedTokenizer(fn func(rune)bool) TokenizerFunc {
 	return func(t *Tokenizer) (string, int) {
 		var j int
 		for j = 0; (t.i+j < len(t.input)) && fn(t.input[t.i+j]); j++ { }
@@ -139,7 +139,7 @@ func RepeatedTokenizer(fn func(int)bool) TokenizerFunc {
 	}
 }
 
-func RepeatedTokenizerTo(fn func(int)bool, translation string) TokenizerFunc {	
+func RepeatedTokenizerTo(fn func(rune)bool, translation string) TokenizerFunc {
 	return func(t *Tokenizer) (string, int) {
 		var j int
 		for j = 0; (t.i+j < len(t.input)) && fn(t.input[t.i+j]); j++ { }

@@ -7,7 +7,7 @@ package main
 
 import (
 	"os"
-	"tabwriter"
+	"text/tabwriter"
 	"bufio"
 )
 

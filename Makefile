@@ -1,7 +1,4 @@
-include $(GOROOT)/src/Make.inc
-
-TARG=pooch
-#TARG=parsemain
+all: pooch
 
 GOFILES=\
 	dbg.go types.go dbname.go compat.go\
@@ -10,9 +7,10 @@ GOFILES=\
 	staticserve.go htmlformat.go serve.go multiserve.go\
 	pooch.go
 
-include $(GOROOT)/src/Make.cmd
-
 staticservedeps = static/* static/dot-luv/* static/dot-luv/images/*
 staticserve.go: $(staticservedeps)
 	perl make-staticserve.pl $(staticservedeps) > staticserve.go
+
+pooch: $(GOFILES)
+	go build
 

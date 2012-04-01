@@ -45,7 +45,7 @@ type ParseResult struct {
 	include BoolExpr
 	exclude BoolExpr
 	options map[string]string
-	
+
 	savedSearch string
 	extra string // text after the #+ separator
 	command string // text after the #! separator
@@ -57,12 +57,12 @@ type ParseResult struct {
 
 func MakeParseResult() *ParseResult {
 	r := &ParseResult{}
-	
+
 	r.include.operator = "AND"
 	r.exclude.operator = "AND"
 	r.include.subExpr = make([]Clausable, 0)
 	r.exclude.subExpr = make([]Clausable, 0)
-	
+
 	r.options = make(map[string]string)
 
 	return r
@@ -87,7 +87,7 @@ func (p *Parser) ParseSpeculative(fn func()bool) bool {
 	defer func() {
 		if !r { p.tkzer.next = pos }
 	}()
-	
+
 	r = fn()
 	return r
 }
@@ -126,7 +126,7 @@ func (p *Parser) ParseOperationSubexpression(r *SimpleExpr) bool {
 			(*r).op = op
 			(*r).value = value
 			return true
-		} 
+		}
 		return false
 	})
 }
@@ -146,7 +146,7 @@ func ParseFreqToken(text string) bool {
 
 func ParsePriority(prstr string) Priority {
 	priority := INVALID
-	
+
 	switch prstr {
 	case "later", "l": priority = LATER
 	case "n", "now": priority = NOW
@@ -180,11 +180,11 @@ func (p *Parser) ParseColumnRequest() bool {
 		if p.tkzer.Next() != "#" { return false }
 
 		colName := p.tkzer.Next()
-		if !isTagChar(([]int(colName))[0]) { return false }
+		if !isTagChar(([]rune(colName))[0]) { return false }
 
 		if p.tkzer.Next() != "?" { return false }
 		p.result.showCols = append(p.result.showCols, colName)
-		
+
 		return true
 	})
 }
@@ -193,16 +193,16 @@ func (p *Parser) ParsePriorityExpression(r *SimpleExpr) bool {
 	return p.ParseSpeculative(func()bool {
 		if p.tkzer.Next() != "#" { return false }
 		tag := p.tkzer.Next()
-		
+
 		priority := ParsePriority(tag)
-		
+
 		if priority == INVALID { return false }
-		
+
 		r.name = ":priority"
 		r.priority = priority
 		r.value = "see priority"
 		r.op = "="
-		
+
 		return true
 	})
 }
@@ -212,9 +212,9 @@ func (p *Parser) ParseTimeExpression(r *SimpleExpr) bool {
 		if p.tkzer.Next() != "#" { return false }
 
 		timeExpr := p.tkzer.Next()
-		
+
 		split := strings.SplitN(timeExpr, "+", 2)
-		
+
 		parsed, err := ParseDateTime(split[0], p.timezone)
 		if err != nil { return false }
 
@@ -225,13 +225,13 @@ func (p *Parser) ParseTimeExpression(r *SimpleExpr) bool {
 				return false
 			}
 		}
-	
+
 		r.name = ":when"
 		r.valueAsTime = parsed
 		r.value = parsed.Format(TRIGGER_AT_FORMAT)
 		r.op = "="
 		r.extra = freq
-		
+
 		return true
 	})
 }
@@ -241,7 +241,7 @@ func (p *Parser) ParseSimpleExpression(r *SimpleExpr) bool {
 		if p.tkzer.Next() != "#" { return false }
 
 		tagName := p.tkzer.Next()
-		if !isTagChar(([]int(tagName))[0]) { return false }
+		if !isTagChar(([]rune(tagName))[0]) { return false }
 
 		isShowCols := false
 		if p.ParseToken("!") {
@@ -252,7 +252,7 @@ func (p *Parser) ParseSimpleExpression(r *SimpleExpr) bool {
 		p.ParseOperationSubexpression(r)
 
 		r.name = tagName
-		
+
 		if isShowCols {
 			p.result.showCols = append(p.result.showCols, tagName)
 		}
@@ -306,7 +306,7 @@ LOOP: for {
 	}
 
 	p.result.text = strings.TrimSpace(strings.Join([]string(query), ""))
-	
+
 	return p.result
 }
 
@@ -315,7 +315,7 @@ var numberRE *regexp.Regexp = regexp.MustCompile("^[0-9.]+$")
 
 func isNumber(tk string) (n float64, ok bool) {
 	if !numberRE.MatchString(tk) { return -1, false }
-	n, err := strconv.Atof64(tk)
+	n, err := strconv.ParseFloat(tk, 64)
 	if err != nil { return -1, false }
 	return n, true
 }
@@ -336,7 +336,7 @@ func ParseCols(colStr string, timezone int) (Columns, bool) {
 
 	multilineKey := ""
 	multilineValue := ""
-	
+
 	foundcat := false
 	for _, v := range strings.Split(colStr, "\n") {
 		if multilineKey != "" {
@@ -349,9 +349,9 @@ func ParseCols(colStr string, timezone int) (Columns, bool) {
 			}
 		} else {
 			vs := strings.SplitN(v, ":", 2)
-			
+
 			if len(vs) == 0 { continue }
-			
+
 			if len(vs) == 1 {
 				// it's a category
 				x := strings.TrimSpace(v)
@@ -366,7 +366,7 @@ func ParseCols(colStr string, timezone int) (Columns, bool) {
 				value := strings.TrimSpace(vs[1])
 
 				if key == "" { continue }
-				
+
 				if startMultilineRE.MatchString(value) {
 					multilineKey = key
 				} else {

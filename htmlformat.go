@@ -6,10 +6,10 @@
 package main
 
 import (
-	"template"
+	"text/template"
 	"io"
 	"strings"
-	"url"
+	"net/url"
 )
 
 func PriorityFormatter(input Priority) string {

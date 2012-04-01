@@ -9,14 +9,13 @@ package main
 import (
 	"fmt"
 	"time"
-	"container/vector"
 	"sort"
 	"strings"
 	"strconv"
 	"hash/crc32"
 	"os"
 	"encoding/base64"
-	"tabwriter"
+	"text/tabwriter"
 	"bufio"
 )
 
@@ -26,7 +25,11 @@ type ParseError struct {
 	error string
 }
 
-func MakeParseError(error string) os.Error {
+func (e *ParseError) Error() string {
+	return e.error
+}
+
+func MakeParseError(error string) error {
 	return &ParseError{error}
 }
 
@@ -108,7 +111,7 @@ type Entry struct {
 }
 
 type ErrorEntry struct {
-	Time *time.Time
+	Time time.Time
 	Message string
 }
 
@@ -116,7 +119,7 @@ func (ee *ErrorEntry) TimeString() string {
 	return ee.Time.Format("2006-01-02 15:04:05")
 }
 
-func must(err os.Error) {
+func must(err error) {
 	if err != nil { panic(err) }
 }
 
@@ -135,7 +138,7 @@ func MarshalEntry(entry *Entry, timezone int) *UnmarshalEntry {
 
 func DemarshalEntry(umentry *UnmarshalEntry, timezone int) *Entry {
 	triggerAt, _ := ParseDateTime(umentry.TriggerAt, timezone)
-	
+
 	sort := umentry.Sort
 	if sort == "" { sort = SortFromTriggerAt(triggerAt, false) }
 
@@ -144,7 +147,7 @@ func DemarshalEntry(umentry *UnmarshalEntry, timezone int) *Entry {
 	if !foundcat {
 		cols["uncat"] = ""
 	}
-	
+
 	return MakeEntry(
 		umentry.Id,
 		umentry.Title,
@@ -176,7 +179,7 @@ func (e *Entry) ColumnOk(name string) (value string, ok bool) { value, ok = e.co
 func (e *Entry) Column(name string) string { return e.columns[name];  }
 func (e *Entry) SetColumns(cols Columns) *Entry { e.columns = cols; return e }
 func (e *Entry) SetColumn(name, value string) *Entry { e.columns[name] = value; return e }
-func (e *Entry) RemoveColumn(name string) *Entry { e.columns[name] = "", false; return e }
+func (e *Entry) RemoveColumn(name string) *Entry { delete(e.columns, name); return e }
 
 func (e *Entry) MergeColumns(cols Columns) *Entry {
 	for k, v := range cols {
@@ -214,8 +217,7 @@ func (entry *Entry) TriggerAtString(timezone int) string {
 	triggerAt := entry.TriggerAt()
 	triggerAtString := ""
 	if triggerAt != nil {
-		z := time.SecondsToUTC(triggerAt.Seconds() + (int64(timezone) * 60 * 60))
-		z.ZoneOffset = timezone * 60
+		z := time.Unix(triggerAt.Unix() + (int64(timezone) * 60 * 60), 0).In(time.FixedZone("fixed-zone", timezone * 60))
 		triggerAtString = z.Format(TRIGGER_AT_FORMAT)
 	}
 
@@ -223,23 +225,23 @@ func (entry *Entry) TriggerAtString(timezone int) string {
 }
 
 func (entry *Entry) NextEntry(newId string) *Entry {
-	newTriggerAt := time.SecondsToUTC(entry.TriggerAt().Seconds() + int64(entry.Freq() * 24 * 60 * 60))
+	newTriggerAt := time.Unix(entry.TriggerAt().Unix() + int64(entry.Freq() * 24 * 60 * 60), 0)
 
-	return MakeEntry(newId, entry.Title(), entry.Text(), entry.Priority(), newTriggerAt, entry.Sort(), entry.Columns())
+	return MakeEntry(newId, entry.Title(), entry.Text(), entry.Priority(), &newTriggerAt, entry.Sort(), entry.Columns())
 }
 
 func (e *Entry) Before(time int64) bool {
-	return e.triggerAt.Seconds() < time
+	return e.triggerAt.Unix() < time
 }
 
 func (e *Entry) CatHash() uint32 {
-	var catsVector vector.StringVector
+	cats := make([]string, 0)
 
 	for key, value := range e.Columns() {
-		if value == "" { catsVector.Push(key) }
+		if value == "" {
+			cats = append(cats, key)
+		}
 	}
-
-	cats := ([]string)(catsVector)
 
 	sort.Strings(cats)
 
@@ -252,17 +254,17 @@ func (e *Entry) CatHash() uint32 {
 }
 
 func (e *Entry) ColString() string {
-	var r vector.StringVector
+	r := make([]string, 0)
 
 	for k, v := range e.Columns() {
 		if strings.IndexAny(v, "\r\n") != -1 {
-			r.Push(k + ": {\n" + v + "}")
+			r = append(r, k + ": {\n" + v + "}")
 		} else {
-			r.Push(k + ": " + v)
+			r = append(r, k + ": " + v)
 		}
 	}
 
-	return strings.Join(([]string)(r), "\n") + "\n"
+	return strings.Join(r, "\n") + "\n"
 }
 
 func StripQuotes(in string) string {
@@ -308,14 +310,14 @@ func (e *Entry) UpgradePriority(special bool) bool {
 		switch e.Priority() {
 		case NOW:
 			e.priority = DONE
-			e.columns["done-at"] = time.UTC().Format("2006-01-02_15:04:05")
+			e.columns["done-at"] = time.Now().UTC().Format("2006-01-02_15:04:05")
 			return false
 		case TIMED:
 			e.priority = DONE
-			e.columns["done-at"] = time.UTC().Format("2006-01-02_15:04:05")
+			e.columns["done-at"] = time.Now().UTC().Format("2006-01-02_15:04:05")
 			return false
 		default:
-			if e.TriggerAt().Seconds() > time.UTC().Seconds() { // trigger time is in the future
+			if e.TriggerAt().Unix() > time.Now().UTC().Unix() { // trigger time is in the future
 				e.priority = TIMED
 			} else {
 				e.priority = NOW
@@ -345,13 +347,13 @@ func (e *Entry) UpgradePriority(special bool) bool {
 				e.priority = NOW
 			case NOW:
 				e.priority = DONE
-				e.columns["done-at"] = time.UTC().Format("2006-01-02_15:04:05")
+				e.columns["done-at"] = time.Now().UTC().Format("2006-01-02_15:04:05")
 				return false
 			}
 			return true
 		}
 	}
-	
+
 	return true
 }
 
@@ -380,10 +382,10 @@ func decodeStatic(name string) string {
 
 func (entry *Entry) Print() {
 	fmt.Printf("%s\n%s\n", entry.Title(), entry.Text())
-	
+
 	tw := tabwriter.NewWriter(os.Stdout, 8, 8, 4, ' ', 0)
 	w := bufio.NewWriter(tw)
-	
+
 	pr := entry.Priority()
 	w.WriteString(fmt.Sprintf("Priority:\t%s\n", pr.String()))
 	if entry.TriggerAt() != nil {
@@ -403,19 +405,19 @@ func (entry *Entry) Print() {
 }
 
 func (e *Entry) CatString() string {
-	var r vector.StringVector
+	r := make([]string, 0)
 
 	for k, v := range e.Columns() {
 		if v != "" { continue; }
-		r.Push(k)
+		r = append(r, k)
 	}
-	
-	return "#" + strings.Join(([]string)(r), "#")
+
+	return "#" + strings.Join(r, "#")
 }
 
 func TimeString(triggerAt *time.Time, sort string, timezone int) string {
 	if triggerAt != nil {
-		now := time.UTC()
+		now := time.Now().UTC()
 		showYear := (triggerAt.Format("2006") != now.Format("2006"))
 		showTime := (triggerAt.Format("15:04") != "00:00")
 

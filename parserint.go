@@ -28,10 +28,10 @@ func SortFromTriggerAt(triggerAt *time.Time, defaultWithTime bool) string {
 	}
 
 	if defaultWithTime {
-		return time.UTC().Format("2006-01-02_15:04:05")
+		return time.Now().UTC().Format("2006-01-02_15:04:05")
 	}
-	
-	return time.UTC().Format("2006-01-02")
+
+	return time.Now().UTC().Format("2006-01-02")
 }
 
 func ExtractColumnsFromSearch(search *ParseResult) Columns {
@@ -67,7 +67,7 @@ func (tl *Tasklist) ParseNew(entryText, queryText string) *Entry {
 	prioritySet := false
 
 	catFound := false
-	
+
 	for _, expr := range parsed.include.subExpr {
 		sexpr, ok := expr.(*SimpleExpr)
 		if !ok { continue }
@@ -149,10 +149,10 @@ func (expr *SimpleExpr) IntoClauseEx(tl *Tasklist) string {
 
 	case ":search":
 		return fmt.Sprintf("id IN (SELECT id FROM ridx WHERE title_field MATCH %s UNION SELECT id FROM ridx WHERE text_field MATCH %s)", tl.Quote(expr.value), tl.Quote(expr.value))
-		
+
 	case ":priority":
 		return fmt.Sprintf("priority = %d", expr.priority)
-		
+
 	case ":when":
 		if expr.op == "notnull" {
 			return "trigger_at_field IS NOT NULL"
@@ -160,7 +160,7 @@ func (expr *SimpleExpr) IntoClauseEx(tl *Tasklist) string {
 			value := expr.value
 			if expr.valueAsTime != nil {
 				value = expr.valueAsTime.Format(TRIGGER_AT_FORMAT)
-			} 
+			}
 			return fmt.Sprintf("trigger_at_field %s '%s'", sqlop, value)
 		} else {
 			panic(MakeParseError(fmt.Sprintf("Unknown operator %s", expr.op)))
@@ -186,7 +186,7 @@ func (expr *SimpleExpr) IntoClauseEx(tl *Tasklist) string {
 func (expr *SimpleExpr) IntoSelect(tl *Tasklist, depth string) string {
 	if expr.name[0] == ':' {
 		return fmt.Sprintf("%sSELECT id FROM tasks WHERE %s", depth, expr.IntoClauseEx(tl))
-	} 
+	}
 
 	return fmt.Sprintf("%s%s", depth, expr.IntoClauseEx(tl))
 }
@@ -203,7 +203,7 @@ func (expr *SimpleExpr) IntoClause(tl *Tasklist, depth string, negate bool) stri
 
 func (expr *BoolExpr) IntoClauses(tl *Tasklist, depth string, negate bool, addDone bool) []string {
 	r := make([]string, 0)
-	
+
 	nextdepth := "   " + depth
 
 	hasPriorityClause := false
@@ -228,12 +228,12 @@ func (expr *BoolExpr) IntoClauses(tl *Tasklist, depth string, negate bool, addDo
 func (expr *BoolExpr) IntoClause(tl *Tasklist, depth string, negate bool) string {
 	clauses := expr.IntoClauses(tl, depth+"   ", negate, false)
 	return depth + "(\n" + strings.Join(clauses, "\n"+depth+expr.operator+"\n") + ")"
-	
+
 }
-	
-func (pr *ParseResult) GetLuaClause(tl *Tasklist) (string, os.Error) {
+
+func (pr *ParseResult) GetLuaClause(tl *Tasklist) (string, error) {
 	if pr.extra == "" { return "", nil }
-	
+
 	tl.mutex.Lock()
 	defer tl.mutex.Unlock()
 
@@ -262,7 +262,7 @@ func (pr *ParseResult) GetLuaClause(tl *Tasklist) (string, os.Error) {
 	if clausable == nil {
 		return "", MakeParseError("Extra lua code didn't return a query object")
 	}
-	
+
 	return clausable.IntoClause(tl, "   ", false), nil
 }
 
@@ -280,13 +280,13 @@ func (pr *ParseResult) ResolveSavedSearch(tl *Tasklist) *ParseResult {
 	return pr
 }
 
-func (pr *ParseResult) IntoSelect(tl *Tasklist, luaClausable Clausable) (string, map[string]string, os.Error) {
+func (pr *ParseResult) IntoSelect(tl *Tasklist, luaClausable Clausable) (string, map[string]string, error) {
 	if pr.savedSearch != "" {
 		parseResult := tl.ParseEx(tl.GetSavedSearch(pr.savedSearch))
 		r, _, err := parseResult.IntoSelect(tl, luaClausable)
 		return r, parseResult.options, err
 	}
-	
+
 	_, addDone := pr.options["w/done"]; addDone = !addDone
 	where := pr.include.IntoClauses(tl, "", false, addDone)
 	whereNot := pr.exclude.IntoClauses(tl, "", true, false)
@@ -297,28 +297,28 @@ func (pr *ParseResult) IntoSelect(tl *Tasklist, luaClausable Clausable) (string,
 
 	for _, v := range whereNot { where = append(where, v) }
 
-	var error os.Error
+	var err error
 	if luaClausable == nil {
 		var extraClause string
-		extraClause, error = pr.GetLuaClause(tl)
+		extraClause, err = pr.GetLuaClause(tl)
 		if extraClause != "" {
 			where = append(where, extraClause)
 		}
 	} else {
 		var extraClause string
-		extraClause, error = luaClausable.IntoClause(tl, "   ", false), nil
+		extraClause, err = luaClausable.IntoClause(tl, "   ", false), nil
 		if extraClause != "" {
 			where = append(where, extraClause)
 		}
 	}
 
 	whereStr := ""
-	
+
 	if len(where) > 0 {
 		whereStr = "\nWHERE\n" + strings.Join(where, "\nAND\n")
 	}
 
-	return SELECT_HEADER + whereStr + "\nGROUP BY tasks.id\nORDER BY priority, trigger_at_field ASC, sort DESC", nil, error
+	return SELECT_HEADER + whereStr + "\nGROUP BY tasks.id\nORDER BY priority, trigger_at_field ASC, sort DESC", nil, err
 }
 
 func (pr *ParseResult) IntoTrigger() string {
@@ -350,7 +350,7 @@ func (pr *ParseResult) IsEmpty() bool {
 	return true
 }
 
-func (tl *Tasklist) ParseSearch(queryText string, luaClausable Clausable) (string, string, string, bool, bool, []string, map[string]string, os.Error) {
+func (tl *Tasklist) ParseSearch(queryText string, luaClausable Clausable) (string, string, string, bool, bool, []string, map[string]string, error) {
 	pr := tl.ParseEx(queryText)
 	isEmpty := pr.IsEmpty()
 	theselect, extraOptions, err := pr.IntoSelect(tl, luaClausable)
@@ -363,7 +363,7 @@ func (tl *Tasklist) ParseSearch(queryText string, luaClausable Clausable) (strin
 	for k, v := range pr.options {
 		options[k] = v
 	}
-	
+
 	return theselect, pr.command, trigger, pr.savedSearch != "", isEmpty, pr.showCols, options, err
 }
 

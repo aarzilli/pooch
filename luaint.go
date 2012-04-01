@@ -6,11 +6,10 @@
 package main
 
 import (
-	"lua51"
+	"github.com/aarzilli/golua/lua"
 	"unsafe"
 	"fmt"
 	"time"
-	"os"
 	"strconv"
 	"strings"
 )
@@ -25,7 +24,7 @@ type LuaIntError struct {
 	message string
 }
 
-func (le *LuaIntError) String() string {
+func (le *LuaIntError) Error() string {
 	return le.message
 }
 
@@ -35,7 +34,7 @@ type LuaFlags struct {
 	persist bool // changes are persisted
 	filterOut bool // during search filters out the current result
 	remove bool // removes the current entry
-	
+
 	freeCursor bool // function is free of moving the cursor around
 	showReturnValue bool // show return value of this function
 
@@ -67,13 +66,13 @@ func (tl *Tasklist) SetTasklistInLua() {
 	tl.luaState.SetGlobal(TASKLIST)
 }
 
-func LuaError(L *lua51.State, error string) {
+func LuaError(L *lua.State, error string) {
 	L.CheckStack(1)
 	L.PushString(error)
 	L.Error()
 }
 
-func GetTasklistFromLua(L *lua51.State) *Tasklist {
+func GetTasklistFromLua(L *lua.State) *Tasklist {
 	L.CheckStack(1)
 	L.GetGlobal(TASKLIST)
 	rawptr := L.ToUserdata(-1)
@@ -82,7 +81,7 @@ func GetTasklistFromLua(L *lua51.State) *Tasklist {
 	return *ptr
 }
 
-func GetEntryFromLua(L *lua51.State, name string) *Entry {
+func GetEntryFromLua(L *lua.State, name string) *Entry {
 	L.CheckStack(1)
 	L.GetGlobal(name)
 	rawptr := L.ToUserdata(-1)
@@ -90,7 +89,7 @@ func GetEntryFromLua(L *lua51.State, name string) *Entry {
 	L.Pop(1)
 	if ptr == nil { return nil }
 	return *ptr
-	
+
 }
 
 func (tl *Tasklist) PushGoInterface(obj interface{}) {
@@ -106,7 +105,7 @@ func (tl *Tasklist) ToGoInterface(index int) interface{} {
 	return tl.luaFlags.objects[idx]
 }
 
-func LuaIntGetterSetterFunction(fname string, L *lua51.State, getter func(tl *Tasklist, entry *Entry)string, setter func(tl *Tasklist, entry *Entry, value string)) int {
+func LuaIntGetterSetterFunction(fname string, L *lua.State, getter func(tl *Tasklist, entry *Entry)string, setter func(tl *Tasklist, entry *Entry, value string)) int {
 	argNum := L.GetTop()
 
 	if argNum == 0 {
@@ -130,12 +129,12 @@ func LuaIntGetterSetterFunction(fname string, L *lua51.State, getter func(tl *Ta
 		if !tl.luaFlags.cursorCloned { tl.luaFlags.cursorEdited = true }
 		return 0
 	}
-	
+
 	LuaError(L, fmt.Sprintf("Incorrect number of argoments to %s (only 0 or 1 accepted)", fname))
 	return 0
 }
 
-func LuaIntGetterSetterFunctionInt(fname string, L *lua51.State, getter func(tl *Tasklist, entry *Entry) int, setter func(tl *Tasklist, entry *Entry, value int)) int {
+func LuaIntGetterSetterFunctionInt(fname string, L *lua.State, getter func(tl *Tasklist, entry *Entry) int, setter func(tl *Tasklist, entry *Entry, value int)) int {
 	argNum := L.GetTop()
 
 	if argNum == 0 {
@@ -159,48 +158,51 @@ func LuaIntGetterSetterFunctionInt(fname string, L *lua51.State, getter func(tl 
 		if !tl.luaFlags.cursorCloned { tl.luaFlags.cursorEdited = true }
 		return 0
 	}
-	
+
 	LuaError(L, fmt.Sprintf("Incorrect number of argoments to %s (only 0 or 1 accepted)", fname))
 	return 0
 }
 
-func LuaIntId(L *lua51.State) int {
+func LuaIntId(L *lua.State) int {
 	return LuaIntGetterSetterFunction("id", L,
 		func(tl *Tasklist, entry *Entry) string { return entry.Id() },
 		func(tl *Tasklist, entry *Entry, value string) { if tl.luaFlags.cursorCloned { entry.SetId(value) } })
 }
 
-func LuaIntTitle(L *lua51.State) int {
+func LuaIntTitle(L *lua.State) int {
 	return LuaIntGetterSetterFunction("title", L,
 		func(tl *Tasklist, entry *Entry) string { return entry.Title() },
 		func(tl *Tasklist, entry *Entry, value string) { entry.SetTitle(value) })
 }
 
-func LuaIntText(L *lua51.State) int {
+func LuaIntText(L *lua.State) int {
 	return LuaIntGetterSetterFunction("text", L,
 		func(tl *Tasklist, entry *Entry) string { return entry.Text() },
 		func(tl *Tasklist, entry *Entry, value string) { entry.SetText(value) })
 }
 
-func LuaIntSortField(L *lua51.State) int {
+func LuaIntSortField(L *lua.State) int {
 	return LuaIntGetterSetterFunction("sortfield", L,
 		func(tl *Tasklist, entry *Entry) string { return entry.Sort() },
 		func(tl *Tasklist, entry *Entry, value string) { entry.SetSort(value) })
 }
 
-func LuaIntPriority(L *lua51.State) int {
+func LuaIntPriority(L *lua.State) int {
 	return LuaIntGetterSetterFunction("priority", L,
 		func(tl *Tasklist, entry *Entry) string { pr := entry.Priority(); return pr.String() },
 		func(tl *Tasklist, entry *Entry, value string) { pr := ParsePriority(value); entry.SetPriority(pr) })
 }
 
-func LuaIntWhen(L *lua51.State) int {
+func LuaIntWhen(L *lua.State) int {
 	return LuaIntGetterSetterFunctionInt("triggerat", L,
-		func(tl *Tasklist, entry *Entry) int { t := entry.TriggerAt(); if t != nil { return int(t.Seconds()) }; return 0 },
-		func(tl *Tasklist, entry *Entry, value int) { entry.SetTriggerAt(time.SecondsToUTC(int64(value))) })
+		func(tl *Tasklist, entry *Entry) int { t := entry.TriggerAt(); if t != nil { return int(t.Unix()) }; return 0 },
+		func(tl *Tasklist, entry *Entry, value int) {
+			r := time.Unix(int64(value), 0)
+			entry.SetTriggerAt(&r)
+		})
 }
 
-func LuaIntColumn(L *lua51.State) int {
+func LuaIntColumn(L *lua.State) int {
 	argNum := L.GetTop()
 
 	if argNum == 1 {
@@ -225,12 +227,12 @@ func LuaIntColumn(L *lua51.State) int {
 		if !tl.luaFlags.cursorCloned { tl.luaFlags.cursorEdited = true }
 		return 0
 	}
-	
+
 	LuaError(L, "Incorrect number of arguments to column (only 1 or 2 accepted)")
 	return 0
 }
 
-func LuaIntRmColumn(L *lua51.State) int {
+func LuaIntRmColumn(L *lua.State) int {
 	if L.GetTop() != 1 {
 		LuaError(L, "Incorrect number of arguments to rmcolumn")
 		return 0
@@ -249,19 +251,19 @@ func LuaIntRmColumn(L *lua51.State) int {
 	return 0
 }
 
-func LuaIntFilterOut(L *lua51.State) int {
+func LuaIntFilterOut(L *lua.State) int {
 	tl := GetTasklistFromLua(L)
 	tl.luaFlags.filterOut = true
 	return 0
 }
 
-func LuaIntFilterIn(L *lua51.State) int {
+func LuaIntFilterIn(L *lua.State) int {
 	tl := GetTasklistFromLua(L)
 	tl.luaFlags.filterOut = false
 	return 0
 }
 
-func LuaIntPersist(L *lua51.State) int {
+func LuaIntPersist(L *lua.State) int {
 	tl := GetTasklistFromLua(L)
 	if tl.luaFlags.freeCursor {
 		LuaError(L, "Can not use persist() on free cursor")
@@ -271,7 +273,7 @@ func LuaIntPersist(L *lua51.State) int {
 	return 0
 }
 
-func LuaIntRemove(L *lua51.State) int {
+func LuaIntRemove(L *lua.State) int {
 	tl := GetTasklistFromLua(L)
 	if tl.luaFlags.freeCursor {
 		LuaError(L, "Can not use persist() on free cursor")
@@ -281,7 +283,7 @@ func LuaIntRemove(L *lua51.State) int {
 	return 0
 }
 
-func LuaIntCloneCursor(L *lua51.State) int {
+func LuaIntCloneCursor(L *lua.State) int {
 	tl := GetTasklistFromLua(L)
 	if tl.luaFlags.freeCursor {
 		LuaError(L, "Can not use persist() on free cursor")
@@ -298,7 +300,7 @@ func LuaIntCloneCursor(L *lua51.State) int {
 	return 0
 }
 
-func LuaIntWriteCursor(L *lua51.State) int {
+func LuaIntWriteCursor(L *lua.State) int {
 	Logf(INFO, "Writing cursor")
 	L.CheckStack(1)
 	tl := GetTasklistFromLua(L)
@@ -311,13 +313,13 @@ func LuaIntWriteCursor(L *lua51.State) int {
 		LuaError(L, "No cursor set, can not use writecurosr()")
 		return 0
 	}
-	tl.Update(cursor, false, true) 
+	tl.Update(cursor, false, true)
 	return 0
 }
 
-func LuaIntVisit(L *lua51.State) int {
+func LuaIntVisit(L *lua.State) int {
 	L.CheckStack(1)
-	
+
 	tl := GetTasklistFromLua(L)
 	if !tl.luaFlags.freeCursor {
 		LuaError(L, "Cursor isn't free to move, can not use visit()")
@@ -329,7 +331,7 @@ func LuaIntVisit(L *lua51.State) int {
 	Logf(DEBUG, "Lua visiting: <%s>\n", id)
 
 	var error interface{} = nil
-	
+
 	{
 		defer func() {
 			if rerr := recover(); rerr != nil {
@@ -337,33 +339,33 @@ func LuaIntVisit(L *lua51.State) int {
 			}
 		}()
 		cursor := tl.Get(id)
-		tl.SetEntryInLua(CURSOR, cursor);		
+		tl.SetEntryInLua(CURSOR, cursor);
 	}
 
 	if error != nil {
 		tl.SetEntryInLua(CURSOR, nil);
 	}
-	
+
 	return 0
 }
 
-func SetTableInt(L *lua51.State, name string, value int) {
+func SetTableInt(L *lua.State, name string, value int) {
 	// Remember to check stack for 2 extra locations
-	
+
 	L.PushString(name)
 	L.PushInteger(value)
 	L.SetTable(-3)
 }
 
-func SetTableIntString(L *lua51.State, idx int, value string) {
+func SetTableIntString(L *lua.State, idx int, value string) {
 	L.PushInteger(idx)
 	L.PushString(value)
 	L.SetTable(-3)
 }
 
-func GetTableInt(L *lua51.State, name string) int {
+func GetTableInt(L *lua.State, name string) int {
 	// Remember to check stack for 1 extra location
-	
+
 	L.PushString(name)
 	L.GetTable(-2)
 	r := L.ToInteger(-1)
@@ -371,21 +373,20 @@ func GetTableInt(L *lua51.State, name string) int {
 	return r
 }
 
-func PushTime(L *lua51.State, t *time.Time) {
+func PushTime(L *lua.State, t time.Time) {
 	L.CheckStack(3)
 	L.CreateTable(0, 7)
 
-	SetTableInt(L, "year", int(t.Year))
-	SetTableInt(L, "month", int(t.Month))
-	SetTableInt(L, "day", int(t.Day))
-	SetTableInt(L, "weekday", int(t.Weekday))
-	SetTableInt(L, "hour", int(t.Hour))
-	SetTableInt(L, "minute", int(t.Minute))
-	SetTableInt(L, "second", int(t.Second))
-	SetTableInt(L, "offset", int(t.ZoneOffset))
+	SetTableInt(L, "year", int(t.Year()))
+	SetTableInt(L, "month", int(t.Month()))
+	SetTableInt(L, "day", int(t.Day()))
+	SetTableInt(L, "weekday", int(t.Weekday()))
+	SetTableInt(L, "hour", int(t.Hour()))
+	SetTableInt(L, "minute", int(t.Minute()))
+	SetTableInt(L, "second", int(t.Second()))
 }
 
-func PushStringVec(L *lua51.State, v []string) {
+func PushStringVec(L *lua.State, v []string) {
 	L.CheckStack(3)
 	L.CreateTable(len(v), 0)
 
@@ -394,19 +395,19 @@ func PushStringVec(L *lua51.State, v []string) {
 	}
 }
 
-func LuaIntUTCTime(L *lua51.State) int {
+func LuaIntUTCTime(L *lua.State) int {
 	if L.GetTop() != 1 {
 		LuaError(L, "Wrong number of arguments to utctime")
 		return 0
 	}
-	
+
 	timestamp := L.ToInteger(1)
-	PushTime(L, time.SecondsToUTC(int64(timestamp)))
-	
+	PushTime(L, time.Unix(int64(timestamp), 0))
+
 	return 1
 }
 
-func LuaIntLocalTime(L *lua51.State) int {
+func LuaIntLocalTime(L *lua.State) int {
 	if L.GetTop() != 1 {
 		LuaError(L, "Wrong number of arguments to localtime")
 		return 0
@@ -415,16 +416,15 @@ func LuaIntLocalTime(L *lua51.State) int {
 	tl := GetTasklistFromLua(L)
 	timezone := tl.GetTimezone()
 	timestamp := L.ToInteger(1)
-	
-	t := time.SecondsToUTC(int64(timestamp) + (int64(timezone) * 60 * 60))
-	t.ZoneOffset = timezone * 60 * 60
-	
+
+	t := time.Unix(int64(timestamp) + (int64(timezone) * 60 * 60), 0)
+
 	PushTime(L, t)
-	
+
 	return 1
 }
 
-func LuaIntTimestamp(L *lua51.State) int {
+func LuaIntTimestamp(L *lua.State) int {
 	if L.GetTop() != 1 {
 		LuaError(L, "Wrong number of arguments to timestamp")
 		return 0
@@ -437,21 +437,13 @@ func LuaIntTimestamp(L *lua51.State) int {
 
 	L.CheckStack(1)
 
-	var t time.Time
+	t := time.Date(GetTableInt(L, "year"), time.Month(GetTableInt(L, "month")), GetTableInt(L, "day"), GetTableInt(L, "hour"), GetTableInt(L, "minute"), GetTableInt(L, "second"), 0, time.Local)
 
-	t.Year = int64(GetTableInt(L, "year"))
-	t.Month = GetTableInt(L, "month")
-	t.Day = GetTableInt(L, "day")
-	t.Hour = GetTableInt(L, "hour")
-	t.Minute = GetTableInt(L, "minute")
-	t.Second = GetTableInt(L, "second")
-	t.ZoneOffset = GetTableInt(L, "offset")
-
-	L.PushInteger(int(t.Seconds()))
+	L.PushInteger(int(t.Unix()))
 	return 1
 }
 
-func LuaIntParseDateTime(L *lua51.State) int {
+func LuaIntParseDateTime(L *lua.State) int {
 	if L.GetTop() != 1 {
 		LuaError(L, "Wrong number of arguments to parsedatetime")
 		return 0
@@ -465,7 +457,7 @@ func LuaIntParseDateTime(L *lua51.State) int {
 	out, _ := ParseDateTime(input, tl.GetTimezone())
 
 	if out != nil {
-		L.PushInteger(int(out.Seconds()))
+		L.PushInteger(int(out.Unix()))
 	} else {
 		L.PushInteger(0)
 	}
@@ -473,7 +465,7 @@ func LuaIntParseDateTime(L *lua51.State) int {
 	return 1
 }
 
-func LuaIntSplit(L *lua51.State) int {
+func LuaIntSplit(L *lua.State) int {
 	if L.GetTop() < 2 {
 		LuaError(L, "Wron number of arguments to split()")
 		return 0
@@ -487,18 +479,18 @@ func LuaIntSplit(L *lua51.State) int {
 	if L.GetTop() == 3 {
 		n = L.ToInteger(3)
 	}
-		
+
 	if L.GetTop() > 3 {
 		LuaError(L, "Wron number of arguments to split()")
 		return 0
 	}
 
 	PushStringVec(L, strings.SplitN(instr, sepstr, n))
-	
+
 	return 1
 }
 
-func LuaIntStringFunction(L *lua51.State, name string, n int, fn func(tl *Tasklist, argv []string)int) int {
+func LuaIntStringFunction(L *lua.State, name string, n int, fn func(tl *Tasklist, argv []string)int) int {
 	if L.GetTop() != n {
 		LuaError(L, "Wrong number of arguments to " + name)
 		return 0
@@ -515,43 +507,44 @@ func LuaIntStringFunction(L *lua51.State, name string, n int, fn func(tl *Taskli
 	return fn(tl, argv)
 }
 
-func LuaIntIdQuery(L *lua51.State) int {
+func LuaIntIdQuery(L *lua.State) int {
 	return LuaIntStringFunction(L, "idq", 1, func(tl *Tasklist, argv []string) int {
 		tl.PushGoInterface(&SimpleExpr{ ":id", "=", argv[0], nil, 0, "" })
 		return 1
 	})
 }
 
-func LuaIntTitleQuery(L *lua51.State) int {	
+func LuaIntTitleQuery(L *lua.State) int {
 	return LuaIntStringFunction(L, "titleq", 2, func(tl *Tasklist, argv []string) int {
 		tl.PushGoInterface(&SimpleExpr{ ":title_field", argv[0], argv[1], nil, 0, "" })
 		return 1
 	})
 }
 
-func LuaIntTextQuery(L *lua51.State) int {
+func LuaIntTextQuery(L *lua.State) int {
 	return LuaIntStringFunction(L, "textq", 2, func(tl *Tasklist, argv []string) int {
 		tl.PushGoInterface(&SimpleExpr{ ":text_field", argv[0], argv[1], nil, 0, "" })
 		return 1
 	})
 }
 
-func LuaIntWhenQuery(L *lua51.State) int {
+func LuaIntWhenQuery(L *lua.State) int {
 	return LuaIntStringFunction(L, "whenq", 2, func(tl *Tasklist, argv []string) int {
-		n, _ := strconv.Atoi64(argv[1])
-		tl.PushGoInterface(&SimpleExpr{ ":when", argv[0], "", time.SecondsToUTC(n), 0, "" })
+		n, _ := strconv.ParseInt(argv[1], 10, 64)
+		t := time.Unix(n, 0)
+		tl.PushGoInterface(&SimpleExpr{ ":when", argv[0], "", &t, 0, "" })
 		return 1
 	})
 }
 
-func LuaIntSearchQuery(L *lua51.State) int {
+func LuaIntSearchQuery(L *lua.State) int {
 	return LuaIntStringFunction(L, "searchq", 1, func(tl *Tasklist, argv []string) int {
 		tl.PushGoInterface(&SimpleExpr{ ":search", "match", argv[0], nil, 0, "" })
 		return 1
 	})
 }
 
-func LuaIntColumnQuery(L *lua51.State) int {
+func LuaIntColumnQuery(L *lua.State) int {
 	if (L.GetTop() != 1) && (L.GetTop() != 3) {
 		LuaError(L, "Wrong number of arguments to columnq")
 		return 0
@@ -567,7 +560,7 @@ func LuaIntColumnQuery(L *lua51.State) int {
 	} else {
 		L.Pop(1)
 	}
-		
+
 	if name[0] == ':' {
 		LuaError(L, "Column name can not start with ':'")
 		return 0
@@ -580,7 +573,7 @@ func LuaIntColumnQuery(L *lua51.State) int {
 	return 1
 }
 
-func LuaIntPriorityQuery(L *lua51.State) int {
+func LuaIntPriorityQuery(L *lua.State) int {
 	if L.GetTop() != 1 {
 		LuaError(L, "Wrong number of arguments to priorityq")
 		return 0
@@ -606,10 +599,10 @@ func GetQueryObject(tl *Tasklist, i int) Clausable {
 			LuaError(tl.luaState, "Unparsable string in expression")
 			return nil
 		}
-	} else if tl.luaState.IsLightUserdata(i) { 
+	} else if tl.luaState.IsLightUserdata(i) {
 		ud := tl.ToGoInterface(i)
 		if ud == nil { return nil }
-		
+
 		clausable, ok := ud.(Clausable)
 		if !ok { return nil }
 
@@ -619,7 +612,7 @@ func GetQueryObject(tl *Tasklist, i int) Clausable {
 	return nil
 }
 
-func LuaIntNotQuery(L *lua51.State) int {
+func LuaIntNotQuery(L *lua.State) int {
 	if L.GetTop() != 1 {
 		LuaError(L, "Wrong number of arguments to notq")
 		return 0
@@ -639,7 +632,7 @@ func LuaIntNotQuery(L *lua51.State) int {
 
 }
 
-func LuaIntBoolQuery(L *lua51.State, operator, name string) int {
+func LuaIntBoolQuery(L *lua.State, operator, name string) int {
 	if L.GetTop() < 2 {
 		LuaError(L, "Wrong number of arguments to " + name)
 		return 0
@@ -663,15 +656,15 @@ func LuaIntBoolQuery(L *lua51.State, operator, name string) int {
 	return 1
 }
 
-func LuaIntAndQuery(L *lua51.State) int {
+func LuaIntAndQuery(L *lua.State) int {
 	return LuaIntBoolQuery(L, "AND", "andq")
 }
 
-func LuaIntOrQuery(L *lua51.State) int {
+func LuaIntOrQuery(L *lua.State) int {
 	return LuaIntBoolQuery(L, "OR", "orq")
 }
 
-func LuaIntSubtag(L *lua51.State) int {
+func LuaIntSubtag(L *lua.State) int {
 	if L.GetTop() != 2 {
 		LuaError(L, "Wrong number of arguments to subtag")
 		return 0
@@ -679,7 +672,7 @@ func LuaIntSubtag(L *lua51.State) int {
 
 	trigger := L.ToString(1)
 	tag := L.ToString(2)
-	
+
 	tl := GetTasklistFromLua(L)
 
 	tl.subcolumns[trigger] = append(tl.subcolumns[trigger], tag)
@@ -687,14 +680,14 @@ func LuaIntSubtag(L *lua51.State) int {
 	return 0
 }
 
-func LuaIntNotTopTag(L *lua51.State) int {
+func LuaIntNotTopTag(L *lua.State) int {
 	if L.GetTop() != 1 {
 		LuaError(L, "Wrong number of arguments to nottoptag")
 		return 0
 	}
-	
+
 	tag := L.ToString(1)
-	
+
 	tl := GetTasklistFromLua(L)
 
 	tl.ignoreColumn[tag] = true
@@ -702,7 +695,7 @@ func LuaIntNotTopTag(L *lua51.State) int {
 	return 0
 }
 
-func LuaIntSearch(L *lua51.State) int {
+func LuaIntSearch(L *lua.State) int {
 	if (L.GetTop() < 1) || (L.GetTop() > 2) {
 		LuaError(L, "Wrong number of arguments to search()")
 		return 0
@@ -739,7 +732,7 @@ func LuaIntSearch(L *lua51.State) int {
 	return 1
 }
 
-func LuaIntShowRet(L *lua51.State) int {
+func LuaIntShowRet(L *lua.State) int {
 	L.CheckStack(2)
 	tl := GetTasklistFromLua(L)
 
@@ -748,7 +741,7 @@ func LuaIntShowRet(L *lua51.State) int {
 	return 0
 }
 
-func LuaIntDebulog(L *lua51.State) int {
+func LuaIntDebulog(L *lua.State) int {
 	if (L.GetTop() != 1) {
 		LuaError(L, "Wrong number of arguments to debulog");
 		return 0;
@@ -757,7 +750,7 @@ func LuaIntDebulog(L *lua51.State) int {
 	return 0;
 }
 
-func LuaTableGetString(L *lua51.State, key string) string {
+func LuaTableGetString(L *lua.State, key string) string {
 	L.PushString(key)
 	L.GetTable(-2)
 	r := ""
@@ -834,7 +827,7 @@ func (tl *Tasklist) LuaResultToEntries() ([]*Entry, []string) {
 	return r, cols
 }
 
-func (tl *Tasklist) DoStringNoLock(code string, cursor *Entry, freeCursor bool) os.Error {
+func (tl *Tasklist) DoStringNoLock(code string, cursor *Entry, freeCursor bool) error {
 	if cursor != nil { tl.SetEntryInLua(CURSOR, cursor) }
 	tl.SetTasklistInLua()
 	tl.ResetLuaFlags()
@@ -842,7 +835,7 @@ func (tl *Tasklist) DoStringNoLock(code string, cursor *Entry, freeCursor bool) 
 	if tl.executionLimitEnabled {
 		tl.luaState.SetExecutionLimit(LUA_EXECUTION_LIMIT)
 	}
-	
+
 	if !tl.luaState.DoString(code) {
 		errorMessage := tl.luaState.ToString(-1)
 		tl.LogError(fmt.Sprintf("Error while executing lua code: %s", errorMessage))
@@ -852,22 +845,22 @@ func (tl *Tasklist) DoStringNoLock(code string, cursor *Entry, freeCursor bool) 
 	return nil
 }
 
-func (tl *Tasklist) DoString(code string, cursor *Entry) os.Error {
+func (tl *Tasklist) DoString(code string, cursor *Entry) error {
 	tl.mutex.Lock()
 	defer tl.mutex.Unlock()
 	return tl.DoStringNoLock(code, cursor, false)
 }
 
-func (tl *Tasklist) DoRunString(code string, args []string) os.Error {
+func (tl *Tasklist) DoRunString(code string, args []string) error {
 	tl.mutex.Lock()
 	defer tl.mutex.Unlock()
-	
+
 	PushStringVec(tl.luaState, args)
 	tl.luaState.SetGlobal(RUN_ARGUMENTS_VAR)
 	return tl.DoStringNoLock(code, nil, true)
 }
 
-func (tl *Tasklist) CallLuaFunction(fname string, cursor *Entry) os.Error {
+func (tl *Tasklist) CallLuaFunction(fname string, cursor *Entry) error {
 	tl.mutex.Lock()
 	defer tl.mutex.Unlock()
 
@@ -889,15 +882,15 @@ func (tl *Tasklist) CallLuaFunction(fname string, cursor *Entry) os.Error {
 	return nil
 }
 
-func NilGlobal(L *lua51.State, name string) {
+func NilGlobal(L *lua.State, name string) {
 	L.PushNil()
 	L.SetGlobal(name)
 }
 
-func MakeLuaState() *lua51.State {
-	L := lua51.NewState()
+func MakeLuaState() *lua.State {
+	L := lua.NewState()
 	L.CheckStack(1)
-	
+
 	//L.OpenLibs()
 	L.OpenBase()
 	L.OpenString()
@@ -920,14 +913,14 @@ func MakeLuaState() *lua51.State {
 	NilGlobal(L, "coroutine")
 
 	// cursor examination functions
-	
+
 	L.Register("id", LuaIntId)
 	L.Register("title", LuaIntTitle)
 	L.Register("text", LuaIntText)
 	L.Register("priority", LuaIntPriority)
 	L.Register("when", LuaIntWhen)
 	L.Register("sortfield", LuaIntSortField)
-	
+
 	L.Register("column", LuaIntColumn)
 	L.Register("rmcolumn", LuaIntRmColumn)
 
@@ -941,7 +934,7 @@ func MakeLuaState() *lua51.State {
 	L.Register("visit", LuaIntVisit)
 
 	// editing functions
-	
+
 	L.Register("persist", LuaIntPersist)
 	L.Register("remove", LuaIntRemove)
 	L.Register("clonecursor", LuaIntCloneCursor)

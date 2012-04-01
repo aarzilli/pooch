@@ -6,15 +6,13 @@
 package main
 
 import (
-	"http"
+	"net/http"
 	"io"
 	"fmt"
 	"strings"
-	"json"
+	"encoding/json"
 	"time"
-	"container/vector"
 	"strconv"
-	"os"
 )
 
 type TasklistWithIdServer func(c http.ResponseWriter, req *http.Request, tl *Tasklist, id string)
@@ -139,7 +137,7 @@ func ChangePriorityServer(c http.ResponseWriter, req *http.Request, tl *Tasklist
 
 func GetServer(c http.ResponseWriter, req *http.Request, tl *Tasklist, id string) {
 	entry := tl.Get(id)
-	io.WriteString(c, time.UTC().Format("2006-01-02 15:04:05") + "\n")
+	io.WriteString(c, time.Now().UTC().Format("2006-01-02 15:04:05") + "\n")
 	json.NewEncoder(c).Encode(MarshalEntry(entry, tl.GetTimezone()))
 }
 
@@ -171,7 +169,7 @@ func SaveServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 
 	tl.Update(entry, false, false);
 
-	io.WriteString(c, "saved-at-timestamp: " + time.UTC().Format("2006-01-02 15:04:05"))
+	io.WriteString(c, "saved-at-timestamp: " + time.Now().UTC().Format("2006-01-02 15:04:05"))
 }
 
 func ErrorLogServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
@@ -206,7 +204,7 @@ func ExplainServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	myexplain := ""
 
 	myexplain += fmt.Sprintf("Errors: %s\nSaved Search: %v\n\nEmpty: %v\n\nShow Cols: %v\n\nOptions: %v\n\nSQL:\n%s\n\nCODE:\n%s\n\nSQLITE OPCODES:\n", err, isSavedSearch, isEmpty, showCols, options, theselect, code)
-	
+
 	ErrorLogHeaderHTML(map[string]string{ "name": "explanation", "theme": css, "code": myexplain }, c)
 	ExplainEntryHeaderHTML(nil, c)
 
@@ -224,7 +222,7 @@ func ExplainServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 			"htmlClass": htmlClass,
 			"explain": expl }, c)
 	}
-	
+
 	ErrorLogEnderHTML(nil, c)
 }
 
@@ -242,7 +240,7 @@ func queryForTitle(query string) string {
 	return queryForTitle
 }
 
-func headerInfo(tl *Tasklist, pageName string, query string, trigger string, isSavedSearch bool, showOtherLink bool, parseError, retrieveError os.Error, options map[string]string) map[string]interface{} {
+func headerInfo(tl *Tasklist, pageName string, query string, trigger string, isSavedSearch bool, showOtherLink bool, parseError, retrieveError error, options map[string]string) map[string]interface{} {
 	css := tl.GetSetting("theme")
 	timezone := tl.GetTimezone()
 	removeSearch := ""; if isSavedSearch { removeSearch = "remove-search" }
@@ -277,7 +275,7 @@ func headerInfo(tl *Tasklist, pageName string, query string, trigger string, isS
 		"parseError": parseError,
 		"otherPageName": otherPageName,
 		"otherPageLink": otherPageLink,
-		
+
 		"savedSearches": savedSearches,
 		"subtags": subtags,
 		"toplevel": toplevel,
@@ -306,7 +304,7 @@ func headerInfo(tl *Tasklist, pageName string, query string, trigger string, isS
 
 func StatServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	headerInfo := headerInfo(tl, "/list", "", "", false, false, nil, nil, nil)
-	
+
 	ListHeaderHTML(headerInfo, c)
 	CommonHeaderHTML(headerInfo, c)
 
@@ -331,7 +329,7 @@ func RunServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 
 	fentry := tl.Get(command[0])
 	tl.DoRunString(fentry.Text(), command[1:len(command)])
-	
+
 	headerInfo := headerInfo(tl, "/list", commandstr, "", false, false, nil, nil, map[string]string{ "hideprioritycol": "", "showidcol": "", "hidecatscol": "" })
 
 	//TODO: options?
@@ -347,13 +345,13 @@ func RunServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 		if len(v) > 0 {
 			EntryListPriorityChangeHTML(map[string]interface{}{ "entry": v[0], "colNames": showCols, "PrioritySize": 4 }, c)
 		}
-		
+
 		for idx, entry := range v {
 			htmlClass := "entry"
 			if idx % 2 != 0 {
 				htmlClass += " oddentry"
 			}
-			
+
 			cols := []string{}
 			for _,  colName := range showCols {
 				cols = append(cols, entry.Columns()[colName])
@@ -367,10 +365,10 @@ func RunServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 				"htmlClass": htmlClass,
 				"cols": cols,
 			}
-			
+
 			EntryListEntryHTML(entryEntry, c)
 		}
-	} 
+	}
 
 	ListEnderHTML(nil, c)
 }
@@ -387,7 +385,7 @@ func ListServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 		http.Redirect(c, req, "/stat", 301)
 		return
 	}*/
-	
+
 	v, rerr := tl.Retrieve(theselect, code)
 
 	prioritySize := 5
@@ -398,11 +396,11 @@ func ListServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	if _, ok := options["showidcol"]; ok { prioritySize++ }
 
 	headerInfo := headerInfo(tl, "/list", query, trigger, isSavedSearch, true, perr, rerr, options)
-	
+
 	ListHeaderHTML(headerInfo, c)
 	CommonHeaderHTML(headerInfo, c)
 	EntryListHeaderHTML(nil, c)
-	
+
 	var curp Priority = INVALID
 	for idx, entry := range v {
 		if curp != entry.Priority() {
@@ -418,7 +416,7 @@ func ListServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 		cols := []string{}
 		for _,  colName := range showCols {
 			cols = append(cols, entry.Columns()[colName])
-		}		
+		}
 
 		entryEntry := map[string](interface{}){
 			"heading": entry.Id(),
@@ -428,7 +426,7 @@ func ListServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 			"htmlClass": htmlClass,
 			"cols": cols,
 		}
-		
+
 		EntryListEntryHTML(entryEntry, c)
 		EntryListEntryEditorHTML(entryEntry, c)
 	}
@@ -447,10 +445,10 @@ func CalendarServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	CalendarHTML(map[string]string{ "query": query }, c)
 }
 
-func GetCalendarEvents(tl *Tasklist, query string, r *vector.Vector, start, end string, endSecs int64) {
+func GetCalendarEvents(tl *Tasklist, query string, start, end string, endSecs int64) []EventForJSON {
 	pr := tl.ParseEx(query)
 	pr = pr.ResolveSavedSearch(tl) // necessary, to modify the result
-	
+
 	pr.AddIncludeClause(&SimpleExpr{ ":when", "notnull", "", nil, 0, "" })
 	pr.AddIncludeClause(&SimpleExpr{ ":when", ">", start, nil, 0, ""  })
 	pr.AddIncludeClause(&SimpleExpr{ ":when", "<", end, nil, 0, "" })
@@ -460,38 +458,40 @@ func GetCalendarEvents(tl *Tasklist, query string, r *vector.Vector, start, end 
 
 	timezone := tl.GetTimezone()
 
+	r := make([]EventForJSON, 0)
+
 	for _, entry := range v {
 		className := fmt.Sprintf("alt%d", entry.CatHash() % 6)
 
-		r.Push(ToCalendarEvent(entry, className, timezone))
+		r = append(r, ToCalendarEvent(entry, className, timezone))
 
 		if entry.Priority() != TIMED { continue }
 		if freq := entry.Freq(); freq > 0 {
 			for newEntry := entry.NextEntry(""); newEntry.Before(endSecs); newEntry = newEntry.NextEntry("") {
-				r.Push(ToCalendarEvent(newEntry, className, timezone))
+				r = append(r, ToCalendarEvent(newEntry, className, timezone))
 			}
 		}
 	}
+
+	return r
 }
 
 func CalendarEventServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	var startSecs, endSecs int64
-	var err os.Error
-	if startSecs, err = strconv.Atoi64(req.FormValue("start")); err != nil {
+	var err error
+	if startSecs, err = strconv.ParseInt(req.FormValue("start"), 10, 64); err != nil {
 		panic(fmt.Sprintf("Error converting start parameter to int %s: %s", req.FormValue("start"), err))
 	}
-	if endSecs, err = strconv.Atoi64(req.FormValue("end")); err != nil {
+	if endSecs, err = strconv.ParseInt(req.FormValue("end"), 10, 64); err != nil {
 		panic(fmt.Sprintf("Error converting start parameter to int %s: %s", req.FormValue("end"), err))
 	}
 
-	start := time.SecondsToUTC(startSecs).Format("2006-01-02")
-	end := time.SecondsToUTC(endSecs).Format("2006-01-02")
-
-	r := new(vector.Vector)
+	start := time.Unix(startSecs, 0).Format("2006-01-02")
+	end := time.Unix(endSecs, 0).Format("2006-01-02")
 
 	query := req.FormValue("q")
 
-	GetCalendarEvents(tl, query, r, start, end, endSecs)
+	r := GetCalendarEvents(tl, query, start, end, endSecs)
 
 	Log(DEBUG, "For req:", req, "return:", r)
 
@@ -510,7 +510,7 @@ func HtmlGetServer(c http.ResponseWriter, req *http.Request, tl *Tasklist, id st
 		"ecats": entry.CatString(),
 		"cols": []string{},
 	}
-	
+
 	EntryListEntryHTML(entryEntry, c)
 	io.WriteString(c, "\u2029")
 	EntryListEntryEditorHTML(entryEntry, c)
@@ -520,12 +520,12 @@ func SaveSearchServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	name := req.FormValue("name")
 	query := req.FormValue("query")
 
-	if (len(name) > 2) && isQuickTagStart(int(name[0])) && (name[1] == '%') {
+	if (len(name) > 2) && isQuickTagStart(rune(name[0])) && (name[1] == '%') {
 		Logf(INFO, "Converting: %s\n", name)
 		name = name[2:len(name)]
 		Logf(INFO, "Converting: %s\n", name)
 	}
-	
+
 	if query != "" {
 		tl.SaveSearch(name, query)
 	} else {
@@ -567,11 +567,11 @@ func OptionServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 			tl.DoString(settings["setup"], nil)
 		}
 	}
-	
+
 	settings := tl.GetSettings()
 
 	OptionsPageHeader(nil, c)
-	
+
 	for k, v := range settings {
 		if LONG_OPTION[k] {
 			OptionsLongPageLine(map[string]string{ "name": k, "value": v }, c)
@@ -579,7 +579,7 @@ func OptionServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 			OptionsPageLine(map[string]string{ "name": k, "value": v }, c)
 		}
 	}
-	
+
 	OptionsPageEnd(nil, c)
 }
 
@@ -623,7 +623,9 @@ func Serve(port string) {
 	fmt.Printf("Done serving\n")
 }
 
-func ToCalendarEvent(entry *Entry, className string, timezone int) map[string]interface{} {
+type EventForJSON map[string]interface{}
+
+func ToCalendarEvent(entry *Entry, className string, timezone int) EventForJSON {
 	return map[string]interface{}{
 		"id": entry.Id(),
 		"title": entry.Title(),

@@ -6,7 +6,6 @@
 package main
 
 import (
-	"os"
 	"fmt"
 	"time"
 	"io"
@@ -15,14 +14,14 @@ import (
 	"strings"
 	"sync"
 	"strconv"
-	"gosqlite.googlecode.com/hg/sqlite"
-	"lua51"
+	"gosqlite/sqlite" // temp change, while gosqlite repository is broken for go1
+	"github.com/aarzilli/golua/lua"
 )
 
 type Tasklist struct {
 	filename string
 	conn *sqlite.Conn
-	luaState *lua51.State
+	luaState *lua.State
 	luaFlags *LuaFlags
 	mutex *sync.Mutex
 	refs int
@@ -86,10 +85,10 @@ func internalTasklistOpenOrCreate(filename string) *Tasklist {
 		if !HasTable(conn, "ridx") { // Workaround for non-accepted CREATE VIRTUAL TABLE IF NOT EXISTS
 			MustExec(conn, "CREATE VIRTUAL TABLE ridx USING fts3(id TEXT, title_field TEXT, text_field TEXT);")
 		}
-		
+
 		MustExec(conn, "CREATE TABLE IF NOT EXISTS columns(id TEXT, name TEXT, value TEXT, FOREIGN KEY (id) REFERENCES tasks (id) ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED)")
 		MustExec(conn, "CREATE INDEX IF NOT EXISTS columns_id ON columns(id);")
-		
+
 		MustExec(conn, "CREATE TABLE IF NOT EXISTS saved_searches(name TEXT, value TEXT);")
 	}
 
@@ -103,9 +102,9 @@ func internalTasklistOpenOrCreate(filename string) *Tasklist {
 
 	MustExec(conn, "CREATE TABLE IF NOT EXISTS private_settings(name TEXT UNIQUE, value TEXT);")
 	MustExec(conn, "INSERT OR IGNORE INTO private_settings(name, value) VALUES (\"enable_lua_execution_limit\", \"1\")")
-	
-	tasklist := &Tasklist{filename, conn, MakeLuaState(), &LuaFlags{}, &sync.Mutex{}, 1, time.Seconds(), make(map[string]bool), make(map[string][]string, 0), true}
-	
+
+	tasklist := &Tasklist{filename, conn, MakeLuaState(), &LuaFlags{}, &sync.Mutex{}, 1, time.Now().Unix(), make(map[string]bool), make(map[string][]string, 0), true}
+
 	if tasklist.GetPrivateSetting("enable_lua_execution_limit") == "0" {
 		Logf(INFO, "Tasklist '%s' runs without lua execution limits", filename)
 		tasklist.executionLimitEnabled = false
@@ -168,17 +167,17 @@ func (tasklist *Tasklist) Close() {
 
 	tasklistCacheMutex.Lock()
 	defer tasklistCacheMutex.Unlock()
-	
+
 	tasklist.refs--
-	
-	if time.Seconds() - tasklist.timestamp < 6 * 60 * 60 { return }
+
+	if time.Now().Unix() - tasklist.timestamp < 6 * 60 * 60 { return }
 	if tasklist.refs != 0 {
 		Logf(ERROR, "Couldn't close stale connection to %s, active connections %d\n", tasklist.filename, tasklist.refs)
 		return
 	}
 
 	Logf(INFO, "Closing connection to %s\n", tasklist.filename)
-	
+
 	tasklist.conn.Close()
 	tasklist.luaState.Close()
 	tasklistCache[tasklist.filename] = nil
@@ -192,13 +191,13 @@ func (tasklist *Tasklist) Exists(id string) bool {
 
 	hasnext := stmt.Next()
 	Log(DEBUG, "Existence of ", id, " ", hasnext)
-	
+
 	return hasnext
 }
 
 func MakeRandomString(size int) string {
 	var buf []byte = make([]byte, size)
-	
+
 	_, err := io.ReadFull(rand.Reader, buf)
 	must(err)
 
@@ -210,13 +209,13 @@ func MakeRandomString(size int) string {
 
 func (tasklist *Tasklist) MakeRandomId() string {
 	id := MakeRandomString(6)
-	
+
 	exists := tasklist.Exists(id)
-	
+
 	if exists {
 		return tasklist.MakeRandomId()
 	}
-	
+
 	return id
 }
 
@@ -276,12 +275,12 @@ func (tasklist *Tasklist) Add(e *Entry) {
 		exists := tasklist.Exists(e.Id())
 		Log(DEBUG, "Existence check:", exists)
 	}
-		
+
 	Log(DEBUG, "Add finished!")
 }
 
 func (tasklist *Tasklist) LogError(error string) {
-	tasklist.MustExec("INSERT INTO errorlog(timestamp, message) VALUES(?, ?)", time.UTC().Seconds(), error)
+	tasklist.MustExec("INSERT INTO errorlog(timestamp, message) VALUES(?, ?)", time.Now().Unix(), error)
 	Logf(INFO, "error while executing lua function: %s\n", error)
 }
 
@@ -312,10 +311,10 @@ func (tasklist *Tasklist) Update(e *Entry, simpleUpdate bool, alreadyLocked bool
 	Log(DEBUG, "Update finished!")
 }
 
-func StatementScan(stmt *sqlite.Stmt, hasCols bool) (*Entry, os.Error) {
+func StatementScan(stmt *sqlite.Stmt, hasCols bool) (*Entry, error) {
 	var priority_num int
 	var trigger_str, id, title, text, sort, columns string
-	var scanerr os.Error
+	var scanerr error
 	if hasCols {
 		scanerr = stmt.Scan(&id, &title, &text, &priority_num, &trigger_str, &sort, &columns)
 	} else {
@@ -362,8 +361,8 @@ func (tl *Tasklist) Get(id string) *Entry {
 	return entry
 }
 
-func (tl *Tasklist) GetListEx(stmt *sqlite.Stmt, code string) ([]*Entry, os.Error) {
-	var err os.Error
+func (tl *Tasklist) GetListEx(stmt *sqlite.Stmt, code string) ([]*Entry, error) {
+	var err error
 
 	if code != "" {
 		tl.luaState.CheckStack(1)
@@ -378,7 +377,7 @@ func (tl *Tasklist) GetListEx(stmt *sqlite.Stmt, code string) ([]*Entry, os.Erro
 		}
 		tl.luaState.Pop(1)
 	}
-	
+
 	v := []*Entry{}
 	for (stmt.Next()) {
 		entry, scanerr := StatementScan(stmt, true)
@@ -390,7 +389,7 @@ func (tl *Tasklist) GetListEx(stmt *sqlite.Stmt, code string) ([]*Entry, os.Erro
 			if tl.luaFlags.remove {
 				tl.Remove(entry.Id())
 			}
-			
+
 			if tl.luaFlags.persist {
 				if !tl.luaFlags.remove && tl.luaFlags.cursorEdited {
 					tl.Update(entry, false, false)
@@ -403,13 +402,13 @@ func (tl *Tasklist) GetListEx(stmt *sqlite.Stmt, code string) ([]*Entry, os.Erro
 
 			if tl.luaFlags.filterOut { continue }
 		}
-		
+
 		v = append(v, entry)
 	}
 	return v, err
 }
 
-func (tl *Tasklist) Retrieve(theselect, code string) ([]*Entry, os.Error) {
+func (tl *Tasklist) Retrieve(theselect, code string) ([]*Entry, error) {
 	stmt, serr := tl.conn.Prepare(theselect)
 	must(serr)
 	defer stmt.Finalize()
@@ -430,7 +429,7 @@ func (tl *Tasklist) RetrieveErrors() []*ErrorEntry {
 		var timestamp int64
 		var message string
 		must(stmt.Scan(&timestamp, &message))
-		r = append(r, &ErrorEntry{time.SecondsToUTC(timestamp), message})
+		r = append(r, &ErrorEntry{time.Unix(timestamp, 0), message})
 	}
 
 	return r
@@ -532,13 +531,13 @@ func (tl *Tasklist) GetSettings() (r map[string]string) {
 		must(stmt.Scan(&name, &value))
 		r[name] = value
 	}
-	
+
 	return
 }
 
 func (tl *Tasklist) GetTags() []string {
 	r := make([]string, 0)
-	
+
 	stmt, serr := tl.conn.Prepare("SELECT DISTINCT name FROM columns WHERE value = ''")
 	must(serr)
 	defer stmt.Finalize()
@@ -549,7 +548,7 @@ func (tl *Tasklist) GetTags() []string {
 		must(stmt.Scan(&name))
 		r = append(r, name)
 	}
-	
+
 	return r
 }
 
@@ -569,8 +568,8 @@ func (tl *Tasklist) SetSettings(settings map[string]string) {
 }
 
 func (tl *Tasklist) RenameTag(src, dst string) {
-	if isQuickTagStart(int(src[0])) { src = src[1:len(src)] }
-	if isQuickTagStart(int(dst[0])) { dst = dst[1:len(dst)] }
+	if isQuickTagStart(rune(src[0])) { src = src[1:len(src)] }
+	if isQuickTagStart(rune(dst[0])) { dst = dst[1:len(dst)] }
 	tl.MustExec("UPDATE columns SET name = ? WHERE name = ?", dst, src)
 }
 
@@ -579,7 +578,7 @@ func (tl *Tasklist) RunTimedTriggers() {
 	must(serr)
 	defer stmt.Finalize()
 
-	must(stmt.Exec(time.UTC().Format("2006-01-02 15:04:05"), TIMED))
+	must(stmt.Exec(time.Now().Format("2006-01-02 15:04:05"), TIMED))
 
 	for stmt.Next() {
 		entry, scanerr := StatementScan(stmt, true)
@@ -606,7 +605,7 @@ func (tl *Tasklist) RunTimedTriggers() {
 					tl.Add(newentry)
 					checkFreq = false
 				}
-				
+
 				if !tl.luaFlags.remove && tl.luaFlags.cursorEdited {
 					entry.SetPriority(NOW)
 					tl.Update(entry, false, false)
@@ -618,12 +617,12 @@ func (tl *Tasklist) RunTimedTriggers() {
 
 		if checkFreq {
 			freq := entry.Freq()
-			
+
 			Logf(INFO, "Triggering: %v %v %v\n", entry.Id(), entry.TriggerAt(), freq);
-			
+
 			if freq > 0 { tl.Add(entry.NextEntry(tl.MakeRandomId())); }
 		}
-			
+
 		if update {
 			tl.MustExec("UPDATE tasks SET priority = ? WHERE id = ?", NOW, entry.Id());
 		}
@@ -647,7 +646,7 @@ type Statistic struct {
 
 func (tl *Tasklist) GetStatistic(tag string) *Statistic {
 	var stmt *sqlite.Stmt
-	var err os.Error
+	var err error
 	if tag == "" {
 		stmt, err = tl.conn.Prepare("SELECT priority, count(priority) FROM tasks GROUP BY priority")
 	} else {
@@ -672,7 +671,7 @@ func (tl *Tasklist) GetStatistic(tag string) *Statistic {
 
 	for (stmt.Next()) {
 		var priority, count int
-		
+
 		stmt.Scan(&priority, &count)
 
 		switch Priority(priority) {
@@ -702,7 +701,7 @@ func (tl *Tasklist) GetStatistics() []*Statistic {
 	r := make([]*Statistic, 0)
 
 	r = append(r, tl.GetStatistic(""))
-	
+
 	for _, tag := range tl.GetTags() {
 		if tl.ignoreColumn[tag] { continue }
 		r = append(r, tl.GetStatistic(tag))

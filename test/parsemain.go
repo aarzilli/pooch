@@ -3,12 +3,13 @@
  Copyright 2010, Alessandro Arzilli
  */
 
-package main
+package parsetest
 
 import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"main"
 )
 
 func main() {

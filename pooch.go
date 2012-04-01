@@ -9,11 +9,11 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"tabwriter"
+	"text/tabwriter"
 	"bufio"
 	"strings"
 	"strconv"
-	"json"
+	"encoding/json"
 	"io/ioutil"
 )
 
@@ -33,7 +33,7 @@ var commands map[string](func (args []string)) = map[string](func (args []string
 	"rename": CmdRename,
 	"rentag": CmdRenTag,
 	"errlog": CmdErrorLog,
-	
+
 	"multiserve": CmdMultiServe,
 
 	"setopt": CmdSetOption,
@@ -82,13 +82,13 @@ func CheckId(tl *Tasklist, id string, cmd string) {
 
 func CmdCreate(args []string) {
 	CheckArgs(args, map[string]bool{}, 1, 1, "create")
-	
+
 	filename, found := Resolve(args[0])
-	
+
 	Log(DEBUG, "Resolved filename: ", filename)
-	
+
 	CheckCondition(found, "Database already exists at: %s\n", filename)
-	
+
 	tasklist := OpenOrCreate(filename)
 	tasklist.Close()
 }
@@ -119,9 +119,9 @@ func HelpQuickAdd() {
 func CmdQuickUpdate(args []string) {
 	CheckArgsOpenDb(args, map[string]bool{}, 1, 1000, "update", func (tl *Tasklist, args []string, flags map[string]bool) {
 		CheckId(tl, args[0], "update")
-		
+
 		entry := tl.ParseNew(strings.Join(args[1:], " "), "")
-		
+
 		entry.SetId(args[0])
 		tl.Update(entry, false, false)
 	})
@@ -142,18 +142,18 @@ func CmdSearch(args []string) {
 		} else {
 			input = strings.Join(args[0:], " ")
 		}
-		
+
 		timezone := tl.GetTimezone()
 		tsv := flags["t"]; js := flags["j"]
 
 		theselect, command, _, _, _, showCols, _, perr := tl.ParseSearch(input, nil)
 		must(perr)
-		
+
 		Logf(DEBUG, "Search statement\n%s\n", theselect)
 
 		entries, serr := tl.Retrieve(theselect, command)
 		must(serr)
-		
+
 		switch {
 		case tsv: CmdListExTsv(entries, showCols, timezone)
 		case js: CmdListExJS(entries, timezone)
