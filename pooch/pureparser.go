@@ -3,7 +3,7 @@
  Copyright 2010, Alessandro Arzilli
  */
 
-package main
+package pooch
 
 import (
 	"strings"
@@ -17,7 +17,7 @@ import (
 type SimpleExpr struct {
 	name string
 	op string  // if empty string this is a simple tag expression
-	
+
 	value string
 	valueAsTime *time.Time
 	priority Priority

@@ -15,6 +15,7 @@ import (
 	"strconv"
 	"encoding/json"
 	"io/ioutil"
+	. "./pooch"
 )
 
 //import _ "http/pprof"
@@ -137,7 +138,7 @@ func CmdSearch(args []string) {
 		var input string
 		if (len(args) == 1) && (args[0] == "-") {
 			buf, err := ioutil.ReadAll(os.Stdin)
-			must(err)
+			Must(err)
 			input = string(buf)
 		} else {
 			input = strings.Join(args[0:], " ")
@@ -147,12 +148,12 @@ func CmdSearch(args []string) {
 		tsv := flags["t"]; js := flags["j"]
 
 		theselect, command, _, _, _, showCols, _, perr := tl.ParseSearch(input, nil)
-		must(perr)
+		Must(perr)
 
 		Logf(DEBUG, "Search statement\n%s\n", theselect)
 
 		entries, serr := tl.Retrieve(theselect, command)
-		must(serr)
+		Must(serr)
 
 		switch {
 		case tsv: CmdListExTsv(entries, showCols, timezone)
@@ -220,7 +221,7 @@ func CmdListExTsv(v []*Entry, showCols []string, timezone int) {
 		fmt.Printf("\t%s", showCol)
 	}
 	fmt.Printf("\n")
-	
+
 	for _, entry := range v {
 		timeString := TimeString(entry.TriggerAt(), entry.Sort(), timezone)
 		fmt.Printf("%s\t%s\t%s", entry.Id(), entry.Title(), timeString)
@@ -290,9 +291,9 @@ func CmdMultiServe(args []string) {
 	logfile, err := os.OpenFile(args[2], os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
 	CheckCondition(err != nil, "Couldn't open logfile %s: %s\n", logfile, err)
 	defer logfile.Close()
-	
+
 	SetLogger(logfile)
-	
+
 	MultiServe(args[0], args[1])
 }
 
@@ -304,11 +305,11 @@ func HelpMultiServe() {
 func CmdTsvUpdate(argv []string) {
 	CheckArgsOpenDb(argv, map[string]bool{}, 0, 0, "tsvup", func (tl *Tasklist, args []string, flags map[string]bool) {
 		in := bufio.NewReader(os.Stdin)
-		
+
 		for line, err := in.ReadString('\n'); err == nil; line, err = in.ReadString('\n') {
 			line = strings.Trim(line, "\t\n ")
 			if line == "" { continue }
-			
+
 			entry := ParseTsvFormat(line, tl, tl.GetTimezone());
 			if tl.Exists(entry.Id()) {
 				//fmt.Printf("UPDATING\t%s\t%s\n", entry.Id(), entry.TriggerAt().Format("2006-01-02"))
@@ -378,12 +379,12 @@ func CmdGet(args []string) {
 	CheckArgsOpenDb(args, map[string]bool{}, 1, 1, "get", func(tl *Tasklist, args []string, flags map[string]bool) {
 		id := args[0]
 		CheckId(tl, id, "get")
-		
+
 		entry := tl.Get(id)
 		entry.Print()
 	})
 }
-	
+
 func HelpGet() {
 	fmt.Fprintf(os.Stderr, "Usage: get <id>\n\n")
 	fmt.Fprintf(os.Stderr, "\tPrints the entry associated with <id> inside <db>\n")
@@ -403,10 +404,10 @@ func CmdSetOption(args []string) {
 
 		if value == "-" {
 			buf, err := ioutil.ReadAll(os.Stdin)
-			must(err)
+			Must(err)
 			value = string(buf)
 		}
-		
+
 		if private {
 			tl.SetPrivateSetting(name, value)
 		} else {
@@ -453,7 +454,7 @@ func CmdRun(args []string) {
 		fentry := tl.Get(fname)
 		tl.DoRunString(fentry.Text(), args[1:len(args)])
 
-		if tl.luaFlags.showReturnValue {
+		if tl.ShowReturnValueRequest() {
 			entries, cols := tl.LuaResultToEntries()
 			CmdListEx(entries, cols, tl.GetTimezone())
 		}
@@ -483,7 +484,7 @@ func HelpHelp() {
 
 func main() {
 	SetLogger(os.Stderr)
-	
+
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Usage of %s:\n", os.Args[0])
 		tw := tabwriter.NewWriter(os.Stderr, 8, 8, 4, ' ', 0)
@@ -520,7 +521,7 @@ func main() {
 	}
 
 	flag.Parse()
-	
+
 	if flag.NArg() < 1 {
 		flag.Usage()
 		os.Exit(-1)
@@ -533,10 +534,10 @@ func main() {
 	defer func() {
 		if rerr := recover(); rerr != nil {
 			fmt.Fprintf(os.Stderr, "Error executing command %s: %s\n", args[0], rerr)
-			WriteStackTrace(rerr, loggerWriter)
+			WriteStackTrace(rerr, LoggerWriter)
 			os.Exit(-1)
 		}
 	}()
-	
+
 	fn(args[1:])
 }

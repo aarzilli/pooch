@@ -3,7 +3,7 @@
  Copyright 2010, Alessandro Arzilli
  */
 
-package main
+package pooch
 
 import (
 	"time"
@@ -136,7 +136,7 @@ var weekdayConversion map[string]int = map[string]int{
 }
 
 func parseNextWeekdayTime(input string, timezone int) *VarTime {
-	var datetime *VarTime
+	var datetime *VarTime = &VarTime{}
 
 	split := strings.SplitN(input, ",", 2)
 	if len(split) > 1 {

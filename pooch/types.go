@@ -3,7 +3,7 @@
  Copyright 2010, Alessandro Arzilli
  */
 
-package main
+package pooch
 
 
 import (
@@ -119,7 +119,7 @@ func (ee *ErrorEntry) TimeString() string {
 	return ee.Time.Format("2006-01-02 15:04:05")
 }
 
-func must(err error) {
+func Must(err error) {
 	if err != nil { panic(err) }
 }
 

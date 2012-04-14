@@ -3,7 +3,7 @@
  Copyright 2010, Alessandro Arzilli
  */
 
-package main
+package pooch
 
 import (
 	"fmt"
@@ -36,14 +36,14 @@ var tasklistCache map[string]*Tasklist = make(map[string]*Tasklist)
 var tasklistCacheMutex sync.Mutex
 
 func MustExec(conn *sqlite.Conn, stmt string, v...interface{}) {
-	must(conn.Exec(stmt, v...))
+	Must(conn.Exec(stmt, v...))
 }
 
 func HasTable(conn *sqlite.Conn, name string) bool {
 	stmt, err := conn.Prepare("SELECT name FROM sqlite_master WHERE name = ?")
-	must(err)
+	Must(err)
 	defer stmt.Finalize()
-	must(stmt.Exec(name))
+	Must(stmt.Exec(name))
 	return stmt.Next()
 }
 
@@ -76,7 +76,7 @@ func (tasklist *Tasklist) WithTransaction(alreadyLocked bool, f func()) {
 
 func internalTasklistOpenOrCreate(filename string) *Tasklist {
 	conn, err := sqlite.Open(filename)
-	must(err)
+	Must(err)
 
 	if !HasTable(conn, "errorlog") { // optimization, if the last added table exists exists do not try to create anything
 		MustExec(conn, "CREATE TABLE IF NOT EXISTS tasks(id TEXT PRIMARY KEY, title_field TEXT, text_field TEXT, priority INTEGER, trigger_at_field DATE, sort TEXT);")
@@ -147,7 +147,7 @@ func OpenOrCreate(filename string) *Tasklist {
 
 	if r, ok := tasklistCache[filename]; ok && r != nil {
 		r.refs++
-		r.RunTimedTriggers() // must run timed triggers anyways
+		r.RunTimedTriggers() // Must run timed triggers anyways
 		return r
 	}
 
@@ -185,9 +185,9 @@ func (tasklist *Tasklist) Close() {
 
 func (tasklist *Tasklist) Exists(id string) bool {
 	stmt, err := tasklist.conn.Prepare("SELECT id FROM tasks WHERE id = ?")
-	must(err)
+	Must(err)
 	defer stmt.Finalize()
-	must(stmt.Exec(id))
+	Must(stmt.Exec(id))
 
 	hasnext := stmt.Next()
 	Log(DEBUG, "Existence of ", id, " ", hasnext)
@@ -199,7 +199,7 @@ func MakeRandomString(size int) string {
 	var buf []byte = make([]byte, size)
 
 	_, err := io.ReadFull(rand.Reader, buf)
-	must(err)
+	Must(err)
 
 	var encbuf []byte = make([]byte, base64.StdEncoding.EncodedLen(len(buf)))
 	base64.StdEncoding.Encode(encbuf, buf)
@@ -345,16 +345,16 @@ func StatementScan(stmt *sqlite.Stmt, hasCols bool) (*Entry, error) {
 
 func (tl *Tasklist) Get(id string) *Entry {
 	stmt, serr := tl.conn.Prepare(SELECT_HEADER + "WHERE tasks.id = ? GROUP BY tasks.id")
-	must(serr)
+	Must(serr)
 	defer stmt.Finalize()
-	must(stmt.Exec(id))
+	Must(stmt.Exec(id))
 
 	if (!stmt.Next()) {
 		panic(fmt.Sprintf("Couldn't find request entry at Tasklist.Get"))
 	}
 
 	entry, err := StatementScan(stmt, true)
-	must(err)
+	Must(err)
 
 	entry.SetId(id)
 
@@ -381,7 +381,7 @@ func (tl *Tasklist) GetListEx(stmt *sqlite.Stmt, code string) ([]*Entry, error) 
 	v := []*Entry{}
 	for (stmt.Next()) {
 		entry, scanerr := StatementScan(stmt, true)
-		must(scanerr)
+		Must(scanerr)
 
 		if code != "" {
 			if cerr := tl.CallLuaFunction(SEARCHFUNCTION, entry); cerr != nil { err = cerr }
@@ -410,25 +410,25 @@ func (tl *Tasklist) GetListEx(stmt *sqlite.Stmt, code string) ([]*Entry, error) 
 
 func (tl *Tasklist) Retrieve(theselect, code string) ([]*Entry, error) {
 	stmt, serr := tl.conn.Prepare(theselect)
-	must(serr)
+	Must(serr)
 	defer stmt.Finalize()
 	serr = stmt.Exec()
-	must(serr)
+	Must(serr)
 
 	return tl.GetListEx(stmt, code)
 }
 
 func (tl *Tasklist) RetrieveErrors() []*ErrorEntry {
 	stmt, serr := tl.conn.Prepare("SELECT timestamp, message FROM errorlog ORDER BY timestamp DESC LIMIT 200")
-	must(serr)
+	Must(serr)
 	defer stmt.Finalize()
-	must(stmt.Exec())
+	Must(stmt.Exec())
 
 	r := make([]*ErrorEntry, 0)
 	for stmt.Next() {
 		var timestamp int64
 		var message string
-		must(stmt.Scan(&timestamp, &message))
+		Must(stmt.Scan(&timestamp, &message))
 		r = append(r, &ErrorEntry{time.Unix(timestamp, 0), message})
 	}
 
@@ -444,14 +444,14 @@ type ExplainEntry struct {
 
 func (tl *Tasklist) ExplainRetrieve(theselect string) []*ExplainEntry {
 	stmt, serr := tl.conn.Prepare(theselect)
-	must(serr)
+	Must(serr)
 	defer stmt.Finalize()
-	must(stmt.Exec())
+	Must(stmt.Exec())
 
 	r := make([]*ExplainEntry, 0)
 	for stmt.Next() {
 		ee := &ExplainEntry{}
-		must(stmt.Scan(&(ee.Addr), &(ee.Opcode),
+		Must(stmt.Scan(&(ee.Addr), &(ee.Opcode),
 			&(ee.P1), &(ee.P2), &(ee.P3), &(ee.P4), &(ee.P5),
 			&(ee.Comment)))
 		r = append(r, ee)
@@ -464,13 +464,13 @@ func (tl *Tasklist) GetSavedSearches() []string {
 	v := make([]string, 0)
 
 	stmt, serr := tl.conn.Prepare("SELECT name FROM saved_searches;")
-	must(serr)
+	Must(serr)
 	defer stmt.Finalize()
-	must(stmt.Exec())
+	Must(stmt.Exec())
 
 	for stmt.Next() {
 		var name string
-		must(stmt.Scan(&name))
+		Must(stmt.Scan(&name))
 		v = append(v, name)
 	}
 
@@ -479,38 +479,38 @@ func (tl *Tasklist) GetSavedSearches() []string {
 
 func (tl *Tasklist) GetSavedSearch(name string) string {
 	stmt, serr := tl.conn.Prepare("SELECT value FROM saved_searches WHERE name = ?")
-	must(serr)
+	Must(serr)
 	defer stmt.Finalize()
-	must(stmt.Exec(name))
+	Must(stmt.Exec(name))
 	if !stmt.Next() { return "" }
 	var value string
-	must(stmt.Scan(&value))
+	Must(stmt.Scan(&value))
 	return value
 }
 
 func (tl *Tasklist) GetSetting(name string) string {
 	stmt, serr := tl.conn.Prepare("SELECT value FROM settings WHERE name = ?;")
-	must(serr)
+	Must(serr)
 	defer stmt.Finalize()
-	must(stmt.Exec(name))
+	Must(stmt.Exec(name))
 
 	if !stmt.Next() { return "" }
 
 	var value string
-	must(stmt.Scan(&value))
+	Must(stmt.Scan(&value))
 	return value
 }
 
 func (tl *Tasklist) GetPrivateSetting(name string) string {
 	stmt, serr := tl.conn.Prepare("SELECT value FROM private_settings WHERE name = ?;")
-	must(serr)
+	Must(serr)
 	defer stmt.Finalize()
-	must(stmt.Exec(name))
+	Must(stmt.Exec(name))
 
 	if !stmt.Next() { return "" }
 
 	var value string
-	must(stmt.Scan(&value))
+	Must(stmt.Scan(&value))
 	return value
 }
 
@@ -522,13 +522,13 @@ func (tl *Tasklist) GetTimezone() int {
 func (tl *Tasklist) GetSettings() (r map[string]string) {
 	r = make(map[string]string)
 	stmt, serr := tl.conn.Prepare("SELECT name, value FROM settings")
-	must(serr)
+	Must(serr)
 	defer stmt.Finalize()
-	must(stmt.Exec())
+	Must(stmt.Exec())
 
 	for stmt.Next() {
 		var name, value string
-		must(stmt.Scan(&name, &value))
+		Must(stmt.Scan(&name, &value))
 		r[name] = value
 	}
 
@@ -539,13 +539,13 @@ func (tl *Tasklist) GetTags() []string {
 	r := make([]string, 0)
 
 	stmt, serr := tl.conn.Prepare("SELECT DISTINCT name FROM columns WHERE value = ''")
-	must(serr)
+	Must(serr)
 	defer stmt.Finalize()
-	must(stmt.Exec())
+	Must(stmt.Exec())
 
 	for stmt.Next() {
 		name := ""
-		must(stmt.Scan(&name))
+		Must(stmt.Scan(&name))
 		r = append(r, name)
 	}
 
@@ -575,14 +575,14 @@ func (tl *Tasklist) RenameTag(src, dst string) {
 
 func (tl *Tasklist) RunTimedTriggers() {
 	stmt, serr := tl.conn.Prepare(SELECT_HEADER + "WHERE tasks.trigger_at_field < ? AND tasks.priority = ? GROUP BY id")
-	must(serr)
+	Must(serr)
 	defer stmt.Finalize()
 
-	must(stmt.Exec(time.Now().Format("2006-01-02 15:04:05"), TIMED))
+	Must(stmt.Exec(time.Now().Format("2006-01-02 15:04:05"), TIMED))
 
 	for stmt.Next() {
 		entry, scanerr := StatementScan(stmt, true)
-		must(scanerr)
+		Must(scanerr)
 
 		if entry.TriggerAt() == nil { continue } // why was this retrieved?
 
@@ -652,12 +652,12 @@ func (tl *Tasklist) GetStatistic(tag string) *Statistic {
 	} else {
 		stmt, err = tl.conn.Prepare("SELECT priority, count(priority) FROM tasks WHERE id IN (SELECT id FROM columns WHERE name = ?) GROUP BY priority")
 	}
-	must(err)
+	Must(err)
 	defer stmt.Finalize()
 	if tag == "" {
-		must(stmt.Exec())
+		Must(stmt.Exec())
 	} else {
-		must(stmt.Exec(tag))
+		Must(stmt.Exec(tag))
 	}
 
 	name := "#"+tag
@@ -708,4 +708,8 @@ func (tl *Tasklist) GetStatistics() []*Statistic {
 	}
 
 	return r
+}
+
+func (tl *Tasklist) ShowReturnValueRequest() bool {
+	return tl.luaFlags.showReturnValue
 }

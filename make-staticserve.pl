@@ -9,7 +9,7 @@ use File::Basename;
 
 use MIME::Base64;
 
-print "package main\n\n";
+print "package pooch\n\n";
 print "var FILES map[string]string = map[string]string{\n";
 
 my %sums = ();

@@ -3,7 +3,7 @@
  Copyright 2010, Alessandro Arzilli
  */
 
-package main
+package pooch
 
 import (
 	"net/http"
@@ -42,7 +42,7 @@ func WrapperServer(sub http.HandlerFunc) http.HandlerFunc {
 		defer func() {
 			if rerr := recover(); rerr != nil {
 				Log(ERROR, "Error while serving:", rerr)
-				WriteStackTrace(rerr, loggerWriter)
+				WriteStackTrace(rerr, LoggerWriter)
 				io.WriteString(c, fmt.Sprintf("Internal server error: %s", rerr))
 			}
 		}()
@@ -555,7 +555,7 @@ var LONG_OPTION map[string]bool = map[string]bool{
 
 func OptionServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	if req.FormValue("save") == "save" {
-		must(req.ParseForm())
+		Must(req.ParseForm())
 		settings := make(map[string]string)
 		for k, v := range req.Form {
 			if k != "save" { settings[k] = v[0] }

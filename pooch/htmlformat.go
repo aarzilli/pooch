@@ -3,7 +3,7 @@
  Copyright 2010, Alessandro Arzilli
  */
 
-package main
+package pooch
 
 import (
 	"text/template"
@@ -25,7 +25,7 @@ type ExecutableTemplate func(interface{}, io.Writer)
 
 func WrapTemplate(t *template.Template) ExecutableTemplate {
 	return func(data interface{}, wr io.Writer) {
-		must(t.Execute(wr, data))
+		Must(t.Execute(wr, data))
 	}
 }
 

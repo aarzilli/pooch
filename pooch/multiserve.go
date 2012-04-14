@@ -3,7 +3,7 @@
  Copyright 2010, Alessandro Arzilli
  */
 
-package main
+package pooch
 
 import (
 	"net/http"
@@ -21,7 +21,7 @@ type MultiuserDb struct {
 
 func OpenMultiuserDb(directory string) *MultiuserDb{
 	multiuserDb, err := sqlite.Open(path.Join(directory, "users.db"))
-	must(err)
+	Must(err)
 	MustExec(multiuserDb, "CREATE TABLE IF NOT EXISTS users (username TEXT, salt TEXT, passhash BLOB)")
 	MustExec(multiuserDb, "CREATE TABLE IF NOT EXISTS cookies (username TEXT, cookie TEXT)")
 	return &MultiuserDb{multiuserDb, directory}
@@ -33,10 +33,10 @@ func (mdb *MultiuserDb) SaveIdCookie(username, idCookie string) {
 
 func (mdb *MultiuserDb) Exists(username string) bool {
 	stmt, err := mdb.conn.Prepare("SELECT username FROM users WHERE username = ?")
-	must(err)
+	Must(err)
 	defer stmt.Finalize()
 
-	must(stmt.Exec(username))
+	Must(stmt.Exec(username))
 
 	return stmt.Next()
 }
@@ -58,16 +58,16 @@ func (mdb *MultiuserDb) Verify(username, password string) bool {
 	Logf(DEBUG, "Verifying %s / %s\n", username, password)
 
 	stmt, err := mdb.conn.Prepare("SELECT salt, passhash FROM users WHERE username = ?")
-	must(err)
+	Must(err)
 	defer stmt.Finalize()
 
-	must(stmt.Exec(username))
+	Must(stmt.Exec(username))
 
 	if !stmt.Next() { return false }
 
 	var salt string
 	var passhash []byte
-	must(stmt.Scan(&salt, &passhash))
+	Must(stmt.Scan(&salt, &passhash))
 
 	hashedPassword := PasswordHashing(salt, password)
 
@@ -90,15 +90,15 @@ func (mdb *MultiuserDb) Register(username, password string) {
 
 func (mdb *MultiuserDb) UsernameFromCookie(req *http.Request) string {
 	stmt, err := mdb.conn.Prepare("SELECT username FROM cookies WHERE cookie = ?")
-	must(err)
+	Must(err)
 	defer stmt.Finalize()
 
-	must(stmt.Exec(GetIdCookie(req)))
+	Must(stmt.Exec(GetIdCookie(req)))
 
 	if !stmt.Next() { return "" }
 
 	var username string
-	must(stmt.Scan(&username))
+	Must(stmt.Scan(&username))
 
 	return username
 }
@@ -205,7 +205,7 @@ func RegisterServer(c http.ResponseWriter, req *http.Request) {
 			panic(r)
 		}
 	}()
-	
+
 	if req.FormValue("user") == "" {
 		RegisterHTML(map[string]string{ "problem": "" }, c)
 	} else {
@@ -227,7 +227,7 @@ func WhoAmIServer(c http.ResponseWriter, req *http.Request) {
 
 func MultiServe(port string, directory string) {
 	multiuserDb = OpenMultiuserDb(directory)
-	
+
 	http.HandleFunc("/login", WrapperServer(LoginServer))
 	http.HandleFunc("/register", WrapperServer(RegisterServer))
 	http.HandleFunc("/whoami", WrapperServer(WhoAmIServer))

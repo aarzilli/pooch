@@ -3,7 +3,7 @@
  Copyright 2010, Alessandro Arzilli
  */
 
-package main
+package pooch
 
 import (
 	"os"
@@ -15,7 +15,7 @@ func FixExtension(name string) string {
 	if (len(name) >= 6) && (name[len(name)-6:] == ".pooch") {
 		return name
 	}
-	
+
 	return name + ".pooch"
 }
 
@@ -40,7 +40,7 @@ func SearchFile(name string) (outname string, found bool) {
 			found = true
 		}
 	}
-	
+
 	return
 }
 

@@ -3,7 +3,7 @@
  Copyright 2010, Alessandro Arzilli
  */
 
-package main
+package pooch
 
 import (
 	"time"
@@ -369,7 +369,7 @@ func (tl *Tasklist) ParseSearch(queryText string, luaClausable Clausable) (strin
 
 func (tl *Tasklist) ExtendedAddParse() *Entry {
 	buf, err := ioutil.ReadAll(os.Stdin)
-	must(err)
+	Must(err)
 	input := string(buf)
 
 	split1 := strings.SplitN(input, "\n", 2)

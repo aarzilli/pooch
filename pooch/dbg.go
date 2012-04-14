@@ -3,8 +3,7 @@
  Copyright 2010, Alessandro Arzilli
  */
 
-
-package main
+package pooch
 
 import (
 	"log"
@@ -29,25 +28,25 @@ func makeLogger(w io.Writer) *log.Logger {
 	return log.New(w, "", log.Ldate + log.Ltime + log.Lmicroseconds)
 }
 
-var logger *log.Logger = makeLogger(os.Stderr)
-var loggerWriter io.Writer
+var Logger *log.Logger = makeLogger(os.Stderr)
+var LoggerWriter io.Writer
 
 func SetLogger(w io.Writer) {
-	loggerWriter = w
-	logger = makeLogger(w)
+	LoggerWriter = w
+	Logger = makeLogger(w)
 }
 
 var CurrentLogLevel LogLevel = INFO
 
 func Log(ll LogLevel, a ...interface{}) {
 	if ll >= CurrentLogLevel {
-		logger.Print(a...)
+		Logger.Print(a...)
 	}
 }
 
 func Logf(ll LogLevel, fmt string, a ...interface{}) {
 	if ll >= CurrentLogLevel {
-		logger.Printf(fmt, a...)
+		Logger.Printf(fmt, a...)
 	}
 }
 
@@ -77,7 +76,7 @@ func CheckArgs(args []string, accepted map[string]bool, min int, max int, cmd st
 			nargs = append(nargs, arg)
 		}
 	}
-	
+
 	if min > -1 {
 		if len(nargs) < min {
 			Complain(false, "Not enough arguments for " + cmd + "\n")

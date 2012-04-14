@@ -3,7 +3,7 @@
  Copyright 2010, Alessandro Arzilli
  */
 
-package main
+package pooch
 
 import (
 	"github.com/aarzilli/golua/lua"
@@ -716,10 +716,10 @@ func LuaIntSearch(L *lua.State) int {
 	}
 
 	theselect, _, _, _, _, _, _, perr := tl.ParseSearch(query, luaClausable)
-	must(perr)
+	Must(perr)
 
 	entries, serr := tl.Retrieve(theselect, "")
-	must(serr)
+	Must(serr)
 
 	Logf(INFO, "Searching from lua interface <%s> clausable: <%v> yields %d results\n", query, luaClausable, len(entries))
 
