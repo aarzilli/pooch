@@ -8,7 +8,7 @@ package pooch
 import (
 	"net/http"
 	"fmt"
-	"gosqlite/sqlite" // temp change while gosqlite repo is broken with go1
+	"code.google.com/p/gosqlite/sqlite"
 	"path"
 	"regexp"
 	"crypto/sha512"

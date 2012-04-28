@@ -14,7 +14,7 @@ import (
 	"strings"
 	"sync"
 	"strconv"
-	"gosqlite/sqlite" // temp change, while gosqlite repository is broken for go1
+	"code.google.com/p/gosqlite/sqlite"
 	"github.com/aarzilli/golua/lua"
 )
 
