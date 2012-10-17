@@ -48,7 +48,6 @@ func (tl *Tasklist) ResetLuaFlags() {
 	tl.luaFlags.filterOut = false
 	tl.luaFlags.remove = false
 	tl.luaFlags.freeCursor = false
-	tl.luaFlags.objects = make([]interface{}, 0)
 	tl.luaFlags.showReturnValue = false
 }
 
@@ -92,19 +91,6 @@ func GetEntryFromLua(L *lua.State, name string) *Entry {
 
 }
 
-func (tl *Tasklist) PushGoInterface(obj interface{}) {
-	idx := len(tl.luaFlags.objects)
-	tl.luaFlags.objects = append(tl.luaFlags.objects, obj)
-	tl.luaState.PushLightInteger(idx)
-}
-
-func (tl *Tasklist) ToGoInterface(index int) interface{} {
-	if !tl.luaState.IsLightUserdata(index) { return nil }
-	idx := tl.luaState.ToLightInteger(index)
-	if idx >= len(tl.luaFlags.objects) { return nil }
-	return tl.luaFlags.objects[idx]
-}
-
 func LuaIntGetterSetterFunction(fname string, L *lua.State, getter func(tl *Tasklist, entry *Entry)string, setter func(tl *Tasklist, entry *Entry, value string)) int {
 	argNum := L.GetTop()
 
@@ -134,7 +120,7 @@ func LuaIntGetterSetterFunction(fname string, L *lua.State, getter func(tl *Task
 	return 0
 }
 
-func LuaIntGetterSetterFunctionInt(fname string, L *lua.State, getter func(tl *Tasklist, entry *Entry) int, setter func(tl *Tasklist, entry *Entry, value int)) int {
+func LuaIntGetterSetterFunctionInt(fname string, L *lua.State, getter func(tl *Tasklist, entry *Entry) int64, setter func(tl *Tasklist, entry *Entry, value int)) int {
 	argNum := L.GetTop()
 
 	if argNum == 0 {
@@ -195,7 +181,7 @@ func LuaIntPriority(L *lua.State) int {
 
 func LuaIntWhen(L *lua.State) int {
 	return LuaIntGetterSetterFunctionInt("triggerat", L,
-		func(tl *Tasklist, entry *Entry) int { t := entry.TriggerAt(); if t != nil { return int(t.Unix()) }; return 0 },
+		func(tl *Tasklist, entry *Entry) int64 { t := entry.TriggerAt(); if t != nil { return int64(t.Unix()) }; return 0 },
 		func(tl *Tasklist, entry *Entry, value int) {
 			r := time.Unix(int64(value), 0)
 			entry.SetTriggerAt(&r)
@@ -349,7 +335,7 @@ func LuaIntVisit(L *lua.State) int {
 	return 0
 }
 
-func SetTableInt(L *lua.State, name string, value int) {
+func SetTableInt(L *lua.State, name string, value int64) {
 	// Remember to check stack for 2 extra locations
 
 	L.PushString(name)
@@ -357,7 +343,7 @@ func SetTableInt(L *lua.State, name string, value int) {
 	L.SetTable(-3)
 }
 
-func SetTableIntString(L *lua.State, idx int, value string) {
+func SetTableIntString(L *lua.State, idx int64, value string) {
 	L.PushInteger(idx)
 	L.PushString(value)
 	L.SetTable(-3)
@@ -377,13 +363,13 @@ func PushTime(L *lua.State, t time.Time) {
 	L.CheckStack(3)
 	L.CreateTable(0, 7)
 
-	SetTableInt(L, "year", int(t.Year()))
-	SetTableInt(L, "month", int(t.Month()))
-	SetTableInt(L, "day", int(t.Day()))
-	SetTableInt(L, "weekday", int(t.Weekday()))
-	SetTableInt(L, "hour", int(t.Hour()))
-	SetTableInt(L, "minute", int(t.Minute()))
-	SetTableInt(L, "second", int(t.Second()))
+	SetTableInt(L, "year", int64(t.Year()))
+	SetTableInt(L, "month", int64(t.Month()))
+	SetTableInt(L, "day", int64(t.Day()))
+	SetTableInt(L, "weekday", int64(t.Weekday()))
+	SetTableInt(L, "hour", int64(t.Hour()))
+	SetTableInt(L, "minute", int64(t.Minute()))
+	SetTableInt(L, "second", int64(t.Second()))
 }
 
 func PushStringVec(L *lua.State, v []string) {
@@ -391,7 +377,7 @@ func PushStringVec(L *lua.State, v []string) {
 	L.CreateTable(len(v), 0)
 
 	for idx, val := range v {
-		SetTableIntString(L, idx+1, val)
+		SetTableIntString(L, int64(idx+1), val)
 	}
 }
 
@@ -439,7 +425,7 @@ func LuaIntTimestamp(L *lua.State) int {
 
 	t := time.Date(GetTableInt(L, "year"), time.Month(GetTableInt(L, "month")), GetTableInt(L, "day"), GetTableInt(L, "hour"), GetTableInt(L, "minute"), GetTableInt(L, "second"), 0, time.Local)
 
-	L.PushInteger(int(t.Unix()))
+	L.PushInteger(int64(t.Unix()))
 	return 1
 }
 
@@ -457,7 +443,7 @@ func LuaIntParseDateTime(L *lua.State) int {
 	out, _ := ParseDateTime(input, tl.GetTimezone())
 
 	if out != nil {
-		L.PushInteger(int(out.Unix()))
+		L.PushInteger(int64(out.Unix()))
 	} else {
 		L.PushInteger(0)
 	}
@@ -509,21 +495,21 @@ func LuaIntStringFunction(L *lua.State, name string, n int, fn func(tl *Tasklist
 
 func LuaIntIdQuery(L *lua.State) int {
 	return LuaIntStringFunction(L, "idq", 1, func(tl *Tasklist, argv []string) int {
-		tl.PushGoInterface(&SimpleExpr{ ":id", "=", argv[0], nil, 0, "" })
+		tl.luaState.PushGoStruct(&SimpleExpr{ ":id", "=", argv[0], nil, 0, "" })
 		return 1
 	})
 }
 
 func LuaIntTitleQuery(L *lua.State) int {
 	return LuaIntStringFunction(L, "titleq", 2, func(tl *Tasklist, argv []string) int {
-		tl.PushGoInterface(&SimpleExpr{ ":title_field", argv[0], argv[1], nil, 0, "" })
+		tl.luaState.PushGoStruct(&SimpleExpr{ ":title_field", argv[0], argv[1], nil, 0, "" })
 		return 1
 	})
 }
 
 func LuaIntTextQuery(L *lua.State) int {
 	return LuaIntStringFunction(L, "textq", 2, func(tl *Tasklist, argv []string) int {
-		tl.PushGoInterface(&SimpleExpr{ ":text_field", argv[0], argv[1], nil, 0, "" })
+		tl.luaState.PushGoStruct(&SimpleExpr{ ":text_field", argv[0], argv[1], nil, 0, "" })
 		return 1
 	})
 }
@@ -532,14 +518,14 @@ func LuaIntWhenQuery(L *lua.State) int {
 	return LuaIntStringFunction(L, "whenq", 2, func(tl *Tasklist, argv []string) int {
 		n, _ := strconv.ParseInt(argv[1], 10, 64)
 		t := time.Unix(n, 0)
-		tl.PushGoInterface(&SimpleExpr{ ":when", argv[0], "", &t, 0, "" })
+		tl.luaState.PushGoStruct(&SimpleExpr{ ":when", argv[0], "", &t, 0, "" })
 		return 1
 	})
 }
 
 func LuaIntSearchQuery(L *lua.State) int {
 	return LuaIntStringFunction(L, "searchq", 1, func(tl *Tasklist, argv []string) int {
-		tl.PushGoInterface(&SimpleExpr{ ":search", "match", argv[0], nil, 0, "" })
+		tl.luaState.PushGoStruct(&SimpleExpr{ ":search", "match", argv[0], nil, 0, "" })
 		return 1
 	})
 }
@@ -569,7 +555,7 @@ func LuaIntColumnQuery(L *lua.State) int {
 	L.CheckStack(1)
 	tl := GetTasklistFromLua(L)
 
-	tl.PushGoInterface(&SimpleExpr{ name, op, value, nil, 0, "" })
+	tl.luaState.PushGoStruct(&SimpleExpr{ name, op, value, nil, 0, "" })
 	return 1
 }
 
@@ -584,7 +570,7 @@ func LuaIntPriorityQuery(L *lua.State) int {
 	L.CheckStack(1)
 	tl := GetTasklistFromLua(L)
 
-	tl.PushGoInterface(&SimpleExpr{ ":priority", "=", priority, nil, ParsePriority(priority), "" })
+	tl.luaState.PushGoStruct(&SimpleExpr{ ":priority", "=", priority, nil, ParsePriority(priority), "" })
 
 	return 1
 }
@@ -600,7 +586,7 @@ func GetQueryObject(tl *Tasklist, i int) Clausable {
 			return nil
 		}
 	} else if tl.luaState.IsLightUserdata(i) {
-		ud := tl.ToGoInterface(i)
+		ud := tl.luaState.ToGoStruct(i)
 		if ud == nil { return nil }
 
 		clausable, ok := ud.(Clausable)
@@ -627,7 +613,7 @@ func LuaIntNotQuery(L *lua.State) int {
 		return 0
 	}
 
-	tl.PushGoInterface(&NotExpr{clausable})
+	tl.luaState.PushGoStruct(&NotExpr{clausable})
 	return 1
 
 }
@@ -652,7 +638,7 @@ func LuaIntBoolQuery(L *lua.State, operator, name string) int {
 		r.subExpr = append(r.subExpr, clausable)
 	}
 
-	tl.PushGoInterface(r)
+	tl.luaState.PushGoStruct(r)
 	return 1
 }
 
@@ -775,7 +761,7 @@ func (tl *Tasklist) LuaResultToEntries() ([]*Entry, []string) {
 	tl.luaState.GetTable(-2)
 	if !tl.luaState.IsNil(-1) {
 		for j := 1; ; j++ {
-			tl.luaState.PushInteger(j)
+			tl.luaState.PushInteger(int64(j))
 			tl.luaState.GetTable(-2)
 			if tl.luaState.IsNil(-1) {
 				tl.luaState.Pop(1)
@@ -792,7 +778,7 @@ func (tl *Tasklist) LuaResultToEntries() ([]*Entry, []string) {
 	fmt.Printf("Columns: %v", cols)
 
 	for j := 1; ; j++ {
-		tl.luaState.PushInteger(j)
+		tl.luaState.PushInteger(int64(j))
 		tl.luaState.GetTable(-2)
 		if tl.luaState.IsNil(-1) {
 			tl.luaState.Pop(1)
@@ -836,10 +822,9 @@ func (tl *Tasklist) DoStringNoLock(code string, cursor *Entry, freeCursor bool) 
 		tl.luaState.SetExecutionLimit(LUA_EXECUTION_LIMIT)
 	}
 
-	if !tl.luaState.DoString(code) {
-		errorMessage := tl.luaState.ToString(-1)
-		tl.LogError(fmt.Sprintf("Error while executing lua code: %s", errorMessage))
-		return &LuaIntError{errorMessage}
+	if err := tl.luaState.DoString(code); err != nil {
+		tl.LogError(fmt.Sprintf("Error while executing lua code: %v", err))
+		return err
 	}
 
 	return nil
