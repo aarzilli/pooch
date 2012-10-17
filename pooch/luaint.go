@@ -585,13 +585,12 @@ func GetQueryObject(tl *Tasklist, i int) Clausable {
 			LuaError(tl.luaState, "Unparsable string in expression")
 			return nil
 		}
-	} else if tl.luaState.IsLightUserdata(i) {
-		ud := tl.luaState.ToGoStruct(i)
-		if ud == nil { return nil }
+	}
 
-		clausable, ok := ud.(Clausable)
-		if !ok { return nil }
+	ud := tl.luaState.ToGoStruct(i)
+	if ud == nil { return nil }
 
+	if clausable, ok := ud.(Clausable); ok {
 		return clausable
 	}
 
