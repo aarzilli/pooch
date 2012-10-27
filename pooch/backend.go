@@ -395,7 +395,7 @@ func (tl *Tasklist) GetListEx(stmt *sqlite.Stmt, code string) ([]*Entry, error) 
 					tl.Update(entry, false, false)
 				}
 				if tl.luaFlags.cursorCloned {
-					newentry := GetEntryFromLua(tl.luaState, CURSOR)
+					newentry := GetEntryFromLua(tl.luaState, CURSOR, "%internal%")
 					tl.Add(newentry)
 				}
 			}
@@ -600,7 +600,7 @@ func (tl *Tasklist) RunTimedTriggers() {
 
 			if tl.luaFlags.persist {
 				if tl.luaFlags.cursorCloned {
-					newentry := GetEntryFromLua(tl.luaState, CURSOR)
+					newentry := GetEntryFromLua(tl.luaState, CURSOR, "%internal%")
 					Logf(INFO, "Cloned, the clone id is: %s\n", newentry.Id())
 					tl.Add(newentry)
 					checkFreq = false
