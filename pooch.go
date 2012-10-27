@@ -16,7 +16,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	. "./pooch"
-	"runtime"
+	//"runtime"
 )
 
 //import _ "http/pprof"
