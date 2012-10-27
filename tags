@@ -1,0 +1,1315 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.9~svn20110310	//
+$.fn.fullCalendar	static/fullcalendar.js	/^var fcViews = fc.views = {};$/;"	c
+Add	pooch/backend.go	/^func (tasklist *Tasklist) Add(e *Entry) {$/;"	d
+Add	pooch/backend.go	/^func (tasklist *Tasklist) Add(e *Entry) {$/;"	f
+AddCookies	pooch/multiserve.go	/^func AddCookies(c http.ResponseWriter, cookies map[string]string) {$/;"	d
+AddCookies	pooch/multiserve.go	/^func AddCookies(c http.ResponseWriter, cookies map[string]string) {$/;"	f
+AddIdCookie	pooch/multiserve.go	/^func AddIdCookie(c http.ResponseWriter) string {$/;"	d
+AddIdCookie	pooch/multiserve.go	/^func AddIdCookie(c http.ResponseWriter) string {$/;"	f
+AddIncludeClause	pooch/parserint.go	/^func (pr *ParseResult) AddIncludeClause(expr *SimpleExpr) {$/;"	d
+AddIncludeClause	pooch/parserint.go	/^func (pr *ParseResult) AddIncludeClause(expr *SimpleExpr) {$/;"	f
+AgendaDayView	static/fullcalendar.js	/^function AgendaDayView(element, calendar) {$/;"	f
+AgendaDayView.render	static/fullcalendar.js	/^	function render(date, delta) {$/;"	f
+AgendaEventRenderer	static/fullcalendar.js	/^function AgendaEventRenderer() {$/;"	f
+AgendaEventRenderer.bindDaySeg	static/fullcalendar.js	/^	function bindDaySeg(event, eventElement, seg) {$/;"	f
+AgendaEventRenderer.bindSlotSeg	static/fullcalendar.js	/^	function bindSlotSeg(event, eventElement, seg) {$/;"	f
+AgendaEventRenderer.clearEvents	static/fullcalendar.js	/^	function clearEvents() {$/;"	f
+AgendaEventRenderer.compileDaySegs	static/fullcalendar.js	/^	function compileDaySegs(events) {$/;"	f
+AgendaEventRenderer.compileSlotSegs	static/fullcalendar.js	/^	function compileSlotSegs(events) {$/;"	f
+AgendaEventRenderer.draggableDayEvent	static/fullcalendar.js	/^	function draggableDayEvent(event, eventElement, isStart) {$/;"	f
+AgendaEventRenderer.draggableSlotEvent	static/fullcalendar.js	/^	function draggableSlotEvent(event, eventElement, timeElement) {$/;"	f
+AgendaEventRenderer.renderEvents	static/fullcalendar.js	/^	function renderEvents(events, modifiedEventId) {$/;"	f
+AgendaEventRenderer.renderSlotSegs	static/fullcalendar.js	/^	function renderSlotSegs(segs, modifiedEventId) {$/;"	f
+AgendaEventRenderer.resizableSlotEvent	static/fullcalendar.js	/^	function resizableSlotEvent(event, eventElement, timeElement) {$/;"	f
+AgendaEventRenderer.slotEventEnd	static/fullcalendar.js	/^	function slotEventEnd(event) {$/;"	f
+AgendaEventRenderer.slotSegHtml	static/fullcalendar.js	/^	function slotSegHtml(event, seg, className) {$/;"	f
+AgendaView	static/fullcalendar.js	/^function AgendaView(element, calendar, viewName) {$/;"	f
+AgendaView.afterShow	static/fullcalendar.js	/^	function afterShow() {$/;"	f
+AgendaView.beforeHide	static/fullcalendar.js	/^	function beforeHide() {$/;"	f
+AgendaView.colContentLeft	static/fullcalendar.js	/^	function colContentLeft(col) {$/;"	f
+AgendaView.colContentRight	static/fullcalendar.js	/^	function colContentRight(col) {$/;"	f
+AgendaView.dateCell	static/fullcalendar.js	/^	function dateCell(date) {$/;"	f
+AgendaView.dayBind	static/fullcalendar.js	/^	function dayBind(tds) {$/;"	f
+AgendaView.dayOfWeekCol	static/fullcalendar.js	/^	function dayOfWeekCol(dayOfWeek) {$/;"	f
+AgendaView.renderAgenda	static/fullcalendar.js	/^	function renderAgenda(c) {$/;"	f
+AgendaView.renderCellOverlay	static/fullcalendar.js	/^	function renderCellOverlay(col0, row0, col1, row1) {$/;"	f
+AgendaView.renderDayOverlay	static/fullcalendar.js	/^	function renderDayOverlay(startDate, endDate, refreshCoordinateGrid) { \/\/ endDate is exclusive$/;"	f
+AgendaView.renderSlotOverlay	static/fullcalendar.js	/^	function renderSlotOverlay(overlayStart, overlayEnd) {$/;"	f
+AgendaView.resetScroll	static/fullcalendar.js	/^	function resetScroll() {$/;"	f
+AgendaView.setHeight	static/fullcalendar.js	/^	function setHeight(height, dateChanged) {$/;"	f
+AgendaView.setWidth	static/fullcalendar.js	/^	function setWidth(width) {$/;"	f
+AgendaView.slotBind	static/fullcalendar.js	/^	function slotBind(tds) {$/;"	f
+AgendaView.slotClick	static/fullcalendar.js	/^	function slotClick(ev) {$/;"	f
+AgendaWeekView	static/fullcalendar.js	/^function AgendaWeekView(element, calendar) {$/;"	f
+AgendaWeekView.render	static/fullcalendar.js	/^	function render(date, delta) {$/;"	f
+Base	pooch/dbname.go	/^func Base(dbpath string) string {$/;"	d
+Base	pooch/dbname.go	/^func Base(dbpath string) string {$/;"	f
+BasicDayView	static/fullcalendar.js	/^function BasicDayView(element, calendar) {$/;"	f
+BasicDayView.render	static/fullcalendar.js	/^	function render(date, delta) {$/;"	f
+BasicEventRenderer	static/fullcalendar.js	/^function BasicEventRenderer() {$/;"	f
+BasicEventRenderer.bindDaySeg	static/fullcalendar.js	/^	function bindDaySeg(event, eventElement, seg) {$/;"	f
+BasicEventRenderer.clearEvents	static/fullcalendar.js	/^	function clearEvents() {$/;"	f
+BasicEventRenderer.compileSegs	static/fullcalendar.js	/^	function compileSegs(events) {$/;"	f
+BasicEventRenderer.draggableDayEvent	static/fullcalendar.js	/^	function draggableDayEvent(event, eventElement) {$/;"	f
+BasicEventRenderer.renderEvents	static/fullcalendar.js	/^	function renderEvents(events, modifiedEventId) {$/;"	f
+BasicView	static/fullcalendar.js	/^function BasicView(element, calendar, viewName) {$/;"	f
+BasicView.clearSelection	static/fullcalendar.js	/^	function clearSelection() {$/;"	f
+BasicView.colContentLeft	static/fullcalendar.js	/^	function colContentLeft(col) {$/;"	f
+BasicView.colContentRight	static/fullcalendar.js	/^	function colContentRight(col) {$/;"	f
+BasicView.dateCell	static/fullcalendar.js	/^	function dateCell(date) {$/;"	f
+BasicView.dayBind	static/fullcalendar.js	/^	function dayBind(days) {$/;"	f
+BasicView.dayClick	static/fullcalendar.js	/^	function dayClick(ev) {$/;"	f
+BasicView.dayOfWeekCol	static/fullcalendar.js	/^	function dayOfWeekCol(dayOfWeek) {$/;"	f
+BasicView.defaultEventEnd	static/fullcalendar.js	/^	function defaultEventEnd(event) {$/;"	f
+BasicView.defaultSelectionEnd	static/fullcalendar.js	/^	function defaultSelectionEnd(startDate, allDay) {$/;"	f
+BasicView.dragStart	static/fullcalendar.js	/^	function dragStart(_dragElement, ev, ui) {$/;"	f
+BasicView.dragStop	static/fullcalendar.js	/^	function dragStop(_dragElement, ev, ui) {$/;"	f
+BasicView.renderBasic	static/fullcalendar.js	/^	function renderBasic(r, c, showNumbers) {$/;"	f
+BasicView.renderCellOverlay	static/fullcalendar.js	/^	function renderCellOverlay(row0, col0, row1, col1) { \/\/ row1,col1 is inclusive$/;"	f
+BasicView.renderDayOverlay	static/fullcalendar.js	/^	function renderDayOverlay(overlayStart, overlayEnd, refreshCoordinateGrid) { \/\/ overlayEnd is exclusive$/;"	f
+BasicView.renderSelection	static/fullcalendar.js	/^	function renderSelection(startDate, endDate, allDay) {$/;"	f
+BasicView.setHeight	static/fullcalendar.js	/^	function setHeight(height) {$/;"	f
+BasicView.setWidth	static/fullcalendar.js	/^	function setWidth(width) {$/;"	f
+BasicWeekView	static/fullcalendar.js	/^function BasicWeekView(element, calendar) {$/;"	f
+BasicWeekView.render	static/fullcalendar.js	/^	function render(date, delta) {$/;"	f
+Before	pooch/types.go	/^func (e *Entry) Before(time int64) bool {$/;"	d
+Before	pooch/types.go	/^func (e *Entry) Before(time int64) bool {$/;"	f
+BoolExpr	pooch/pureparser.go	/^type BoolExpr struct {$/;"	d
+BoolExpr	pooch/pureparser.go	/^type BoolExpr struct {$/;"	t
+CURSOR	pooch/luaint.go	/^var CURSOR string = "cursor"$/;"	d
+CURSOR	pooch/luaint.go	/^var CURSOR string = "cursor"$/;"	v
+Calendar	static/fullcalendar.js	/^function Calendar(element, options, eventSources) {$/;"	f
+Calendar.bodyVisible	static/fullcalendar.js	/^	function bodyVisible() {$/;"	f
+Calendar.calcSize	static/fullcalendar.js	/^	function calcSize() {$/;"	f
+Calendar.changeView	static/fullcalendar.js	/^	function changeView(newViewName) {$/;"	f
+Calendar.destroy	static/fullcalendar.js	/^	function destroy() {$/;"	f
+Calendar.elementVisible	static/fullcalendar.js	/^	function elementVisible() {$/;"	f
+Calendar.getDate	static/fullcalendar.js	/^	function getDate() {$/;"	f
+Calendar.getView	static/fullcalendar.js	/^	function getView() {$/;"	f
+Calendar.gotoDate	static/fullcalendar.js	/^	function gotoDate(year, month, dateOfMonth) {$/;"	f
+Calendar.incrementDate	static/fullcalendar.js	/^	function incrementDate(years, months, days) {$/;"	f
+Calendar.initialRender	static/fullcalendar.js	/^	function initialRender() {$/;"	f
+Calendar.lateRender	static/fullcalendar.js	/^	function lateRender() {$/;"	f
+Calendar.markEventsDirty	static/fullcalendar.js	/^	function markEventsDirty() {$/;"	f
+Calendar.markSizesDirty	static/fullcalendar.js	/^	function markSizesDirty() {$/;"	f
+Calendar.next	static/fullcalendar.js	/^	function next() {$/;"	f
+Calendar.nextYear	static/fullcalendar.js	/^	function nextYear() {$/;"	f
+Calendar.option	static/fullcalendar.js	/^	function option(name, value) {$/;"	f
+Calendar.prev	static/fullcalendar.js	/^	function prev() {$/;"	f
+Calendar.prevYear	static/fullcalendar.js	/^	function prevYear() {$/;"	f
+Calendar.refetchEvents	static/fullcalendar.js	/^	function refetchEvents() {$/;"	f
+Calendar.render	static/fullcalendar.js	/^	function render(inc) {$/;"	f
+Calendar.renderView	static/fullcalendar.js	/^	function renderView(inc) {$/;"	f
+Calendar.reportEventChange	static/fullcalendar.js	/^	function reportEventChange(eventID) {$/;"	f
+Calendar.reportEvents	static/fullcalendar.js	/^	function reportEvents(_events) {$/;"	f
+Calendar.rerenderEvents	static/fullcalendar.js	/^	function rerenderEvents(modifiedEventID) {$/;"	f
+Calendar.select	static/fullcalendar.js	/^	function select(start, end, allDay) {$/;"	f
+Calendar.setSize	static/fullcalendar.js	/^	function setSize(dateChanged) { \/\/ todo: dateChanged?$/;"	f
+Calendar.today	static/fullcalendar.js	/^	function today() {$/;"	f
+Calendar.trigger	static/fullcalendar.js	/^	function trigger(name, thisObj) {$/;"	f
+Calendar.unselect	static/fullcalendar.js	/^	function unselect() { \/\/ safe to be called before renderView$/;"	f
+Calendar.updateEvents	static/fullcalendar.js	/^	function updateEvents(forceRender) {$/;"	f
+Calendar.updateSize	static/fullcalendar.js	/^	function updateSize() {$/;"	f
+Calendar.windowResize	static/fullcalendar.js	/^	function windowResize() {$/;"	f
+CalendarEventServer	pooch/serve.go	/^func CalendarEventServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {$/;"	d
+CalendarEventServer	pooch/serve.go	/^func CalendarEventServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {$/;"	f
+CalendarHTML	pooch/htmlformat.go	/^var CalendarHTML ExecutableTemplate = MakeExecutableTemplate("Calendar", `$/;"	d
+CalendarHTML	pooch/htmlformat.go	/^var CalendarHTML ExecutableTemplate = MakeExecutableTemplate("Calendar", `$/;"	v
+CalendarHeaderHTML	pooch/htmlformat.go	/^var CalendarHeaderHTML ExecutableTemplate = MakeExecutableTemplate("CalendarHeader", `$/;"	d
+CalendarHeaderHTML	pooch/htmlformat.go	/^var CalendarHeaderHTML ExecutableTemplate = MakeExecutableTemplate("CalendarHeader", `$/;"	v
+CalendarServer	pooch/serve.go	/^func CalendarServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {$/;"	d
+CalendarServer	pooch/serve.go	/^func CalendarServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {$/;"	f
+CallLuaFunction	pooch/luaint.go	/^func (tl *Tasklist) CallLuaFunction(fname string, cursor *Entry) error {$/;"	d
+CallLuaFunction	pooch/luaint.go	/^func (tl *Tasklist) CallLuaFunction(fname string, cursor *Entry) error {$/;"	f
+CatHash	pooch/types.go	/^func (e *Entry) CatHash() uint32 {$/;"	d
+CatHash	pooch/types.go	/^func (e *Entry) CatHash() uint32 {$/;"	f
+CatString	pooch/types.go	/^func (e *Entry) CatString() string {$/;"	d
+CatString	pooch/types.go	/^func (e *Entry) CatString() string {$/;"	f
+ChangePriorityServer	pooch/serve.go	/^func ChangePriorityServer(c http.ResponseWriter, req *http.Request, tl *Tasklist, id string) {$/;"	d
+ChangePriorityServer	pooch/serve.go	/^func ChangePriorityServer(c http.ResponseWriter, req *http.Request, tl *Tasklist, id string) {$/;"	f
+CheckArgs	pooch/dbg.go	/^func CheckArgs(args []string, accepted map[string]bool, min int, max int, cmd string) (nargs []string, flags map[string]bool) {$/;"	d
+CheckArgs	pooch/dbg.go	/^func CheckArgs(args []string, accepted map[string]bool, min int, max int, cmd string) (nargs []string, flags map[string]bool) {$/;"	f
+CheckArgsOpenDb	pooch.go	/^func CheckArgsOpenDb(args []string, flags map[string]bool, min int, max int, cmd string, rest func(tl *Tasklist, args []string, flags map[string]bool)) {$/;"	d
+CheckArgsOpenDb	pooch.go	/^func CheckArgsOpenDb(args []string, flags map[string]bool, min int, max int, cmd string, rest func(tl *Tasklist, args []string, flags map[string]bool)) {$/;"	f
+CheckBool	pooch/serve.go	/^func CheckBool(in string, name string) bool {$/;"	d
+CheckBool	pooch/serve.go	/^func CheckBool(in string, name string) bool {$/;"	f
+CheckCondition	pooch.go	/^func CheckCondition(cond bool, format string, a ...interface{}) {$/;"	d
+CheckCondition	pooch.go	/^func CheckCondition(cond bool, format string, a ...interface{}) {$/;"	f
+CheckFormValue	pooch/serve.go	/^func CheckFormValue(req *http.Request, name string) string {$/;"	d
+CheckFormValue	pooch/serve.go	/^func CheckFormValue(req *http.Request, name string) string {$/;"	f
+CheckId	pooch.go	/^func CheckId(tl *Tasklist, id string, cmd string) {$/;"	d
+CheckId	pooch.go	/^func CheckId(tl *Tasklist, id string, cmd string) {$/;"	f
+Clausable	pooch/pureparser.go	/^type Clausable interface{$/;"	d
+Clausable	pooch/pureparser.go	/^type Clausable interface{$/;"	t
+CloneEntry	pooch/backend.go	/^func (tl *Tasklist) CloneEntry(entry *Entry) *Entry {$/;"	d
+CloneEntry	pooch/backend.go	/^func (tl *Tasklist) CloneEntry(entry *Entry) *Entry {$/;"	f
+Close	pooch/backend.go	/^func (tasklist *Tasklist) Close() {$/;"	d
+Close	pooch/backend.go	/^func (tasklist *Tasklist) Close() {$/;"	f
+Close	pooch/multiserve.go	/^func (mdb *MultiuserDb) Close() {$/;"	d
+Close	pooch/multiserve.go	/^func (mdb *MultiuserDb) Close() {$/;"	f
+CmdCreate	pooch.go	/^func CmdCreate(args []string) {$/;"	d
+CmdCreate	pooch.go	/^func CmdCreate(args []string) {$/;"	f
+CmdErrorLog	pooch.go	/^func CmdErrorLog(argv []string) {$/;"	d
+CmdErrorLog	pooch.go	/^func CmdErrorLog(argv []string) {$/;"	f
+CmdGet	pooch.go	/^func CmdGet(args []string) {$/;"	d
+CmdGet	pooch.go	/^func CmdGet(args []string) {$/;"	f
+CmdGetOption	pooch.go	/^func CmdGetOption(args []string) {$/;"	d
+CmdGetOption	pooch.go	/^func CmdGetOption(args []string) {$/;"	f
+CmdHelp	pooch.go	/^func CmdHelp(args []string) {$/;"	d
+CmdHelp	pooch.go	/^func CmdHelp(args []string) {$/;"	f
+CmdListEx	pooch.go	/^func CmdListEx(v []*Entry, showCols []string, timezone int) {$/;"	d
+CmdListEx	pooch.go	/^func CmdListEx(v []*Entry, showCols []string, timezone int) {$/;"	f
+CmdListExJS	pooch.go	/^func CmdListExJS(v []*Entry, timezone int) {$/;"	d
+CmdListExJS	pooch.go	/^func CmdListExJS(v []*Entry, timezone int) {$/;"	f
+CmdListExTsv	pooch.go	/^func CmdListExTsv(v []*Entry, showCols []string, timezone int) {$/;"	d
+CmdListExTsv	pooch.go	/^func CmdListExTsv(v []*Entry, showCols []string, timezone int) {$/;"	f
+CmdMultiServe	pooch.go	/^func CmdMultiServe(args []string) {$/;"	d
+CmdMultiServe	pooch.go	/^func CmdMultiServe(args []string) {$/;"	f
+CmdQuickAdd	pooch.go	/^func CmdQuickAdd(args []string) {$/;"	d
+CmdQuickAdd	pooch.go	/^func CmdQuickAdd(args []string) {$/;"	f
+CmdQuickUpdate	pooch.go	/^func CmdQuickUpdate(args []string) {$/;"	d
+CmdQuickUpdate	pooch.go	/^func CmdQuickUpdate(args []string) {$/;"	f
+CmdRemove	pooch.go	/^func CmdRemove(args []string) {$/;"	d
+CmdRemove	pooch.go	/^func CmdRemove(args []string) {$/;"	f
+CmdRenTag	pooch.go	/^func CmdRenTag(argv []string) {$/;"	d
+CmdRenTag	pooch.go	/^func CmdRenTag(argv []string) {$/;"	f
+CmdRename	pooch.go	/^func CmdRename(argv []string) {$/;"	d
+CmdRename	pooch.go	/^func CmdRename(argv []string) {$/;"	f
+CmdRun	pooch.go	/^func CmdRun(args []string) {$/;"	d
+CmdRun	pooch.go	/^func CmdRun(args []string) {$/;"	f
+CmdSaveSearch	pooch.go	/^func CmdSaveSearch(args []string) {$/;"	d
+CmdSaveSearch	pooch.go	/^func CmdSaveSearch(args []string) {$/;"	f
+CmdSearch	pooch.go	/^func CmdSearch(args []string) {$/;"	d
+CmdSearch	pooch.go	/^func CmdSearch(args []string) {$/;"	f
+CmdServe	pooch.go	/^func CmdServe(args []string) {$/;"	d
+CmdServe	pooch.go	/^func CmdServe(args []string) {$/;"	f
+CmdSetOption	pooch.go	/^func CmdSetOption(args []string) {$/;"	d
+CmdSetOption	pooch.go	/^func CmdSetOption(args []string) {$/;"	f
+CmdTsvUpdate	pooch.go	/^func CmdTsvUpdate(argv []string) {$/;"	d
+CmdTsvUpdate	pooch.go	/^func CmdTsvUpdate(argv []string) {$/;"	f
+ColString	pooch/types.go	/^func (e *Entry) ColString() string {$/;"	d
+ColString	pooch/types.go	/^func (e *Entry) ColString() string {$/;"	f
+Column	pooch/types.go	/^func (e *Entry) Column(name string) string { return e.columns[name];  }$/;"	d
+Column	pooch/types.go	/^func (e *Entry) Column(name string) string { return e.columns[name];  }$/;"	f
+ColumnOk	pooch/types.go	/^func (e *Entry) ColumnOk(name string) (value string, ok bool) { value, ok = e.columns[name]; return; }$/;"	d
+ColumnOk	pooch/types.go	/^func (e *Entry) ColumnOk(name string) (value string, ok bool) { value, ok = e.columns[name]; return; }$/;"	f
+Columns	pooch/types.go	/^func (e *Entry) Columns() Columns { return e.columns; }$/;"	d
+Columns	pooch/types.go	/^func (e *Entry) Columns() Columns { return e.columns; }$/;"	f
+Columns	pooch/types.go	/^type Columns map[string]string$/;"	d
+Columns	pooch/types.go	/^type Columns map[string]string$/;"	t
+CommonHeaderHTML	pooch/htmlformat.go	/^var CommonHeaderHTML ExecutableTemplate = MakeExecutableTemplate("CommonHeader", `$/;"	d
+CommonHeaderHTML	pooch/htmlformat.go	/^var CommonHeaderHTML ExecutableTemplate = MakeExecutableTemplate("CommonHeader", `$/;"	v
+CompatHelp	pooch/compat.go	/^func CompatHelp() {$/;"	d
+CompatHelp	pooch/compat.go	/^func CompatHelp() {$/;"	f
+Complain	pooch/dbg.go	/^func Complain(usage bool, format string, a ...interface{}) {$/;"	d
+Complain	pooch/dbg.go	/^func Complain(usage bool, format string, a ...interface{}) {$/;"	f
+ConsumeRealExtra	pooch/tokenizer.go	/^func ConsumeRealExtra(t *Tokenizer) string {$/;"	d
+ConsumeRealExtra	pooch/tokenizer.go	/^func ConsumeRealExtra(t *Tokenizer) string {$/;"	f
+CoordinateGrid	static/fullcalendar.js	/^function CoordinateGrid(buildFunc) {$/;"	f
+CurrentLogLevel	pooch/dbg.go	/^var CurrentLogLevel LogLevel = INFO$/;"	d
+CurrentLogLevel	pooch/dbg.go	/^var CurrentLogLevel LogLevel = INFO$/;"	v
+DEBUG	pooch/dbg.go	/^	DEBUG$/;"	c
+DONE	pooch/types.go	/^	DONE$/;"	c
+Date	static/json.js	/^    if (typeof Date.prototype.toJSON !== 'function') {$/;"	c
+Date.toJSON	static/json.js	/^        Date.prototype.toJSON = function (key) {$/;"	m
+DateTimeFormat	pooch/parsetime.go	/^type DateTimeFormat struct {$/;"	d
+DateTimeFormat	pooch/parsetime.go	/^type DateTimeFormat struct {$/;"	t
+DateTimeFormats	pooch/parsetime.go	/^var DateTimeFormats []DateTimeFormat = []DateTimeFormat{$/;"	d
+DateTimeFormats	pooch/parsetime.go	/^var DateTimeFormats []DateTimeFormat = []DateTimeFormat{$/;"	v
+DayEventRenderer	static/fullcalendar.js	/^function DayEventRenderer() {$/;"	f
+DayEventRenderer.daySegCalcHSides	static/fullcalendar.js	/^	function daySegCalcHSides(segs) { \/\/ also sets seg.key$/;"	f
+DayEventRenderer.daySegCalcHeights	static/fullcalendar.js	/^	function daySegCalcHeights(segs) {$/;"	f
+DayEventRenderer.daySegElementReport	static/fullcalendar.js	/^	function daySegElementReport(segs) {$/;"	f
+DayEventRenderer.daySegElementResolve	static/fullcalendar.js	/^	function daySegElementResolve(segs, elements) { \/\/ sets seg.element$/;"	f
+DayEventRenderer.daySegHTML	static/fullcalendar.js	/^	function daySegHTML(segs) { \/\/ also sets seg.left and seg.outerWidth$/;"	f
+DayEventRenderer.daySegHandlers	static/fullcalendar.js	/^	function daySegHandlers(segs, segmentContainer, modifiedEventId) {$/;"	f
+DayEventRenderer.daySegSetTops	static/fullcalendar.js	/^	function daySegSetTops(segs, rowTops) { \/\/ also triggers eventAfterRender$/;"	f
+DayEventRenderer.daySegSetWidths	static/fullcalendar.js	/^	function daySegSetWidths(segs) {$/;"	f
+DayEventRenderer.getRowDivs	static/fullcalendar.js	/^	function getRowDivs() {$/;"	f
+DayEventRenderer.getRowTops	static/fullcalendar.js	/^	function getRowTops(rowDivs) {$/;"	f
+DayEventRenderer.renderDaySegs	static/fullcalendar.js	/^	function renderDaySegs(segs, modifiedEventId) {$/;"	f
+DayEventRenderer.renderTempDaySegs	static/fullcalendar.js	/^	function renderTempDaySegs(segs, adjustRow, adjustTop) {$/;"	f
+DayEventRenderer.resizableDayEvent	static/fullcalendar.js	/^	function resizableDayEvent(event, element, seg) {$/;"	f
+DecodeBase64	pooch/types.go	/^func DecodeBase64(in string) string {$/;"	d
+DecodeBase64	pooch/types.go	/^func DecodeBase64(in string) string {$/;"	f
+DemarshalEntry	pooch/types.go	/^func DemarshalEntry(umentry *UnmarshalEntry, timezone int) *Entry {$/;"	d
+DemarshalEntry	pooch/types.go	/^func DemarshalEntry(umentry *UnmarshalEntry, timezone int) *Entry {$/;"	f
+DoRunString	pooch/luaint.go	/^func (tl *Tasklist) DoRunString(code string, args []string) error {$/;"	d
+DoRunString	pooch/luaint.go	/^func (tl *Tasklist) DoRunString(code string, args []string) error {$/;"	f
+DoString	pooch/luaint.go	/^func (tl *Tasklist) DoString(code string, cursor *Entry) error {$/;"	d
+DoString	pooch/luaint.go	/^func (tl *Tasklist) DoString(code string, cursor *Entry) error {$/;"	f
+DoStringNoLock	pooch/luaint.go	/^func (tl *Tasklist) DoStringNoLock(code string, cursor *Entry, freeCursor bool) error {$/;"	d
+DoStringNoLock	pooch/luaint.go	/^func (tl *Tasklist) DoStringNoLock(code string, cursor *Entry, freeCursor bool) error {$/;"	f
+ERROR	pooch/dbg.go	/^	ERROR$/;"	c
+Entry	pooch/types.go	/^type Entry struct {$/;"	d
+Entry	pooch/types.go	/^type Entry struct {$/;"	t
+EntryListEntryEditorHTML	pooch/htmlformat.go	/^var EntryListEntryEditorHTML ExecutableTemplate = MakeExecutableTemplate("EntryListEntryEditor", `$/;"	d
+EntryListEntryEditorHTML	pooch/htmlformat.go	/^var EntryListEntryEditorHTML ExecutableTemplate = MakeExecutableTemplate("EntryListEntryEditor", `$/;"	v
+EntryListEntryHTML	pooch/htmlformat.go	/^var EntryListEntryHTML ExecutableTemplate = MakeExecutableTemplate("EntryListEntry", `$/;"	d
+EntryListEntryHTML	pooch/htmlformat.go	/^var EntryListEntryHTML ExecutableTemplate = MakeExecutableTemplate("EntryListEntry", `$/;"	v
+EntryListHeaderHTML	pooch/htmlformat.go	/^var EntryListHeaderHTML ExecutableTemplate = MakeExecutableTemplate("EntryListHeader", `$/;"	d
+EntryListHeaderHTML	pooch/htmlformat.go	/^var EntryListHeaderHTML ExecutableTemplate = MakeExecutableTemplate("EntryListHeader", `$/;"	v
+EntryListPriorityChangeHTML	pooch/htmlformat.go	/^var EntryListPriorityChangeHTML ExecutableTemplate = MakeExecutableTemplate("EntryListPriorityChange", `$/;"	d
+EntryListPriorityChangeHTML	pooch/htmlformat.go	/^var EntryListPriorityChangeHTML ExecutableTemplate = MakeExecutableTemplate("EntryListPriorityChange", `$/;"	v
+Error	pooch/luaint.go	/^func (le *LuaIntError) Error() string {$/;"	d
+Error	pooch/luaint.go	/^func (le *LuaIntError) Error() string {$/;"	f
+Error	pooch/types.go	/^func (e *ParseError) Error() string {$/;"	d
+Error	pooch/types.go	/^func (e *ParseError) Error() string {$/;"	f
+ErrorEntry	pooch/types.go	/^type ErrorEntry struct {$/;"	d
+ErrorEntry	pooch/types.go	/^type ErrorEntry struct {$/;"	t
+ErrorLogEnderHTML	pooch/htmlformat.go	/^var ErrorLogEnderHTML ExecutableTemplate = MakeExecutableTemplate("ErrorLogEnder", `$/;"	d
+ErrorLogEnderHTML	pooch/htmlformat.go	/^var ErrorLogEnderHTML ExecutableTemplate = MakeExecutableTemplate("ErrorLogEnder", `$/;"	v
+ErrorLogEntryHTML	pooch/htmlformat.go	/^var ErrorLogEntryHTML ExecutableTemplate = MakeExecutableTemplate("ErrorLogEntry", `$/;"	d
+ErrorLogEntryHTML	pooch/htmlformat.go	/^var ErrorLogEntryHTML ExecutableTemplate = MakeExecutableTemplate("ErrorLogEntry", `$/;"	v
+ErrorLogHeaderHTML	pooch/htmlformat.go	/^var ErrorLogHeaderHTML ExecutableTemplate = MakeExecutableTemplate("ErrorLogHeader", `$/;"	d
+ErrorLogHeaderHTML	pooch/htmlformat.go	/^var ErrorLogHeaderHTML ExecutableTemplate = MakeExecutableTemplate("ErrorLogHeader", `$/;"	v
+ErrorLogServer	pooch/serve.go	/^func ErrorLogServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {$/;"	d
+ErrorLogServer	pooch/serve.go	/^func ErrorLogServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {$/;"	f
+EventForJSON	pooch/serve.go	/^type EventForJSON map[string]interface{}$/;"	d
+EventForJSON	pooch/serve.go	/^type EventForJSON map[string]interface{}$/;"	t
+EventManager	static/fullcalendar.js	/^function EventManager(options, sources) {$/;"	f
+EventManager._fetchEventSource	static/fullcalendar.js	/^	function _fetchEventSource(source, callback) {$/;"	f
+EventManager.addEventSource	static/fullcalendar.js	/^	function addEventSource(source) {$/;"	f
+EventManager.clientEvents	static/fullcalendar.js	/^	function clientEvents(filter) {$/;"	f
+EventManager.fetchEventSource	static/fullcalendar.js	/^	function fetchEventSource(source, fetchID) {$/;"	f
+EventManager.fetchEvents	static/fullcalendar.js	/^	function fetchEvents(start, end) {$/;"	f
+EventManager.isFetchNeeded	static/fullcalendar.js	/^	function isFetchNeeded(start, end) {$/;"	f
+EventManager.normalizeEvent	static/fullcalendar.js	/^	function normalizeEvent(event) {$/;"	f
+EventManager.popLoading	static/fullcalendar.js	/^	function popLoading() {$/;"	f
+EventManager.pushLoading	static/fullcalendar.js	/^	function pushLoading() {$/;"	f
+EventManager.removeEventSource	static/fullcalendar.js	/^	function removeEventSource(source) {$/;"	f
+EventManager.removeEvents	static/fullcalendar.js	/^	function removeEvents(filter) {$/;"	f
+EventManager.renderEvent	static/fullcalendar.js	/^	function renderEvent(event, stick) {$/;"	f
+EventManager.updateEvent	static/fullcalendar.js	/^	function updateEvent(event) { \/\/ update an existing event$/;"	f
+ExecutableTemplate	pooch/htmlformat.go	/^type ExecutableTemplate func(interface{}, io.Writer)$/;"	d
+ExecutableTemplate	pooch/htmlformat.go	/^type ExecutableTemplate func(interface{}, io.Writer)$/;"	t
+Exists	pooch/backend.go	/^func (tasklist *Tasklist) Exists(id string) bool {$/;"	d
+Exists	pooch/backend.go	/^func (tasklist *Tasklist) Exists(id string) bool {$/;"	f
+Exists	pooch/multiserve.go	/^func (mdb *MultiuserDb) Exists(username string) bool {$/;"	d
+Exists	pooch/multiserve.go	/^func (mdb *MultiuserDb) Exists(username string) bool {$/;"	f
+ExplainEntry	pooch/backend.go	/^type ExplainEntry struct {$/;"	d
+ExplainEntry	pooch/backend.go	/^type ExplainEntry struct {$/;"	t
+ExplainEntryHTML	pooch/htmlformat.go	/^var ExplainEntryHTML ExecutableTemplate = MakeExecutableTemplate("ExplainEntry", `$/;"	d
+ExplainEntryHTML	pooch/htmlformat.go	/^var ExplainEntryHTML ExecutableTemplate = MakeExecutableTemplate("ExplainEntry", `$/;"	v
+ExplainEntryHeaderHTML	pooch/htmlformat.go	/^var ExplainEntryHeaderHTML ExecutableTemplate = MakeExecutableTemplate("ExplainEntryHeader", `$/;"	d
+ExplainEntryHeaderHTML	pooch/htmlformat.go	/^var ExplainEntryHeaderHTML ExecutableTemplate = MakeExecutableTemplate("ExplainEntryHeader", `$/;"	v
+ExplainRetrieve	pooch/backend.go	/^func (tl *Tasklist) ExplainRetrieve(theselect string) []*ExplainEntry {$/;"	d
+ExplainRetrieve	pooch/backend.go	/^func (tl *Tasklist) ExplainRetrieve(theselect string) []*ExplainEntry {$/;"	f
+ExplainServer	pooch/serve.go	/^func ExplainServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {$/;"	d
+ExplainServer	pooch/serve.go	/^func ExplainServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {$/;"	f
+ExtendedAddParse	pooch/parserint.go	/^func (tl *Tasklist) ExtendedAddParse() *Entry {$/;"	d
+ExtendedAddParse	pooch/parserint.go	/^func (tl *Tasklist) ExtendedAddParse() *Entry {$/;"	f
+ExtraSeparatorTokenizer	pooch/tokenizer.go	/^func ExtraSeparatorTokenizer(t *Tokenizer) (string, int) {$/;"	d
+ExtraSeparatorTokenizer	pooch/tokenizer.go	/^func ExtraSeparatorTokenizer(t *Tokenizer) (string, int) {$/;"	f
+ExtractColumnsFromSearch	pooch/parserint.go	/^func ExtractColumnsFromSearch(search *ParseResult) Columns {$/;"	d
+ExtractColumnsFromSearch	pooch/parserint.go	/^func ExtractColumnsFromSearch(search *ParseResult) Columns {$/;"	f
+FILES	pooch/staticserve.go	/^var FILES map[string]string = map[string]string{$/;"	d
+FILES	pooch/staticserve.go	/^var FILES map[string]string = map[string]string{$/;"	v
+FixDate	pooch/parsetime.go	/^func FixDate(datetime *VarTime) {$/;"	d
+FixDate	pooch/parsetime.go	/^func FixDate(datetime *VarTime) {$/;"	f
+FixExtension	pooch/dbname.go	/^func FixExtension(name string) string {$/;"	d
+FixExtension	pooch/dbname.go	/^func FixExtension(name string) string {$/;"	f
+FixYear	pooch/parsetime.go	/^func FixYear(datetime *VarTime, withTime bool) {$/;"	d
+FixYear	pooch/parsetime.go	/^func FixYear(datetime *VarTime, withTime bool) {$/;"	f
+FormatTriggerAtForAdd	pooch/backend.go	/^func FormatTriggerAtForAdd(e *Entry) string {$/;"	d
+FormatTriggerAtForAdd	pooch/backend.go	/^func FormatTriggerAtForAdd(e *Entry) string {$/;"	f
+Freq	pooch/types.go	/^func (e *Entry) Freq() int {$/;"	d
+Freq	pooch/types.go	/^func (e *Entry) Freq() int {$/;"	f
+FrequencyToString	pooch/types.go	/^func FrequencyToString(freq int) string {$/;"	d
+FrequencyToString	pooch/types.go	/^func FrequencyToString(freq int) string {$/;"	f
+GOFILES	Makefile	/^GOFILES=\\$/;"	m
+Get	pooch/backend.go	/^func (tl *Tasklist) Get(id string) *Entry {$/;"	d
+Get	pooch/backend.go	/^func (tl *Tasklist) Get(id string) *Entry {$/;"	f
+GetCalendarEvents	pooch/serve.go	/^func GetCalendarEvents(tl *Tasklist, query string, start, end string, endSecs int64) []EventForJSON {$/;"	d
+GetCalendarEvents	pooch/serve.go	/^func GetCalendarEvents(tl *Tasklist, query string, start, end string, endSecs int64) []EventForJSON {$/;"	f
+GetCookies	pooch/multiserve.go	/^func GetCookies(c *http.Request) map[string]string {$/;"	d
+GetCookies	pooch/multiserve.go	/^func GetCookies(c *http.Request) map[string]string {$/;"	f
+GetEntryFromLua	pooch/luaint.go	/^func GetEntryFromLua(L *lua.State, name string, fname string) *Entry {$/;"	d
+GetEntryFromLua	pooch/luaint.go	/^func GetEntryFromLua(L *lua.State, name string, fname string) *Entry {$/;"	f
+GetIdCookie	pooch/multiserve.go	/^func GetIdCookie(c *http.Request) string {$/;"	d
+GetIdCookie	pooch/multiserve.go	/^func GetIdCookie(c *http.Request) string {$/;"	f
+GetListEx	pooch/backend.go	/^func (tl *Tasklist) GetListEx(stmt *sqlite.Stmt, code string) ([]*Entry, error) {$/;"	d
+GetListEx	pooch/backend.go	/^func (tl *Tasklist) GetListEx(stmt *sqlite.Stmt, code string) ([]*Entry, error) {$/;"	f
+GetLuaClause	pooch/parserint.go	/^func (pr *ParseResult) GetLuaClause(tl *Tasklist) (string, error) {$/;"	d
+GetLuaClause	pooch/parserint.go	/^func (pr *ParseResult) GetLuaClause(tl *Tasklist) (string, error) {$/;"	f
+GetPrivateSetting	pooch/backend.go	/^func (tl *Tasklist) GetPrivateSetting(name string) string {$/;"	d
+GetPrivateSetting	pooch/backend.go	/^func (tl *Tasklist) GetPrivateSetting(name string) string {$/;"	f
+GetQueryObject	pooch/luaint.go	/^func GetQueryObject(tl *Tasklist, i int) Clausable {$/;"	d
+GetQueryObject	pooch/luaint.go	/^func GetQueryObject(tl *Tasklist, i int) Clausable {$/;"	f
+GetSavedSearch	pooch/backend.go	/^func (tl *Tasklist) GetSavedSearch(name string) string {$/;"	d
+GetSavedSearch	pooch/backend.go	/^func (tl *Tasklist) GetSavedSearch(name string) string {$/;"	f
+GetSavedSearches	pooch/backend.go	/^func (tl *Tasklist) GetSavedSearches() []string {$/;"	d
+GetSavedSearches	pooch/backend.go	/^func (tl *Tasklist) GetSavedSearches() []string {$/;"	f
+GetServer	pooch/serve.go	/^func GetServer(c http.ResponseWriter, req *http.Request, tl *Tasklist, id string) {$/;"	d
+GetServer	pooch/serve.go	/^func GetServer(c http.ResponseWriter, req *http.Request, tl *Tasklist, id string) {$/;"	f
+GetSetting	pooch/backend.go	/^func (tl *Tasklist) GetSetting(name string) string {$/;"	d
+GetSetting	pooch/backend.go	/^func (tl *Tasklist) GetSetting(name string) string {$/;"	f
+GetSettings	pooch/backend.go	/^func (tl *Tasklist) GetSettings() (r map[string]string) {$/;"	d
+GetSettings	pooch/backend.go	/^func (tl *Tasklist) GetSettings() (r map[string]string) {$/;"	f
+GetSizesForList	pooch.go	/^func GetSizesForList(v []*Entry, showCols []string) (id_size, title_size, cat_size int, colSizes map[string]int) {$/;"	d
+GetSizesForList	pooch.go	/^func GetSizesForList(v []*Entry, showCols []string) (id_size, title_size, cat_size int, colSizes map[string]int) {$/;"	f
+GetStatistic	pooch/backend.go	/^func (tl *Tasklist) GetStatistic(tag string) *Statistic {$/;"	d
+GetStatistic	pooch/backend.go	/^func (tl *Tasklist) GetStatistic(tag string) *Statistic {$/;"	f
+GetStatistics	pooch/backend.go	/^func (tl *Tasklist) GetStatistics() []*Statistic {$/;"	d
+GetStatistics	pooch/backend.go	/^func (tl *Tasklist) GetStatistics() []*Statistic {$/;"	f
+GetTableInt	pooch/luaint.go	/^func GetTableInt(L *lua.State, name string) int {$/;"	d
+GetTableInt	pooch/luaint.go	/^func GetTableInt(L *lua.State, name string) int {$/;"	f
+GetTags	pooch/backend.go	/^func (tl *Tasklist) GetTags() []string {$/;"	d
+GetTags	pooch/backend.go	/^func (tl *Tasklist) GetTags() []string {$/;"	f
+GetTasklistFromLua	pooch/luaint.go	/^func GetTasklistFromLua(L *lua.State) *Tasklist {$/;"	d
+GetTasklistFromLua	pooch/luaint.go	/^func GetTasklistFromLua(L *lua.State) *Tasklist {$/;"	f
+GetTimezone	pooch/backend.go	/^func (tl *Tasklist) GetTimezone() int {$/;"	d
+GetTimezone	pooch/backend.go	/^func (tl *Tasklist) GetTimezone() int {$/;"	f
+HasTable	pooch/backend.go	/^func HasTable(conn *sqlite.Conn, name string) bool {$/;"	d
+HasTable	pooch/backend.go	/^func HasTable(conn *sqlite.Conn, name string) bool {$/;"	f
+Header	static/fullcalendar.js	/^function Header(calendar, options) {$/;"	f
+Header.activateButton	static/fullcalendar.js	/^	function activateButton(buttonName) {$/;"	f
+Header.deactivateButton	static/fullcalendar.js	/^	function deactivateButton(buttonName) {$/;"	f
+Header.destroy	static/fullcalendar.js	/^	function destroy() {$/;"	f
+Header.disableButton	static/fullcalendar.js	/^	function disableButton(buttonName) {$/;"	f
+Header.enableButton	static/fullcalendar.js	/^	function enableButton(buttonName) {$/;"	f
+Header.render	static/fullcalendar.js	/^	function render() {$/;"	f
+Header.renderSection	static/fullcalendar.js	/^	function renderSection(buttonStr) {$/;"	f
+Header.updateTitle	static/fullcalendar.js	/^	function updateTitle(html) {$/;"	f
+HelloServer	pooch/serve.go	/^func HelloServer(c http.ResponseWriter, req *http.Request) {$/;"	d
+HelloServer	pooch/serve.go	/^func HelloServer(c http.ResponseWriter, req *http.Request) {$/;"	f
+HelpCreate	pooch.go	/^func HelpCreate() {$/;"	d
+HelpCreate	pooch.go	/^func HelpCreate() {$/;"	f
+HelpErrorLog	pooch.go	/^func HelpErrorLog() {$/;"	d
+HelpErrorLog	pooch.go	/^func HelpErrorLog() {$/;"	f
+HelpGet	pooch.go	/^func HelpGet() {$/;"	d
+HelpGet	pooch.go	/^func HelpGet() {$/;"	f
+HelpGetOption	pooch.go	/^func HelpGetOption() {$/;"	d
+HelpGetOption	pooch.go	/^func HelpGetOption() {$/;"	f
+HelpHelp	pooch.go	/^func HelpHelp() {$/;"	d
+HelpHelp	pooch.go	/^func HelpHelp() {$/;"	f
+HelpMultiServe	pooch.go	/^func HelpMultiServe() {$/;"	d
+HelpMultiServe	pooch.go	/^func HelpMultiServe() {$/;"	f
+HelpQuickAdd	pooch.go	/^func HelpQuickAdd() {$/;"	d
+HelpQuickAdd	pooch.go	/^func HelpQuickAdd() {$/;"	f
+HelpQuickUpdate	pooch.go	/^func HelpQuickUpdate() {$/;"	d
+HelpQuickUpdate	pooch.go	/^func HelpQuickUpdate() {$/;"	f
+HelpRemove	pooch.go	/^func HelpRemove() {$/;"	d
+HelpRemove	pooch.go	/^func HelpRemove() {$/;"	f
+HelpRenTag	pooch.go	/^func HelpRenTag() {$/;"	d
+HelpRenTag	pooch.go	/^func HelpRenTag() {$/;"	f
+HelpRename	pooch.go	/^func HelpRename() {$/;"	d
+HelpRename	pooch.go	/^func HelpRename() {$/;"	f
+HelpRun	pooch.go	/^func HelpRun() {$/;"	d
+HelpRun	pooch.go	/^func HelpRun() {$/;"	f
+HelpSaveSearch	pooch.go	/^func HelpSaveSearch() {$/;"	d
+HelpSaveSearch	pooch.go	/^func HelpSaveSearch() {$/;"	f
+HelpSearch	pooch.go	/^func HelpSearch() {$/;"	d
+HelpSearch	pooch.go	/^func HelpSearch() {$/;"	f
+HelpServe	pooch.go	/^func HelpServe() {$/;"	d
+HelpServe	pooch.go	/^func HelpServe() {$/;"	f
+HelpSetOption	pooch.go	/^func HelpSetOption() {$/;"	d
+HelpSetOption	pooch.go	/^func HelpSetOption() {$/;"	f
+HelpTsvUpdate	pooch.go	/^func HelpTsvUpdate() {$/;"	d
+HelpTsvUpdate	pooch.go	/^func HelpTsvUpdate() {$/;"	f
+HorizontalPositionCache	static/fullcalendar.js	/^function HorizontalPositionCache(getElement) {$/;"	f
+HorizontalPositionCache.e	static/fullcalendar.js	/^	function e(i) {$/;"	f
+HoverListener	static/fullcalendar.js	/^function HoverListener(coordinateGrid) {$/;"	f
+HoverListener.mouse	static/fullcalendar.js	/^	function mouse(ev) {$/;"	f
+HtmlGetServer	pooch/serve.go	/^func HtmlGetServer(c http.ResponseWriter, req *http.Request, tl *Tasklist, id string) {$/;"	d
+HtmlGetServer	pooch/serve.go	/^func HtmlGetServer(c http.ResponseWriter, req *http.Request, tl *Tasklist, id string) {$/;"	f
+INFO	pooch/dbg.go	/^	INFO$/;"	c
+INVALID	pooch/types.go	/^	INVALID$/;"	c
+Id	pooch/types.go	/^func (e *Entry) Id() string { return e.id; }$/;"	d
+Id	pooch/types.go	/^func (e *Entry) Id() string { return e.id; }$/;"	f
+IntoClause	pooch/parserint.go	/^func (expr *BoolExpr) IntoClause(tl *Tasklist, depth string, negate bool) string {$/;"	d
+IntoClause	pooch/parserint.go	/^func (expr *BoolExpr) IntoClause(tl *Tasklist, depth string, negate bool) string {$/;"	f
+IntoClause	pooch/parserint.go	/^func (expr *SimpleExpr) IntoClause(tl *Tasklist, depth string, negate bool) string {$/;"	d
+IntoClause	pooch/parserint.go	/^func (expr *SimpleExpr) IntoClause(tl *Tasklist, depth string, negate bool) string {$/;"	f
+IntoClause	pooch/parserint.go	/^func (ne *NotExpr) IntoClause(tl *Tasklist, depth string, negate bool) string {$/;"	d
+IntoClause	pooch/parserint.go	/^func (ne *NotExpr) IntoClause(tl *Tasklist, depth string, negate bool) string {$/;"	f
+IntoClauseEx	pooch/parserint.go	/^func (expr *SimpleExpr) IntoClauseEx(tl *Tasklist) string {$/;"	d
+IntoClauseEx	pooch/parserint.go	/^func (expr *SimpleExpr) IntoClauseEx(tl *Tasklist) string {$/;"	f
+IntoClauses	pooch/parserint.go	/^func (expr *BoolExpr) IntoClauses(tl *Tasklist, depth string, negate bool, addDone bool) []string {$/;"	d
+IntoClauses	pooch/parserint.go	/^func (expr *BoolExpr) IntoClauses(tl *Tasklist, depth string, negate bool, addDone bool) []string {$/;"	f
+IntoSelect	pooch/parserint.go	/^func (expr *SimpleExpr) IntoSelect(tl *Tasklist, depth string) string {$/;"	d
+IntoSelect	pooch/parserint.go	/^func (expr *SimpleExpr) IntoSelect(tl *Tasklist, depth string) string {$/;"	f
+IntoSelect	pooch/parserint.go	/^func (pr *ParseResult) IntoSelect(tl *Tasklist, luaClausable Clausable) (string, map[string]string, error) {$/;"	d
+IntoSelect	pooch/parserint.go	/^func (pr *ParseResult) IntoSelect(tl *Tasklist, luaClausable Clausable) (string, map[string]string, error) {$/;"	f
+IntoTrigger	pooch/parserint.go	/^func (pr *ParseResult) IntoTrigger() string {$/;"	d
+IntoTrigger	pooch/parserint.go	/^func (pr *ParseResult) IntoTrigger() string {$/;"	f
+InvalidUsernameRE	pooch/multiserve.go	/^var InvalidUsernameRE *regexp.Regexp = regexp.MustCompile("[^a-zA-Z0-9]")$/;"	d
+InvalidUsernameRE	pooch/multiserve.go	/^var InvalidUsernameRE *regexp.Regexp = regexp.MustCompile("[^a-zA-Z0-9]")$/;"	v
+IsEmpty	pooch/parserint.go	/^func (pr *ParseResult) IsEmpty() bool {$/;"	d
+IsEmpty	pooch/parserint.go	/^func (pr *ParseResult) IsEmpty() bool {$/;"	f
+JSON.parse.walk	static/json.js	/^            function walk(holder, key) {$/;"	f
+JSON.stringify	static/json.js	/^    if (typeof JSON.stringify !== 'function') {$/;"	f
+Ka.Oa	static/jquery.js	/^e);if(e=e&&e.events){delete f.handle;f.events={};for(var h in e)for(var l in e[h])c.event.add(this,h,e[h][l],e[h][l].data)}}})}function Oa(a,b){b.src?c.ajax({url:b.src,async:false,dataType:"script"}):c.globalEval(b.text||b.textContent||b.innerHTML||"");b.parentNode&&b.parentNode.removeChild(b)}function oa(a,b,d){var e=b==="width"?a.offsetWidth:a.offsetHeight;if(d==="border")return e;c.each(b==="width"?Pa:Qa,function(){d||(e-=parseFloat(c.css(a,"padding"+this))||0);if(d==="margin")e+=parseFloat(c.css(a,$/;"	f
+Ka.S	static/jquery.js	/^"margin"+this))||0;else e-=parseFloat(c.css(a,"border"+this+"Width"))||0});return e}function da(a,b,d,e){if(c.isArray(b)&&b.length)c.each(b,function(f,h){d||Ra.test(a)?e(a,h):da(a+"["+(typeof h==="object"||c.isArray(h)?f:"")+"]",h,d,e)});else if(!d&&b!=null&&typeof b==="object")c.isEmptyObject(b)?e(a,""):c.each(b,function(f,h){da(a+"["+f+"]",h,d,e)});else e(a,b)}function S(a,b){var d={};c.each(pa.concat.apply([],pa.slice(0,b)),function(){d[this]=a});return d}function qa(a){if(!ea[a]){var b=c("<"+$/;"	f
+Ka.Y	static/jquery.js	/^h.preType==="mouseleave"){a.type=h.preType;e=c(a.relatedTarget).closest(h.selector)[0]}if(!e||e!==l)C.push({elem:l,handleObj:h,level:r.level})}}}o=0;for(x=C.length;o<x;o++){f=C[o];if(d&&f.level>d)break;a.currentTarget=f.elem;a.data=f.handleObj.data;a.handleObj=f.handleObj;A=f.handleObj.origHandler.apply(f.elem,arguments);if(A===false||a.isPropagationStopped()){d=f.level;if(A===false)b=false;if(a.isImmediatePropagationStopped())break}}return b}}function Y(a,b){return(a&&a!=="*"?a+".":"")+b.replace(La,$/;"	f
+Ka.da	static/jquery.js	/^"margin"+this))||0;else e-=parseFloat(c.css(a,"border"+this+"Width"))||0});return e}function da(a,b,d,e){if(c.isArray(b)&&b.length)c.each(b,function(f,h){d||Ra.test(a)?e(a,h):da(a+"["+(typeof h==="object"||c.isArray(h)?f:"")+"]",h,d,e)});else if(!d&&b!=null&&typeof b==="object")c.isEmptyObject(b)?e(a,""):c.each(b,function(f,h){da(a+"["+f+"]",h,d,e)});else e(a,b)}function S(a,b){var d={};c.each(pa.concat.apply([],pa.slice(0,b)),function(){d[this]=a});return d}function qa(a){if(!ea[a]){var b=c("<"+$/;"	f
+Ka.ma	static/jquery.js	/^"`").replace(Ma,"&")}function ma(a,b,d){if(c.isFunction(b))return c.grep(a,function(f,h){return!!b.call(f,h,f)===d});else if(b.nodeType)return c.grep(a,function(f){return f===b===d});else if(typeof b==="string"){var e=c.grep(a,function(f){return f.nodeType===1});if(Na.test(b))return c.filter(b,e,!d);else b=c.filter(b,e)}return c.grep(a,function(f){return c.inArray(f,b)>=0===d})}function na(a,b){var d=0;b.each(function(){if(this.nodeName===(a[d]&&a[d].nodeName)){var e=c.data(a[d++]),f=c.data(this,$/;"	f
+Ka.na	static/jquery.js	/^"`").replace(Ma,"&")}function ma(a,b,d){if(c.isFunction(b))return c.grep(a,function(f,h){return!!b.call(f,h,f)===d});else if(b.nodeType)return c.grep(a,function(f){return f===b===d});else if(typeof b==="string"){var e=c.grep(a,function(f){return f.nodeType===1});if(Na.test(b))return c.filter(b,e,!d);else b=c.filter(b,e)}return c.grep(a,function(f){return c.inArray(f,b)>=0===d})}function na(a,b){var d=0;b.each(function(){if(this.nodeName===(a[d]&&a[d].nodeName)){var e=c.data(a[d++]),f=c.data(this,$/;"	f
+Ka.oa	static/jquery.js	/^e);if(e=e&&e.events){delete f.handle;f.events={};for(var h in e)for(var l in e[h])c.event.add(this,h,e[h][l],e[h][l].data)}}})}function Oa(a,b){b.src?c.ajax({url:b.src,async:false,dataType:"script"}):c.globalEval(b.text||b.textContent||b.innerHTML||"");b.parentNode&&b.parentNode.removeChild(b)}function oa(a,b,d){var e=b==="width"?a.offsetWidth:a.offsetHeight;if(d==="border")return e;c.each(b==="width"?Pa:Qa,function(){d||(e-=parseFloat(c.css(a,"padding"+this))||0);if(d==="margin")e+=parseFloat(c.css(a,$/;"	f
+LATER	pooch/types.go	/^	LATER$/;"	c
+LINE_SIZE	pooch.go	/^var LINE_SIZE int = 80$/;"	d
+LINE_SIZE	pooch.go	/^var LINE_SIZE int = 80$/;"	v
+LONG_OPTION	pooch/serve.go	/^var LONG_OPTION map[string]bool = map[string]bool{$/;"	d
+LONG_OPTION	pooch/serve.go	/^var LONG_OPTION map[string]bool = map[string]bool{$/;"	v
+LUA_EXECUTION_LIMIT	pooch/luaint.go	/^var LUA_EXECUTION_LIMIT = 1000$/;"	d
+LUA_EXECUTION_LIMIT	pooch/luaint.go	/^var LUA_EXECUTION_LIMIT = 1000$/;"	v
+ListEnderHTML	pooch/htmlformat.go	/^var ListEnderHTML ExecutableTemplate = MakeExecutableTemplate("ListEnder", `$/;"	d
+ListEnderHTML	pooch/htmlformat.go	/^var ListEnderHTML ExecutableTemplate = MakeExecutableTemplate("ListEnder", `$/;"	v
+ListHeaderHTML	pooch/htmlformat.go	/^var ListHeaderHTML ExecutableTemplate = MakeExecutableTemplate("ListHeader", `$/;"	d
+ListHeaderHTML	pooch/htmlformat.go	/^var ListHeaderHTML ExecutableTemplate = MakeExecutableTemplate("ListHeader", `$/;"	v
+ListServer	pooch/serve.go	/^func ListServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {$/;"	d
+ListServer	pooch/serve.go	/^func ListServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {$/;"	f
+Log	pooch/dbg.go	/^func Log(ll LogLevel, a ...interface{}) {$/;"	d
+Log	pooch/dbg.go	/^func Log(ll LogLevel, a ...interface{}) {$/;"	f
+LogError	pooch/backend.go	/^func (tasklist *Tasklist) LogError(error string) {$/;"	d
+LogError	pooch/backend.go	/^func (tasklist *Tasklist) LogError(error string) {$/;"	f
+LogLevel	pooch/dbg.go	/^type LogLevel int$/;"	d
+LogLevel	pooch/dbg.go	/^type LogLevel int$/;"	t
+Logf	pooch/dbg.go	/^func Logf(ll LogLevel, fmt string, a ...interface{}) {$/;"	d
+Logf	pooch/dbg.go	/^func Logf(ll LogLevel, fmt string, a ...interface{}) {$/;"	f
+Logger	pooch/dbg.go	/^var Logger *log.Logger = makeLogger(os.Stderr)$/;"	d
+Logger	pooch/dbg.go	/^var Logger *log.Logger = makeLogger(os.Stderr)$/;"	v
+LoggerWriter	pooch/dbg.go	/^var LoggerWriter io.Writer$/;"	d
+LoggerWriter	pooch/dbg.go	/^var LoggerWriter io.Writer$/;"	v
+LoginHTML	pooch/htmlformat.go	/^var LoginHTML ExecutableTemplate = MakeExecutableTemplate("Login", `$/;"	d
+LoginHTML	pooch/htmlformat.go	/^var LoginHTML ExecutableTemplate = MakeExecutableTemplate("Login", `$/;"	v
+LoginOKHTML	pooch/htmlformat.go	/^var LoginOKHTML ExecutableTemplate = MakeExecutableTemplate("LoginOK", `$/;"	d
+LoginOKHTML	pooch/htmlformat.go	/^var LoginOKHTML ExecutableTemplate = MakeExecutableTemplate("LoginOK", `$/;"	v
+LoginServer	pooch/multiserve.go	/^func LoginServer(c http.ResponseWriter, req *http.Request) {$/;"	d
+LoginServer	pooch/multiserve.go	/^func LoginServer(c http.ResponseWriter, req *http.Request) {$/;"	f
+LookaheadToken	pooch/pureparser.go	/^func (p *Parser) LookaheadToken(token string) bool {$/;"	d
+LookaheadToken	pooch/pureparser.go	/^func (p *Parser) LookaheadToken(token string) bool {$/;"	f
+LuaFlags	pooch/luaint.go	/^type LuaFlags struct {$/;"	d
+LuaFlags	pooch/luaint.go	/^type LuaFlags struct {$/;"	t
+LuaIntAndQuery	pooch/luaint.go	/^func LuaIntAndQuery(L *lua.State) int {$/;"	d
+LuaIntAndQuery	pooch/luaint.go	/^func LuaIntAndQuery(L *lua.State) int {$/;"	f
+LuaIntBoolQuery	pooch/luaint.go	/^func LuaIntBoolQuery(L *lua.State, operator, name string) int {$/;"	d
+LuaIntBoolQuery	pooch/luaint.go	/^func LuaIntBoolQuery(L *lua.State, operator, name string) int {$/;"	f
+LuaIntCloneCursor	pooch/luaint.go	/^func LuaIntCloneCursor(L *lua.State) int {$/;"	d
+LuaIntCloneCursor	pooch/luaint.go	/^func LuaIntCloneCursor(L *lua.State) int {$/;"	f
+LuaIntColumn	pooch/luaint.go	/^func LuaIntColumn(L *lua.State) int {$/;"	d
+LuaIntColumn	pooch/luaint.go	/^func LuaIntColumn(L *lua.State) int {$/;"	f
+LuaIntColumnQuery	pooch/luaint.go	/^func LuaIntColumnQuery(L *lua.State) int {$/;"	d
+LuaIntColumnQuery	pooch/luaint.go	/^func LuaIntColumnQuery(L *lua.State) int {$/;"	f
+LuaIntDebulog	pooch/luaint.go	/^func LuaIntDebulog(L *lua.State) int {$/;"	d
+LuaIntDebulog	pooch/luaint.go	/^func LuaIntDebulog(L *lua.State) int {$/;"	f
+LuaIntError	pooch/luaint.go	/^type LuaIntError struct {$/;"	d
+LuaIntError	pooch/luaint.go	/^type LuaIntError struct {$/;"	t
+LuaIntFilterIn	pooch/luaint.go	/^func LuaIntFilterIn(L *lua.State) int {$/;"	d
+LuaIntFilterIn	pooch/luaint.go	/^func LuaIntFilterIn(L *lua.State) int {$/;"	f
+LuaIntFilterOut	pooch/luaint.go	/^func LuaIntFilterOut(L *lua.State) int {$/;"	d
+LuaIntFilterOut	pooch/luaint.go	/^func LuaIntFilterOut(L *lua.State) int {$/;"	f
+LuaIntGetterSetterFunction	pooch/luaint.go	/^func LuaIntGetterSetterFunction(fname string, L *lua.State, getter func(tl *Tasklist, entry *Entry)string, setter func(tl *Tasklist, entry *Entry, value string)) int {$/;"	d
+LuaIntGetterSetterFunction	pooch/luaint.go	/^func LuaIntGetterSetterFunction(fname string, L *lua.State, getter func(tl *Tasklist, entry *Entry)string, setter func(tl *Tasklist, entry *Entry, value string)) int {$/;"	f
+LuaIntGetterSetterFunctionInt	pooch/luaint.go	/^func LuaIntGetterSetterFunctionInt(fname string, L *lua.State, getter func(tl *Tasklist, entry *Entry) int64, setter func(tl *Tasklist, entry *Entry, value int)) int {$/;"	d
+LuaIntGetterSetterFunctionInt	pooch/luaint.go	/^func LuaIntGetterSetterFunctionInt(fname string, L *lua.State, getter func(tl *Tasklist, entry *Entry) int64, setter func(tl *Tasklist, entry *Entry, value int)) int {$/;"	f
+LuaIntId	pooch/luaint.go	/^func LuaIntId(L *lua.State) int {$/;"	d
+LuaIntId	pooch/luaint.go	/^func LuaIntId(L *lua.State) int {$/;"	f
+LuaIntIdQuery	pooch/luaint.go	/^func LuaIntIdQuery(L *lua.State) int {$/;"	d
+LuaIntIdQuery	pooch/luaint.go	/^func LuaIntIdQuery(L *lua.State) int {$/;"	f
+LuaIntLocalTime	pooch/luaint.go	/^func LuaIntLocalTime(L *lua.State) int {$/;"	d
+LuaIntLocalTime	pooch/luaint.go	/^func LuaIntLocalTime(L *lua.State) int {$/;"	f
+LuaIntNotQuery	pooch/luaint.go	/^func LuaIntNotQuery(L *lua.State) int {$/;"	d
+LuaIntNotQuery	pooch/luaint.go	/^func LuaIntNotQuery(L *lua.State) int {$/;"	f
+LuaIntNotTopTag	pooch/luaint.go	/^func LuaIntNotTopTag(L *lua.State) int {$/;"	d
+LuaIntNotTopTag	pooch/luaint.go	/^func LuaIntNotTopTag(L *lua.State) int {$/;"	f
+LuaIntOrQuery	pooch/luaint.go	/^func LuaIntOrQuery(L *lua.State) int {$/;"	d
+LuaIntOrQuery	pooch/luaint.go	/^func LuaIntOrQuery(L *lua.State) int {$/;"	f
+LuaIntParseDateTime	pooch/luaint.go	/^func LuaIntParseDateTime(L *lua.State) int {$/;"	d
+LuaIntParseDateTime	pooch/luaint.go	/^func LuaIntParseDateTime(L *lua.State) int {$/;"	f
+LuaIntPersist	pooch/luaint.go	/^func LuaIntPersist(L *lua.State) int {$/;"	d
+LuaIntPersist	pooch/luaint.go	/^func LuaIntPersist(L *lua.State) int {$/;"	f
+LuaIntPriority	pooch/luaint.go	/^func LuaIntPriority(L *lua.State) int {$/;"	d
+LuaIntPriority	pooch/luaint.go	/^func LuaIntPriority(L *lua.State) int {$/;"	f
+LuaIntPriorityQuery	pooch/luaint.go	/^func LuaIntPriorityQuery(L *lua.State) int {$/;"	d
+LuaIntPriorityQuery	pooch/luaint.go	/^func LuaIntPriorityQuery(L *lua.State) int {$/;"	f
+LuaIntRemove	pooch/luaint.go	/^func LuaIntRemove(L *lua.State) int {$/;"	d
+LuaIntRemove	pooch/luaint.go	/^func LuaIntRemove(L *lua.State) int {$/;"	f
+LuaIntRmColumn	pooch/luaint.go	/^func LuaIntRmColumn(L *lua.State) int {$/;"	d
+LuaIntRmColumn	pooch/luaint.go	/^func LuaIntRmColumn(L *lua.State) int {$/;"	f
+LuaIntSearch	pooch/luaint.go	/^func LuaIntSearch(L *lua.State) int {$/;"	d
+LuaIntSearch	pooch/luaint.go	/^func LuaIntSearch(L *lua.State) int {$/;"	f
+LuaIntSearchQuery	pooch/luaint.go	/^func LuaIntSearchQuery(L *lua.State) int {$/;"	d
+LuaIntSearchQuery	pooch/luaint.go	/^func LuaIntSearchQuery(L *lua.State) int {$/;"	f
+LuaIntShowRet	pooch/luaint.go	/^func LuaIntShowRet(L *lua.State) int {$/;"	d
+LuaIntShowRet	pooch/luaint.go	/^func LuaIntShowRet(L *lua.State) int {$/;"	f
+LuaIntSortField	pooch/luaint.go	/^func LuaIntSortField(L *lua.State) int {$/;"	d
+LuaIntSortField	pooch/luaint.go	/^func LuaIntSortField(L *lua.State) int {$/;"	f
+LuaIntSplit	pooch/luaint.go	/^func LuaIntSplit(L *lua.State) int {$/;"	d
+LuaIntSplit	pooch/luaint.go	/^func LuaIntSplit(L *lua.State) int {$/;"	f
+LuaIntStringFunction	pooch/luaint.go	/^func LuaIntStringFunction(L *lua.State, name string, n int, fn func(tl *Tasklist, argv []string)int) int {$/;"	d
+LuaIntStringFunction	pooch/luaint.go	/^func LuaIntStringFunction(L *lua.State, name string, n int, fn func(tl *Tasklist, argv []string)int) int {$/;"	f
+LuaIntSubtag	pooch/luaint.go	/^func LuaIntSubtag(L *lua.State) int {$/;"	d
+LuaIntSubtag	pooch/luaint.go	/^func LuaIntSubtag(L *lua.State) int {$/;"	f
+LuaIntText	pooch/luaint.go	/^func LuaIntText(L *lua.State) int {$/;"	d
+LuaIntText	pooch/luaint.go	/^func LuaIntText(L *lua.State) int {$/;"	f
+LuaIntTextQuery	pooch/luaint.go	/^func LuaIntTextQuery(L *lua.State) int {$/;"	d
+LuaIntTextQuery	pooch/luaint.go	/^func LuaIntTextQuery(L *lua.State) int {$/;"	f
+LuaIntTimestamp	pooch/luaint.go	/^func LuaIntTimestamp(L *lua.State) int {$/;"	d
+LuaIntTimestamp	pooch/luaint.go	/^func LuaIntTimestamp(L *lua.State) int {$/;"	f
+LuaIntTitle	pooch/luaint.go	/^func LuaIntTitle(L *lua.State) int {$/;"	d
+LuaIntTitle	pooch/luaint.go	/^func LuaIntTitle(L *lua.State) int {$/;"	f
+LuaIntTitleQuery	pooch/luaint.go	/^func LuaIntTitleQuery(L *lua.State) int {$/;"	d
+LuaIntTitleQuery	pooch/luaint.go	/^func LuaIntTitleQuery(L *lua.State) int {$/;"	f
+LuaIntUTCTime	pooch/luaint.go	/^func LuaIntUTCTime(L *lua.State) int {$/;"	d
+LuaIntUTCTime	pooch/luaint.go	/^func LuaIntUTCTime(L *lua.State) int {$/;"	f
+LuaIntVisit	pooch/luaint.go	/^func LuaIntVisit(L *lua.State) int {$/;"	d
+LuaIntVisit	pooch/luaint.go	/^func LuaIntVisit(L *lua.State) int {$/;"	f
+LuaIntWhen	pooch/luaint.go	/^func LuaIntWhen(L *lua.State) int {$/;"	d
+LuaIntWhen	pooch/luaint.go	/^func LuaIntWhen(L *lua.State) int {$/;"	f
+LuaIntWhenQuery	pooch/luaint.go	/^func LuaIntWhenQuery(L *lua.State) int {$/;"	d
+LuaIntWhenQuery	pooch/luaint.go	/^func LuaIntWhenQuery(L *lua.State) int {$/;"	f
+LuaIntWriteCursor	pooch/luaint.go	/^func LuaIntWriteCursor(L *lua.State) int {$/;"	d
+LuaIntWriteCursor	pooch/luaint.go	/^func LuaIntWriteCursor(L *lua.State) int {$/;"	f
+LuaResultToEntries	pooch/luaint.go	/^func (tl *Tasklist) LuaResultToEntries() ([]*Entry, []string) {$/;"	d
+LuaResultToEntries	pooch/luaint.go	/^func (tl *Tasklist) LuaResultToEntries() ([]*Entry, []string) {$/;"	f
+LuaTableGetString	pooch/luaint.go	/^func LuaTableGetString(L *lua.State, key string) string {$/;"	d
+LuaTableGetString	pooch/luaint.go	/^func LuaTableGetString(L *lua.State, key string) string {$/;"	f
+MakeEntry	pooch/types.go	/^func MakeEntry(id string, title string, text string, priority Priority, triggerAt *time.Time, sort string, columns Columns) *Entry {$/;"	d
+MakeEntry	pooch/types.go	/^func MakeEntry(id string, title string, text string, priority Priority, triggerAt *time.Time, sort string, columns Columns) *Entry {$/;"	f
+MakeExecutableTemplate	pooch/htmlformat.go	/^func MakeExecutableTemplate(name string, rawTemplate string) ExecutableTemplate {$/;"	d
+MakeExecutableTemplate	pooch/htmlformat.go	/^func MakeExecutableTemplate(name string, rawTemplate string) ExecutableTemplate {$/;"	f
+MakeLuaState	pooch/luaint.go	/^func MakeLuaState() *lua.State {$/;"	d
+MakeLuaState	pooch/luaint.go	/^func MakeLuaState() *lua.State {$/;"	f
+MakeParseError	pooch/types.go	/^func MakeParseError(error string) error {$/;"	d
+MakeParseError	pooch/types.go	/^func MakeParseError(error string) error {$/;"	f
+MakeParseResult	pooch/pureparser.go	/^func MakeParseResult() *ParseResult {$/;"	d
+MakeParseResult	pooch/pureparser.go	/^func MakeParseResult() *ParseResult {$/;"	f
+MakeRandomId	pooch/backend.go	/^func (tasklist *Tasklist) MakeRandomId() string {$/;"	d
+MakeRandomId	pooch/backend.go	/^func (tasklist *Tasklist) MakeRandomId() string {$/;"	f
+MakeRandomString	pooch/backend.go	/^func MakeRandomString(size int) string {$/;"	d
+MakeRandomString	pooch/backend.go	/^func MakeRandomString(size int) string {$/;"	f
+MarshalEntry	pooch/types.go	/^func MarshalEntry(entry *Entry, timezone int) *UnmarshalEntry {$/;"	d
+MarshalEntry	pooch/types.go	/^func MarshalEntry(entry *Entry, timezone int) *UnmarshalEntry {$/;"	f
+MergeColumns	pooch/types.go	/^func (e *Entry) MergeColumns(cols Columns) *Entry {$/;"	d
+MergeColumns	pooch/types.go	/^func (e *Entry) MergeColumns(cols Columns) *Entry {$/;"	f
+MonthView	static/fullcalendar.js	/^function MonthView(element, calendar) {$/;"	f
+MonthView.render	static/fullcalendar.js	/^	function render(date, delta) {$/;"	f
+MultiServe	pooch/multiserve.go	/^func MultiServe(port string, directory string) {$/;"	d
+MultiWrapperTasklistServer	pooch/multiserve.go	/^func MultiWrapperTasklistServer(fn TasklistServer) http.HandlerFunc {$/;"	d
+MultiWrapperTasklistServer	pooch/multiserve.go	/^func MultiWrapperTasklistServer(fn TasklistServer) http.HandlerFunc {$/;"	f
+MultiWrapperTasklistWithIdServer	pooch/multiserve.go	/^func MultiWrapperTasklistWithIdServer(fn TasklistWithIdServer) http.HandlerFunc {$/;"	d
+MultiWrapperTasklistWithIdServer	pooch/multiserve.go	/^func MultiWrapperTasklistWithIdServer(fn TasklistWithIdServer) http.HandlerFunc {$/;"	f
+MultiuserDb	pooch/multiserve.go	/^type MultiuserDb struct {$/;"	d
+MultiuserDb	pooch/multiserve.go	/^type MultiuserDb struct {$/;"	t
+Must	pooch/types.go	/^func Must(err error) {$/;"	d
+Must	pooch/types.go	/^func Must(err error) {$/;"	f
+MustExec	pooch/backend.go	/^func (tasklist *Tasklist) MustExec(stmt string, v...interface{}) {$/;"	d
+MustExec	pooch/backend.go	/^func (tasklist *Tasklist) MustExec(stmt string, v...interface{}) {$/;"	f
+MustExec	pooch/backend.go	/^func MustExec(conn *sqlite.Conn, stmt string, v...interface{}) {$/;"	d
+MustExec	pooch/backend.go	/^func MustExec(conn *sqlite.Conn, stmt string, v...interface{}) {$/;"	f
+MustLogInHTML	pooch/htmlformat.go	/^var MustLogInHTML ExecutableTemplate = MakeExecutableTemplate("MustLogIn", `$/;"	d
+MustLogInHTML	pooch/htmlformat.go	/^var MustLogInHTML ExecutableTemplate = MakeExecutableTemplate("MustLogIn", `$/;"	v
+NOTES	pooch/types.go	/^	NOTES$/;"	c
+NOW	pooch/types.go	/^	NOW$/;"	c
+NewParser	pooch/pureparser.go	/^func NewParser(tkzer *Tokenizer, timezone int) *Parser {$/;"	d
+NewParser	pooch/pureparser.go	/^func NewParser(tkzer *Tokenizer, timezone int) *Parser {$/;"	f
+NewTokenizer	pooch/tokenizer.go	/^func NewTokenizer(input string) *Tokenizer {$/;"	d
+NewTokenizer	pooch/tokenizer.go	/^func NewTokenizer(input string) *Tokenizer {$/;"	f
+Next	pooch/tokenizer.go	/^func (t *Tokenizer) Next() string {$/;"	d
+Next	pooch/tokenizer.go	/^func (t *Tokenizer) Next() string {$/;"	f
+NextEntry	pooch/types.go	/^func (entry *Entry) NextEntry(newId string) *Entry {$/;"	d
+NextEntry	pooch/types.go	/^func (entry *Entry) NextEntry(newId string) *Entry {$/;"	f
+NilGlobal	pooch/luaint.go	/^func NilGlobal(L *lua.State, name string) {$/;"	d
+NilGlobal	pooch/luaint.go	/^func NilGlobal(L *lua.State, name string) {$/;"	f
+NotExpr	pooch/parserint.go	/^type NotExpr struct {$/;"	d
+NotExpr	pooch/parserint.go	/^type NotExpr struct {$/;"	t
+OPERATORS	pooch/pureparser.go	/^var OPERATORS map[string]bool = map[string]bool{$/;"	d
+OPERATORS	pooch/pureparser.go	/^var OPERATORS map[string]bool = map[string]bool{$/;"	v
+OPERATOR_CHECK	pooch/parserint.go	/^var OPERATOR_CHECK map[string]string = map[string]string{$/;"	d
+OPERATOR_CHECK	pooch/parserint.go	/^var OPERATOR_CHECK map[string]string = map[string]string{$/;"	v
+Object	static/json.js	/^if (!Object.prototype.toJSONString) {$/;"	c
+Object.parseJSON	static/json.js	/^    Object.prototype.parseJSON = function (filter) {$/;"	m
+OpenMultiuserDb	pooch/multiserve.go	/^func OpenMultiuserDb(directory string) *MultiuserDb{$/;"	d
+OpenMultiuserDb	pooch/multiserve.go	/^func OpenMultiuserDb(directory string) *MultiuserDb{$/;"	f
+OpenOrCreate	pooch/backend.go	/^func OpenOrCreate(filename string) *Tasklist {$/;"	d
+OpenOrCreate	pooch/backend.go	/^func OpenOrCreate(filename string) *Tasklist {$/;"	f
+OpenOrCreateUserDb	pooch/multiserve.go	/^func (mdb *MultiuserDb) OpenOrCreateUserDb(username string) *Tasklist {$/;"	d
+OpenOrCreateUserDb	pooch/multiserve.go	/^func (mdb *MultiuserDb) OpenOrCreateUserDb(username string) *Tasklist {$/;"	f
+OptionServer	pooch/serve.go	/^func OptionServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {$/;"	d
+OptionServer	pooch/serve.go	/^func OptionServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {$/;"	f
+OptionsLongPageLine	pooch/htmlformat.go	/^var OptionsLongPageLine ExecutableTemplate = MakeExecutableTemplate("OptionsLongPage", `$/;"	d
+OptionsLongPageLine	pooch/htmlformat.go	/^var OptionsLongPageLine ExecutableTemplate = MakeExecutableTemplate("OptionsLongPage", `$/;"	v
+OptionsPageEnd	pooch/htmlformat.go	/^var OptionsPageEnd ExecutableTemplate = MakeExecutableTemplate("OptionsPageEnd", `$/;"	d
+OptionsPageEnd	pooch/htmlformat.go	/^var OptionsPageEnd ExecutableTemplate = MakeExecutableTemplate("OptionsPageEnd", `$/;"	v
+OptionsPageHeader	pooch/htmlformat.go	/^var OptionsPageHeader ExecutableTemplate = MakeExecutableTemplate("OptionsPageHeader", `$/;"	d
+OptionsPageHeader	pooch/htmlformat.go	/^var OptionsPageHeader ExecutableTemplate = MakeExecutableTemplate("OptionsPageHeader", `$/;"	v
+OptionsPageLine	pooch/htmlformat.go	/^var OptionsPageLine ExecutableTemplate = MakeExecutableTemplate("OptionsPageLine", `$/;"	d
+OptionsPageLine	pooch/htmlformat.go	/^var OptionsPageLine ExecutableTemplate = MakeExecutableTemplate("OptionsPageLine", `$/;"	v
+OverlayManager	static/fullcalendar.js	/^function OverlayManager() {$/;"	f
+OverlayManager.clearOverlays	static/fullcalendar.js	/^	function clearOverlays() {$/;"	f
+OverlayManager.renderOverlay	static/fullcalendar.js	/^	function renderOverlay(rect, parent) {$/;"	f
+ParseCols	pooch/pureparser.go	/^func ParseCols(colStr string, timezone int) (Columns, bool) {$/;"	d
+ParseCols	pooch/pureparser.go	/^func ParseCols(colStr string, timezone int) (Columns, bool) {$/;"	f
+ParseColumnRequest	pooch/pureparser.go	/^func (p *Parser) ParseColumnRequest() bool {$/;"	d
+ParseColumnRequest	pooch/pureparser.go	/^func (p *Parser) ParseColumnRequest() bool {$/;"	f
+ParseDateTime	pooch/parsetime.go	/^func ParseDateTime(input string, timezone int) (*time.Time, error) {$/;"	d
+ParseDateTime	pooch/parsetime.go	/^func ParseDateTime(input string, timezone int) (*time.Time, error) {$/;"	f
+ParseError	pooch/types.go	/^type ParseError struct {$/;"	d
+ParseError	pooch/types.go	/^type ParseError struct {$/;"	t
+ParseEx	pooch/parserint.go	/^func (tl *Tasklist) ParseEx(text string) *ParseResult {$/;"	d
+ParseEx	pooch/parserint.go	/^func (tl *Tasklist) ParseEx(text string) *ParseResult {$/;"	f
+ParseEx	pooch/pureparser.go	/^func (p *Parser) ParseEx() *ParseResult {$/;"	d
+ParseEx	pooch/pureparser.go	/^func (p *Parser) ParseEx() *ParseResult {$/;"	f
+ParseExclusion	pooch/pureparser.go	/^func (p *Parser) ParseExclusion(r *SimpleExpr) bool {$/;"	d
+ParseExclusion	pooch/pureparser.go	/^func (p *Parser) ParseExclusion(r *SimpleExpr) bool {$/;"	f
+ParseFreqToken	pooch/pureparser.go	/^func ParseFreqToken(text string) bool {$/;"	d
+ParseFreqToken	pooch/pureparser.go	/^func ParseFreqToken(text string) bool {$/;"	f
+ParseFrequency	pooch/types.go	/^func ParseFrequency(freq string) int {$/;"	d
+ParseFrequency	pooch/types.go	/^func ParseFrequency(freq string) int {$/;"	f
+ParseNew	pooch/parserint.go	/^func (tl *Tasklist) ParseNew(entryText, queryText string) *Entry {$/;"	d
+ParseNew	pooch/parserint.go	/^func (tl *Tasklist) ParseNew(entryText, queryText string) *Entry {$/;"	f
+ParseOperationSubexpression	pooch/pureparser.go	/^func (p *Parser) ParseOperationSubexpression(r *SimpleExpr) bool {$/;"	d
+ParseOperationSubexpression	pooch/pureparser.go	/^func (p *Parser) ParseOperationSubexpression(r *SimpleExpr) bool {$/;"	f
+ParseOption	pooch/pureparser.go	/^func (p *Parser) ParseOption(r *SimpleExpr) bool {$/;"	d
+ParseOption	pooch/pureparser.go	/^func (p *Parser) ParseOption(r *SimpleExpr) bool {$/;"	f
+ParsePriority	pooch/pureparser.go	/^func ParsePriority(prstr string) Priority {$/;"	d
+ParsePriority	pooch/pureparser.go	/^func ParsePriority(prstr string) Priority {$/;"	f
+ParsePriorityExpression	pooch/pureparser.go	/^func (p *Parser) ParsePriorityExpression(r *SimpleExpr) bool {$/;"	d
+ParsePriorityExpression	pooch/pureparser.go	/^func (p *Parser) ParsePriorityExpression(r *SimpleExpr) bool {$/;"	f
+ParseResult	pooch/pureparser.go	/^type ParseResult struct {$/;"	d
+ParseResult	pooch/pureparser.go	/^type ParseResult struct {$/;"	t
+ParseSavedSearch	pooch/pureparser.go	/^func (p *Parser) ParseSavedSearch(r *SimpleExpr) bool {$/;"	d
+ParseSavedSearch	pooch/pureparser.go	/^func (p *Parser) ParseSavedSearch(r *SimpleExpr) bool {$/;"	f
+ParseSearch	pooch/parserint.go	/^func (tl *Tasklist) ParseSearch(queryText string, luaClausable Clausable) (string, string, string, bool, bool, []string, map[string]string, error) {$/;"	d
+ParseSearch	pooch/parserint.go	/^func (tl *Tasklist) ParseSearch(queryText string, luaClausable Clausable) (string, string, string, bool, bool, []string, map[string]string, error) {$/;"	f
+ParseSimpleExpression	pooch/pureparser.go	/^func (p *Parser) ParseSimpleExpression(r *SimpleExpr) bool {$/;"	d
+ParseSimpleExpression	pooch/pureparser.go	/^func (p *Parser) ParseSimpleExpression(r *SimpleExpr) bool {$/;"	f
+ParseSpeculative	pooch/pureparser.go	/^func (p *Parser) ParseSpeculative(fn func()bool) bool {$/;"	d
+ParseSpeculative	pooch/pureparser.go	/^func (p *Parser) ParseSpeculative(fn func()bool) bool {$/;"	f
+ParseTimeExpression	pooch/pureparser.go	/^func (p *Parser) ParseTimeExpression(r *SimpleExpr) bool {$/;"	d
+ParseTimeExpression	pooch/pureparser.go	/^func (p *Parser) ParseTimeExpression(r *SimpleExpr) bool {$/;"	f
+ParseToken	pooch/pureparser.go	/^func (p *Parser) ParseToken(token string) bool {$/;"	d
+ParseToken	pooch/pureparser.go	/^func (p *Parser) ParseToken(token string) bool {$/;"	f
+ParseTsvFormat	pooch/pureparser.go	/^func ParseTsvFormat(in string, tl *Tasklist, timezone int) *Entry {$/;"	d
+ParseTsvFormat	pooch/pureparser.go	/^func ParseTsvFormat(in string, tl *Tasklist, timezone int) *Entry {$/;"	f
+Parser	pooch/pureparser.go	/^type Parser struct {$/;"	d
+Parser	pooch/pureparser.go	/^type Parser struct {$/;"	t
+PasswordHashing	pooch/multiserve.go	/^func PasswordHashing(salt, password string) []byte {$/;"	d
+PasswordHashing	pooch/multiserve.go	/^func PasswordHashing(salt, password string) []byte {$/;"	f
+Print	pooch/types.go	/^func (entry *Entry) Print() {$/;"	d
+Print	pooch/types.go	/^func (entry *Entry) Print() {$/;"	f
+Priority	pooch/types.go	/^func (e *Entry) Priority() Priority { return e.priority; }$/;"	d
+Priority	pooch/types.go	/^func (e *Entry) Priority() Priority { return e.priority; }$/;"	f
+Priority	pooch/types.go	/^type Priority int;$/;"	d
+Priority	pooch/types.go	/^type Priority int;$/;"	t
+PriorityFormatter	pooch/htmlformat.go	/^func PriorityFormatter(input Priority) string {$/;"	d
+PriorityFormatter	pooch/htmlformat.go	/^func PriorityFormatter(input Priority) string {$/;"	f
+PushCommand	pooch/tokenizer.go	/^func (t *Tokenizer) PushCommand(command string) {$/;"	d
+PushCommand	pooch/tokenizer.go	/^func (t *Tokenizer) PushCommand(command string) {$/;"	f
+PushExtra	pooch/tokenizer.go	/^func (t *Tokenizer) PushExtra(extra string) {$/;"	d
+PushExtra	pooch/tokenizer.go	/^func (t *Tokenizer) PushExtra(extra string) {$/;"	f
+PushStringVec	pooch/luaint.go	/^func PushStringVec(L *lua.State, v []string) {$/;"	d
+PushStringVec	pooch/luaint.go	/^func PushStringVec(L *lua.State, v []string) {$/;"	f
+PushTime	pooch/luaint.go	/^func PushTime(L *lua.State, t time.Time) {$/;"	d
+PushTime	pooch/luaint.go	/^func PushTime(L *lua.State, t time.Time) {$/;"	f
+QaddServer	pooch/serve.go	/^func QaddServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {$/;"	d
+QaddServer	pooch/serve.go	/^func QaddServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {$/;"	f
+Quote	pooch/backend.go	/^func (tasklist *Tasklist) Quote(in string) string {$/;"	d
+Quote	pooch/backend.go	/^func (tasklist *Tasklist) Quote(in string) string {$/;"	f
+RUN_ARGUMENTS_VAR	pooch/luaint.go	/^var RUN_ARGUMENTS_VAR = "args"$/;"	d
+RUN_ARGUMENTS_VAR	pooch/luaint.go	/^var RUN_ARGUMENTS_VAR = "args"$/;"	v
+RealNext	pooch/tokenizer.go	/^func (t *Tokenizer) RealNext() string {$/;"	d
+RealNext	pooch/tokenizer.go	/^func (t *Tokenizer) RealNext() string {$/;"	f
+Register	pooch/multiserve.go	/^func (mdb *MultiuserDb) Register(username, password string) {$/;"	d
+Register	pooch/multiserve.go	/^func (mdb *MultiuserDb) Register(username, password string) {$/;"	f
+RegisterHTML	pooch/htmlformat.go	/^var RegisterHTML ExecutableTemplate = MakeExecutableTemplate("Register", `$/;"	d
+RegisterHTML	pooch/htmlformat.go	/^var RegisterHTML ExecutableTemplate = MakeExecutableTemplate("Register", `$/;"	v
+RegisterOKHTML	pooch/htmlformat.go	/^var RegisterOKHTML ExecutableTemplate = MakeExecutableTemplate("RegisterOK", `$/;"	d
+RegisterOKHTML	pooch/htmlformat.go	/^var RegisterOKHTML ExecutableTemplate = MakeExecutableTemplate("RegisterOK", `$/;"	v
+RegisterServer	pooch/multiserve.go	/^func RegisterServer(c http.ResponseWriter, req *http.Request) {$/;"	d
+RegisterServer	pooch/multiserve.go	/^func RegisterServer(c http.ResponseWriter, req *http.Request) {$/;"	f
+Remove	pooch/backend.go	/^func (tasklist *Tasklist) Remove(id string) {$/;"	d
+Remove	pooch/backend.go	/^func (tasklist *Tasklist) Remove(id string) {$/;"	f
+RemoveColumn	pooch/types.go	/^func (e *Entry) RemoveColumn(name string) *Entry { delete(e.columns, name); return e }$/;"	d
+RemoveColumn	pooch/types.go	/^func (e *Entry) RemoveColumn(name string) *Entry { delete(e.columns, name); return e }$/;"	f
+RemoveSaveSearch	pooch/backend.go	/^func (tl *Tasklist) RemoveSaveSearch(name string) {$/;"	d
+RemoveSaveSearch	pooch/backend.go	/^func (tl *Tasklist) RemoveSaveSearch(name string) {$/;"	f
+RemoveSearchServer	pooch/serve.go	/^func RemoveSearchServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {$/;"	d
+RemoveSearchServer	pooch/serve.go	/^func RemoveSearchServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {$/;"	f
+RemoveServer	pooch/serve.go	/^func RemoveServer(c http.ResponseWriter, req *http.Request, tl *Tasklist, id string) {$/;"	d
+RemoveServer	pooch/serve.go	/^func RemoveServer(c http.ResponseWriter, req *http.Request, tl *Tasklist, id string) {$/;"	f
+RenTagServer	pooch/serve.go	/^func RenTagServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {$/;"	d
+RenTagServer	pooch/serve.go	/^func RenTagServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {$/;"	f
+RenameTag	pooch/backend.go	/^func (tl *Tasklist) RenameTag(src, dst string) {$/;"	d
+RenameTag	pooch/backend.go	/^func (tl *Tasklist) RenameTag(src, dst string) {$/;"	f
+RepeatString	pooch/types.go	/^func RepeatString(ch string, num int) string {$/;"	d
+RepeatString	pooch/types.go	/^func RepeatString(ch string, num int) string {$/;"	f
+RepeatedTokenizer	pooch/tokenizer.go	/^func RepeatedTokenizer(fn func(rune)bool) TokenizerFunc {$/;"	d
+RepeatedTokenizer	pooch/tokenizer.go	/^func RepeatedTokenizer(fn func(rune)bool) TokenizerFunc {$/;"	f
+RepeatedTokenizerTo	pooch/tokenizer.go	/^func RepeatedTokenizerTo(fn func(rune)bool, translation string) TokenizerFunc {$/;"	d
+RepeatedTokenizerTo	pooch/tokenizer.go	/^func RepeatedTokenizerTo(fn func(rune)bool, translation string) TokenizerFunc {$/;"	f
+ResetLuaFlags	pooch/luaint.go	/^func (tl *Tasklist) ResetLuaFlags() {$/;"	d
+ResetLuaFlags	pooch/luaint.go	/^func (tl *Tasklist) ResetLuaFlags() {$/;"	f
+ResetSetup	pooch/backend.go	/^func (tl *Tasklist) ResetSetup() {$/;"	d
+ResetSetup	pooch/backend.go	/^func (tl *Tasklist) ResetSetup() {$/;"	f
+Resolve	pooch/dbname.go	/^func Resolve(name string) (outname string, found bool) {$/;"	d
+Resolve	pooch/dbname.go	/^func Resolve(name string) (outname string, found bool) {$/;"	f
+ResolveSavedSearch	pooch/parserint.go	/^func (pr *ParseResult) ResolveSavedSearch(tl *Tasklist) *ParseResult {$/;"	d
+ResolveSavedSearch	pooch/parserint.go	/^func (pr *ParseResult) ResolveSavedSearch(tl *Tasklist) *ParseResult {$/;"	f
+Rest	pooch/tokenizer.go	/^func (t *Tokenizer) Rest() string {$/;"	d
+Rest	pooch/tokenizer.go	/^func (t *Tokenizer) Rest() string {$/;"	f
+Retrieve	pooch/backend.go	/^func (tl *Tasklist) Retrieve(theselect, code string) ([]*Entry, error) {$/;"	d
+Retrieve	pooch/backend.go	/^func (tl *Tasklist) Retrieve(theselect, code string) ([]*Entry, error) {$/;"	f
+RetrieveErrors	pooch/backend.go	/^func (tl *Tasklist) RetrieveErrors() []*ErrorEntry {$/;"	d
+RetrieveErrors	pooch/backend.go	/^func (tl *Tasklist) RetrieveErrors() []*ErrorEntry {$/;"	f
+RunServer	pooch/serve.go	/^func RunServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {$/;"	d
+RunServer	pooch/serve.go	/^func RunServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {$/;"	f
+RunTimedTriggers	pooch/backend.go	/^func (tl *Tasklist) RunTimedTriggers() {$/;"	d
+RunTimedTriggers	pooch/backend.go	/^func (tl *Tasklist) RunTimedTriggers() {$/;"	f
+SEARCHFUNCTION	pooch/luaint.go	/^var SEARCHFUNCTION string = "searchfn"$/;"	d
+SEARCHFUNCTION	pooch/luaint.go	/^var SEARCHFUNCTION string = "searchfn"$/;"	v
+SELECT_HEADER	pooch/parserint.go	/^var SELECT_HEADER string = "SELECT tasks.id, title_field, text_field, priority, trigger_at_field, sort, group_concat(columns.name||'\\u001f'||columns.value, '\\u001f')\\nFROM tasks NATURAL JOIN columns "$/;"	d
+SELECT_HEADER	pooch/parserint.go	/^var SELECT_HEADER string = "SELECT tasks.id, title_field, text_field, priority, trigger_at_field, sort, group_concat(columns.name||'\\u001f'||columns.value, '\\u001f')\\nFROM tasks NATURAL JOIN columns "$/;"	v
+STICKY	pooch/types.go	/^	STICKY Priority = Priority(iota)$/;"	c
+SUMS	pooch/staticserve.go	/^var SUMS map[string]string = map[string]string{$/;"	d
+SUMS	pooch/staticserve.go	/^var SUMS map[string]string = map[string]string{$/;"	v
+SaveIdCookie	pooch/multiserve.go	/^func (mdb *MultiuserDb) SaveIdCookie(username, idCookie string) {$/;"	d
+SaveIdCookie	pooch/multiserve.go	/^func (mdb *MultiuserDb) SaveIdCookie(username, idCookie string) {$/;"	f
+SaveSearch	pooch/backend.go	/^func (tl *Tasklist) SaveSearch(name string, query string) {$/;"	d
+SaveSearch	pooch/backend.go	/^func (tl *Tasklist) SaveSearch(name string, query string) {$/;"	f
+SaveSearchServer	pooch/serve.go	/^func SaveSearchServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {$/;"	d
+SaveSearchServer	pooch/serve.go	/^func SaveSearchServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {$/;"	f
+SaveServer	pooch/serve.go	/^func SaveServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {$/;"	d
+SaveServer	pooch/serve.go	/^func SaveServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {$/;"	f
+SearchDayOfTheWeek	pooch/parsetime.go	/^func SearchDayOfTheWeek(datetime *VarTime) *VarTime {$/;"	d
+SearchDayOfTheWeek	pooch/parsetime.go	/^func SearchDayOfTheWeek(datetime *VarTime) *VarTime {$/;"	f
+SearchFile	pooch/dbname.go	/^func SearchFile(name string) (outname string, found bool) {$/;"	d
+SearchFile	pooch/dbname.go	/^func SearchFile(name string) (outname string, found bool) {$/;"	f
+SelectionManager	static/fullcalendar.js	/^function SelectionManager() {$/;"	f
+SelectionManager.daySelectionMousedown	static/fullcalendar.js	/^	function daySelectionMousedown(ev) { \/\/ not really a generic manager method, oh well$/;"	f
+SelectionManager.reportSelection	static/fullcalendar.js	/^	function reportSelection(startDate, endDate, allDay, ev) {$/;"	f
+SelectionManager.select	static/fullcalendar.js	/^	function select(startDate, endDate, allDay) {$/;"	f
+SelectionManager.unselect	static/fullcalendar.js	/^	function unselect(ev) {$/;"	f
+Serve	pooch/serve.go	/^func Serve(port string) {$/;"	d
+Serve	pooch/serve.go	/^func Serve(port string) {$/;"	f
+SetColumn	pooch/types.go	/^func (e *Entry) SetColumn(name, value string) *Entry { e.columns[name] = value; return e }$/;"	d
+SetColumn	pooch/types.go	/^func (e *Entry) SetColumn(name, value string) *Entry { e.columns[name] = value; return e }$/;"	f
+SetColumns	pooch/types.go	/^func (e *Entry) SetColumns(cols Columns) *Entry { e.columns = cols; return e }$/;"	d
+SetColumns	pooch/types.go	/^func (e *Entry) SetColumns(cols Columns) *Entry { e.columns = cols; return e }$/;"	f
+SetEntryInLua	pooch/luaint.go	/^func (tl *Tasklist) SetEntryInLua(name string, entry *Entry) {$/;"	d
+SetEntryInLua	pooch/luaint.go	/^func (tl *Tasklist) SetEntryInLua(name string, entry *Entry) {$/;"	f
+SetId	pooch/types.go	/^func (e *Entry) SetId(id string) *Entry { e.id = id; return e}$/;"	d
+SetId	pooch/types.go	/^func (e *Entry) SetId(id string) *Entry { e.id = id; return e}$/;"	f
+SetLogger	pooch/dbg.go	/^func SetLogger(w io.Writer) {$/;"	d
+SetLogger	pooch/dbg.go	/^func SetLogger(w io.Writer) {$/;"	f
+SetPriority	pooch/types.go	/^func (e *Entry) SetPriority(p Priority) *Entry { e.priority = p; return e}$/;"	d
+SetPriority	pooch/types.go	/^func (e *Entry) SetPriority(p Priority) *Entry { e.priority = p; return e}$/;"	f
+SetPrivateSetting	pooch/backend.go	/^func (tl *Tasklist) SetPrivateSetting(name, value string) {$/;"	d
+SetPrivateSetting	pooch/backend.go	/^func (tl *Tasklist) SetPrivateSetting(name, value string) {$/;"	f
+SetSetting	pooch/backend.go	/^func (tl *Tasklist) SetSetting(name, value string) {$/;"	d
+SetSetting	pooch/backend.go	/^func (tl *Tasklist) SetSetting(name, value string) {$/;"	f
+SetSettings	pooch/backend.go	/^func (tl *Tasklist) SetSettings(settings map[string]string) {$/;"	d
+SetSettings	pooch/backend.go	/^func (tl *Tasklist) SetSettings(settings map[string]string) {$/;"	f
+SetSort	pooch/types.go	/^func (e *Entry) SetSort(sort string) { e.sort = sort; }$/;"	d
+SetSort	pooch/types.go	/^func (e *Entry) SetSort(sort string) { e.sort = sort; }$/;"	f
+SetTableInt	pooch/luaint.go	/^func SetTableInt(L *lua.State, name string, value int64) {$/;"	d
+SetTableInt	pooch/luaint.go	/^func SetTableInt(L *lua.State, name string, value int64) {$/;"	f
+SetTableIntString	pooch/luaint.go	/^func SetTableIntString(L *lua.State, idx int64, value string) {$/;"	d
+SetTableIntString	pooch/luaint.go	/^func SetTableIntString(L *lua.State, idx int64, value string) {$/;"	f
+SetTasklistInLua	pooch/luaint.go	/^func (tl *Tasklist) SetTasklistInLua() {$/;"	d
+SetTasklistInLua	pooch/luaint.go	/^func (tl *Tasklist) SetTasklistInLua() {$/;"	f
+SetText	pooch/types.go	/^func (e *Entry) SetText(text string) *Entry { e.text = text; return e }$/;"	d
+SetText	pooch/types.go	/^func (e *Entry) SetText(text string) *Entry { e.text = text; return e }$/;"	f
+SetTitle	pooch/types.go	/^func (e *Entry) SetTitle(title string) *Entry { e.title = title; return e }$/;"	d
+SetTitle	pooch/types.go	/^func (e *Entry) SetTitle(title string) *Entry { e.title = title; return e }$/;"	f
+SetTriggerAt	pooch/types.go	/^func (e *Entry) SetTriggerAt(tat *time.Time) { e.triggerAt = tat; }$/;"	d
+SetTriggerAt	pooch/types.go	/^func (e *Entry) SetTriggerAt(tat *time.Time) { e.triggerAt = tat; }$/;"	f
+SetupHandleFunc	pooch/serve.go	/^func SetupHandleFunc(wrapperTasklistServer func(TasklistServer)http.HandlerFunc, wrapperTasklistWithIdServer func(TasklistWithIdServer)http.HandlerFunc) {$/;"	d
+SetupHandleFunc	pooch/serve.go	/^func SetupHandleFunc(wrapperTasklistServer func(TasklistServer)http.HandlerFunc, wrapperTasklistWithIdServer func(TasklistWithIdServer)http.HandlerFunc) {$/;"	f
+SetupSearchStuff	pooch/newparse_test.go	/^func SetupSearchStuff(tl *Tasklist) {$/;"	d
+SetupSearchStuff	pooch/newparse_test.go	/^func SetupSearchStuff(tl *Tasklist) {$/;"	f
+ShowReturnValueRequest	pooch/backend.go	/^func (tl *Tasklist) ShowReturnValueRequest() bool {$/;"	d
+SimpleExpr	pooch/pureparser.go	/^type SimpleExpr struct {$/;"	d
+SimpleExpr	pooch/pureparser.go	/^type SimpleExpr struct {$/;"	t
+SingleWrapperTasklistServer	pooch/serve.go	/^func SingleWrapperTasklistServer(fn TasklistServer) http.HandlerFunc {$/;"	d
+SingleWrapperTasklistServer	pooch/serve.go	/^func SingleWrapperTasklistServer(fn TasklistServer) http.HandlerFunc {$/;"	f
+SingleWrapperTasklistWithIdServer	pooch/serve.go	/^func SingleWrapperTasklistWithIdServer(fn TasklistWithIdServer) http.HandlerFunc {$/;"	d
+SingleWrapperTasklistWithIdServer	pooch/serve.go	/^func SingleWrapperTasklistWithIdServer(fn TasklistWithIdServer) http.HandlerFunc {$/;"	f
+Sort	pooch/types.go	/^func (e *Entry) Sort() string { return e.sort; }$/;"	d
+Sort	pooch/types.go	/^func (e *Entry) Sort() string { return e.sort; }$/;"	f
+SortFromTriggerAt	pooch/parserint.go	/^func SortFromTriggerAt(triggerAt *time.Time, defaultWithTime bool) string {$/;"	d
+SortFromTriggerAt	pooch/parserint.go	/^func SortFromTriggerAt(triggerAt *time.Time, defaultWithTime bool) string {$/;"	f
+StatEntryHTML	pooch/htmlformat.go	/^var StatEntryHTML ExecutableTemplate = MakeExecutableTemplate("StatEntry", `$/;"	d
+StatEntryHTML	pooch/htmlformat.go	/^var StatEntryHTML ExecutableTemplate = MakeExecutableTemplate("StatEntry", `$/;"	v
+StatHeaderHTML	pooch/htmlformat.go	/^var StatHeaderHTML ExecutableTemplate = MakeExecutableTemplate("StatHeader", `$/;"	d
+StatHeaderHTML	pooch/htmlformat.go	/^var StatHeaderHTML ExecutableTemplate = MakeExecutableTemplate("StatHeader", `$/;"	v
+StatServer	pooch/serve.go	/^func StatServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {$/;"	d
+StatServer	pooch/serve.go	/^func StatServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {$/;"	f
+StatementScan	pooch/backend.go	/^func StatementScan(stmt *sqlite.Stmt, hasCols bool) (*Entry, error) {$/;"	d
+StatementScan	pooch/backend.go	/^func StatementScan(stmt *sqlite.Stmt, hasCols bool) (*Entry, error) {$/;"	f
+StaticInMemoryServer	pooch/serve.go	/^func StaticInMemoryServer(c http.ResponseWriter, req *http.Request) {$/;"	d
+StaticInMemoryServer	pooch/serve.go	/^func StaticInMemoryServer(c http.ResponseWriter, req *http.Request) {$/;"	f
+Statistic	pooch/backend.go	/^type Statistic struct {$/;"	d
+Statistic	pooch/backend.go	/^type Statistic struct {$/;"	t
+StrTokenizer	pooch/tokenizer.go	/^func StrTokenizer(match string) TokenizerFunc {$/;"	d
+StrTokenizer	pooch/tokenizer.go	/^func StrTokenizer(match string) TokenizerFunc {$/;"	f
+StrTokenizerTo	pooch/tokenizer.go	/^func StrTokenizerTo(match string, translation string) TokenizerFunc {$/;"	d
+StrTokenizerTo	pooch/tokenizer.go	/^func StrTokenizerTo(match string, translation string) TokenizerFunc {$/;"	f
+String	pooch/pureparser.go	/^func (se *SimpleExpr) String() string {$/;"	d
+String	pooch/pureparser.go	/^func (se *SimpleExpr) String() string {$/;"	f
+String	pooch/types.go	/^func (p *Priority) String() string {$/;"	d
+String	pooch/types.go	/^func (p *Priority) String() string {$/;"	f
+String	pooch/types.go	/^func (pe *ParseError) String() string {$/;"	d
+String	pooch/types.go	/^func (pe *ParseError) String() string {$/;"	f
+String	static/json.js	/^        };$/;"	c
+String.toJSON	static/json.js	/^        String.prototype.toJSON =$/;"	m
+StripQuotes	pooch/types.go	/^func StripQuotes(in string) string {$/;"	d
+StripQuotes	pooch/types.go	/^func StripQuotes(in string) string {$/;"	f
+TASKLIST	pooch/luaint.go	/^var TASKLIST string = "tasklist"$/;"	d
+TASKLIST	pooch/luaint.go	/^var TASKLIST string = "tasklist"$/;"	v
+TIMED	pooch/types.go	/^	TIMED$/;"	c
+TRACE	pooch/dbg.go	/^	TRACE = LogLevel(iota)$/;"	c
+TRIGGER_AT_FORMAT	pooch/types.go	/^var TRIGGER_AT_FORMAT string = "2006-01-02 15:04"$/;"	d
+TRIGGER_AT_FORMAT	pooch/types.go	/^var TRIGGER_AT_FORMAT string = "2006-01-02 15:04"$/;"	v
+Tasklist	pooch/backend.go	/^type Tasklist struct {$/;"	d
+Tasklist	pooch/backend.go	/^type Tasklist struct {$/;"	t
+TasklistServer	pooch/serve.go	/^type TasklistServer func(c http.ResponseWriter, req *http.Request, tl *Tasklist)$/;"	d
+TasklistServer	pooch/serve.go	/^type TasklistServer func(c http.ResponseWriter, req *http.Request, tl *Tasklist)$/;"	t
+TasklistWithIdServer	pooch/serve.go	/^type TasklistWithIdServer func(c http.ResponseWriter, req *http.Request, tl *Tasklist, id string)$/;"	d
+TasklistWithIdServer	pooch/serve.go	/^type TasklistWithIdServer func(c http.ResponseWriter, req *http.Request, tl *Tasklist, id string)$/;"	t
+TestColEntry	pooch/newparse_test.go	/^func TestColEntry(z *testing.T) {$/;"	d
+TestColEntry	pooch/newparse_test.go	/^func TestColEntry(z *testing.T) {$/;"	f
+TestEntryWithSearch	pooch/newparse_test.go	/^func TestEntryWithSearch(z *testing.T) {$/;"	d
+TestEntryWithSearch	pooch/newparse_test.go	/^func TestEntryWithSearch(z *testing.T) {$/;"	f
+TestEscaping	pooch/newparse_test.go	/^func TestEscaping(z *testing.T) {$/;"	d
+TestEscaping	pooch/newparse_test.go	/^func TestEscaping(z *testing.T) {$/;"	f
+TestExclusionSelect	pooch/newparse_test.go	/^func TestExclusionSelect(z *testing.T) {$/;"	d
+TestExclusionSelect	pooch/newparse_test.go	/^func TestExclusionSelect(z *testing.T) {$/;"	f
+TestExtra	pooch/newparse_test.go	/^func TestExtra(z *testing.T) {$/;"	d
+TestExtra	pooch/newparse_test.go	/^func TestExtra(z *testing.T) {$/;"	f
+TestLuaSelect	pooch/newparse_test.go	/^func TestLuaSelect(z *testing.T) {$/;"	d
+TestLuaSelect	pooch/newparse_test.go	/^func TestLuaSelect(z *testing.T) {$/;"	f
+TestNoQuerySelect	pooch/newparse_test.go	/^func TestNoQuerySelect(z *testing.T) {$/;"	d
+TestNoQuerySelect	pooch/newparse_test.go	/^func TestNoQuerySelect(z *testing.T) {$/;"	f
+TestOptions	pooch/newparse_test.go	/^func TestOptions(z *testing.T) {$/;"	d
+TestOptions	pooch/newparse_test.go	/^func TestOptions(z *testing.T) {$/;"	f
+TestOptionsSelect	pooch/newparse_test.go	/^func TestOptionsSelect(z *testing.T) {$/;"	d
+TestOptionsSelect	pooch/newparse_test.go	/^func TestOptionsSelect(z *testing.T) {$/;"	f
+TestParseAnd	pooch/newparse_test.go	/^func TestParseAnd(z *testing.T) {$/;"	d
+TestParseAnd	pooch/newparse_test.go	/^func TestParseAnd(z *testing.T) {$/;"	f
+TestParseFull	pooch/newparse_test.go	/^func TestParseFull(z *testing.T) {$/;"	d
+TestParseFull	pooch/newparse_test.go	/^func TestParseFull(z *testing.T) {$/;"	f
+TestParsePriority	pooch/newparse_test.go	/^func TestParsePriority(z *testing.T) {$/;"	d
+TestParsePriority	pooch/newparse_test.go	/^func TestParsePriority(z *testing.T) {$/;"	f
+TestParseSimpleExpr	pooch/newparse_test.go	/^func TestParseSimpleExpr(z *testing.T) {$/;"	d
+TestParseSimpleExpr	pooch/newparse_test.go	/^func TestParseSimpleExpr(z *testing.T) {$/;"	f
+TestParseTimetag	pooch/newparse_test.go	/^func TestParseTimetag(z *testing.T) {$/;"	d
+TestParseTimetag	pooch/newparse_test.go	/^func TestParseTimetag(z *testing.T) {$/;"	f
+TestQuerySelect	pooch/newparse_test.go	/^func TestQuerySelect(z *testing.T) {$/;"	d
+TestQuerySelect	pooch/newparse_test.go	/^func TestQuerySelect(z *testing.T) {$/;"	f
+TestSavedSearch	pooch/newparse_test.go	/^func TestSavedSearch(z *testing.T) {$/;"	d
+TestSavedSearch	pooch/newparse_test.go	/^func TestSavedSearch(z *testing.T) {$/;"	f
+TestSavedSearchSelect	pooch/newparse_test.go	/^func TestSavedSearchSelect(z *testing.T) {$/;"	d
+TestSavedSearchSelect	pooch/newparse_test.go	/^func TestSavedSearchSelect(z *testing.T) {$/;"	f
+TestSearch	pooch/newparse_test.go	/^func TestSearch(z *testing.T) {$/;"	d
+TestSearch	pooch/newparse_test.go	/^func TestSearch(z *testing.T) {$/;"	f
+TestShowCols	pooch/newparse_test.go	/^func TestShowCols(z *testing.T) {$/;"	d
+TestShowCols	pooch/newparse_test.go	/^func TestShowCols(z *testing.T) {$/;"	f
+TestSimpleEntry	pooch/newparse_test.go	/^func TestSimpleEntry(z *testing.T) {$/;"	d
+TestSimpleEntry	pooch/newparse_test.go	/^func TestSimpleEntry(z *testing.T) {$/;"	f
+TestSpecialEntry	pooch/newparse_test.go	/^func TestSpecialEntry(z *testing.T) {$/;"	d
+TestSpecialEntry	pooch/newparse_test.go	/^func TestSpecialEntry(z *testing.T) {$/;"	f
+TestTokMisc	pooch/newparse_test.go	/^func TestTokMisc(z *testing.T) {$/;"	d
+TestTokMisc	pooch/newparse_test.go	/^func TestTokMisc(z *testing.T) {$/;"	f
+TestTokOps	pooch/newparse_test.go	/^func TestTokOps(z *testing.T) {$/;"	d
+TestTokOps	pooch/newparse_test.go	/^func TestTokOps(z *testing.T) {$/;"	f
+TestTokRewind	pooch/newparse_test.go	/^func TestTokRewind(z *testing.T) {$/;"	d
+TestTokRewind	pooch/newparse_test.go	/^func TestTokRewind(z *testing.T) {$/;"	f
+TestTokSpaces	pooch/newparse_test.go	/^func TestTokSpaces(z *testing.T) {$/;"	d
+TestTokSpaces	pooch/newparse_test.go	/^func TestTokSpaces(z *testing.T) {$/;"	f
+TestTokTime	pooch/newparse_test.go	/^func TestTokTime(z *testing.T) {$/;"	d
+TestTokTime	pooch/newparse_test.go	/^func TestTokTime(z *testing.T) {$/;"	f
+Text	pooch/types.go	/^func (e *Entry) Text() string { return e.text; }$/;"	d
+Text	pooch/types.go	/^func (e *Entry) Text() string { return e.text; }$/;"	f
+TimeFormatTimezone	pooch/parsetime.go	/^func TimeFormatTimezone(atime *time.Time, format string, timezone int) string {$/;"	d
+TimeFormatTimezone	pooch/parsetime.go	/^func TimeFormatTimezone(atime *time.Time, format string, timezone int) string {$/;"	f
+TimeOnlyFormats	pooch/parsetime.go	/^var TimeOnlyFormats []DateTimeFormat = []DateTimeFormat{$/;"	d
+TimeOnlyFormats	pooch/parsetime.go	/^var TimeOnlyFormats []DateTimeFormat = []DateTimeFormat{$/;"	v
+TimeParseTimezone	pooch/parsetime.go	/^func TimeParseTimezone(layout, input string, timezone int) (*VarTime, error) {$/;"	d
+TimeParseTimezone	pooch/parsetime.go	/^func TimeParseTimezone(layout, input string, timezone int) (*VarTime, error) {$/;"	f
+TimeString	pooch/types.go	/^func (ee *ErrorEntry) TimeString() string {$/;"	d
+TimeString	pooch/types.go	/^func (ee *ErrorEntry) TimeString() string {$/;"	f
+TimeString	pooch/types.go	/^func TimeString(triggerAt *time.Time, sort string, timezone int) string {$/;"	d
+TimeString	pooch/types.go	/^func TimeString(triggerAt *time.Time, sort string, timezone int) string {$/;"	f
+Title	pooch/types.go	/^func (e *Entry) Title() string { return e.title; }$/;"	d
+Title	pooch/types.go	/^func (e *Entry) Title() string { return e.title; }$/;"	f
+ToCalendarEvent	pooch/serve.go	/^func ToCalendarEvent(entry *Entry, className string, timezone int) EventForJSON {$/;"	d
+ToCalendarEvent	pooch/serve.go	/^func ToCalendarEvent(entry *Entry, className string, timezone int) EventForJSON {$/;"	f
+ToInteger	pooch/types.go	/^func (p *Priority) ToInteger() int {$/;"	d
+ToInteger	pooch/types.go	/^func (p *Priority) ToInteger() int {$/;"	f
+ToTime	pooch/parsetime.go	/^func (vt *VarTime) ToTime() time.Time {$/;"	d
+ToTime	pooch/parsetime.go	/^func (vt *VarTime) ToTime() time.Time {$/;"	f
+ToTimePtr	pooch/parsetime.go	/^func (vt *VarTime) ToTimePtr() *time.Time {$/;"	d
+ToTimePtr	pooch/parsetime.go	/^func (vt *VarTime) ToTimePtr() *time.Time {$/;"	f
+Tokenizer	pooch/tokenizer.go	/^type Tokenizer struct {$/;"	d
+Tokenizer	pooch/tokenizer.go	/^type Tokenizer struct {$/;"	t
+TokenizerFunc	pooch/tokenizer.go	/^type TokenizerFunc func(t *Tokenizer) (string, int);$/;"	d
+TokenizerFunc	pooch/tokenizer.go	/^type TokenizerFunc func(t *Tokenizer) (string, int);$/;"	t
+TriggerAt	pooch/types.go	/^func (e *Entry) TriggerAt() *time.Time { return e.triggerAt; }$/;"	d
+TriggerAt	pooch/types.go	/^func (e *Entry) TriggerAt() *time.Time { return e.triggerAt; }$/;"	f
+TriggerAtString	pooch/types.go	/^func (entry *Entry) TriggerAtString(timezone int) string {$/;"	d
+TriggerAtString	pooch/types.go	/^func (entry *Entry) TriggerAtString(timezone int) string {$/;"	f
+Truncate	pooch/backend.go	/^func (tl *Tasklist) Truncate() {$/;"	d
+Truncate	pooch/backend.go	/^func (tl *Tasklist) Truncate() {$/;"	f
+U	static/jquery.js	/^(function(E,B){function ka(a,b,d){if(d===B&&a.nodeType===1){d=a.getAttribute("data-"+b);if(typeof d==="string"){try{d=d==="true"?true:d==="false"?false:d==="null"?null:!c.isNaN(d)?parseFloat(d):Ja.test(d)?c.parseJSON(d):d}catch(e){}c.data(a,b,d)}else d=B}return d}function U(){return false}function ca(){return true}function la(a,b,d){d[0].type=a;return c.event.handle.apply(b,d)}function Ka(a){var b,d,e,f,h,l,k,o,x,r,A,C=[];f=[];h=c.data(this,this.nodeType?"events":"__events__");if(typeof h==="function")h=$/;"	f
+UnmarshalEntry	pooch/types.go	/^type UnmarshalEntry struct {$/;"	d
+UnmarshalEntry	pooch/types.go	/^type UnmarshalEntry struct {$/;"	t
+Update	pooch/backend.go	/^func (tasklist *Tasklist) Update(e *Entry, simpleUpdate bool, alreadyLocked bool) {$/;"	d
+Update	pooch/backend.go	/^func (tasklist *Tasklist) Update(e *Entry, simpleUpdate bool, alreadyLocked bool) {$/;"	f
+UpgradePriority	pooch/backend.go	/^func (tl *Tasklist) UpgradePriority(id string, special bool) Priority {$/;"	d
+UpgradePriority	pooch/backend.go	/^func (tl *Tasklist) UpgradePriority(id string, special bool) Priority {$/;"	f
+UpgradePriority	pooch/types.go	/^func (e *Entry) UpgradePriority(special bool) bool {$/;"	d
+UpgradePriority	pooch/types.go	/^func (e *Entry) UpgradePriority(special bool) bool {$/;"	f
+UsernameFromCookie	pooch/multiserve.go	/^func (mdb *MultiuserDb) UsernameFromCookie(req *http.Request) string {$/;"	d
+UsernameFromCookie	pooch/multiserve.go	/^func (mdb *MultiuserDb) UsernameFromCookie(req *http.Request) string {$/;"	f
+ValidUserName	pooch/multiserve.go	/^func ValidUserName(username string) bool {$/;"	d
+ValidUserName	pooch/multiserve.go	/^func ValidUserName(username string) bool {$/;"	f
+VarTime	pooch/parsetime.go	/^type VarTime struct {$/;"	d
+VarTime	pooch/parsetime.go	/^type VarTime struct {$/;"	t
+VarTimeFromTime	pooch/parsetime.go	/^func VarTimeFromTime(t time.Time) *VarTime {$/;"	d
+VarTimeFromTime	pooch/parsetime.go	/^func VarTimeFromTime(t time.Time) *VarTime {$/;"	f
+Verify	pooch/multiserve.go	/^func (mdb *MultiuserDb) Verify(username, password string) bool {$/;"	d
+Verify	pooch/multiserve.go	/^func (mdb *MultiuserDb) Verify(username, password string) bool {$/;"	f
+View	static/fullcalendar.js	/^function View(element, calendar, viewName) {$/;"	f
+View.eachEventElement	static/fullcalendar.js	/^	function eachEventElement(event, exceptElement, funcName) {$/;"	f
+View.elongateEvents	static/fullcalendar.js	/^	function elongateEvents(events, dayDelta, minuteDelta) {$/;"	f
+View.eventDrop	static/fullcalendar.js	/^	function eventDrop(e, event, dayDelta, minuteDelta, allDay, ev, ui) {$/;"	f
+View.eventElementHandlers	static/fullcalendar.js	/^	function eventElementHandlers(event, eventElement) {$/;"	f
+View.eventEnd	static/fullcalendar.js	/^	function eventEnd(event) {$/;"	f
+View.eventResize	static/fullcalendar.js	/^	function eventResize(e, event, dayDelta, minuteDelta, ev, ui) {$/;"	f
+View.hideEvents	static/fullcalendar.js	/^	function hideEvents(event, exceptElement) {$/;"	f
+View.moveEvents	static/fullcalendar.js	/^	function moveEvents(events, dayDelta, minuteDelta, allDay) {$/;"	f
+View.opt	static/fullcalendar.js	/^	function opt(name, viewNameOverride) {$/;"	f
+View.reportEventClear	static/fullcalendar.js	/^	function reportEventClear() {$/;"	f
+View.reportEventElement	static/fullcalendar.js	/^	function reportEventElement(event, element) {$/;"	f
+View.reportEvents	static/fullcalendar.js	/^	function reportEvents(events) { \/\/ events are already normalized at this point$/;"	f
+View.showEvents	static/fullcalendar.js	/^	function showEvents(event, exceptElement) {$/;"	f
+View.trigger	static/fullcalendar.js	/^	function trigger(name, thisObj) {$/;"	f
+WARN	pooch/dbg.go	/^	WARN$/;"	c
+WhoAmIHTML	pooch/htmlformat.go	/^var WhoAmIHTML ExecutableTemplate = MakeExecutableTemplate("WhoAmI", `$/;"	d
+WhoAmIHTML	pooch/htmlformat.go	/^var WhoAmIHTML ExecutableTemplate = MakeExecutableTemplate("WhoAmI", `$/;"	v
+WhoAmIServer	pooch/multiserve.go	/^func WhoAmIServer(c http.ResponseWriter, req *http.Request) {$/;"	d
+WhoAmIServer	pooch/multiserve.go	/^func WhoAmIServer(c http.ResponseWriter, req *http.Request) {$/;"	f
+WithOpenDefault	pooch/dbname.go	/^func WithOpenDefault(rest func(tl *Tasklist)) {$/;"	d
+WithOpenDefault	pooch/dbname.go	/^func WithOpenDefault(rest func(tl *Tasklist)) {$/;"	f
+WithOpenUser	pooch/multiserve.go	/^func (mdb *MultiuserDb) WithOpenUser(req *http.Request, fn func(tl *Tasklist)) bool{$/;"	d
+WithOpenUser	pooch/multiserve.go	/^func (mdb *MultiuserDb) WithOpenUser(req *http.Request, fn func(tl *Tasklist)) bool{$/;"	f
+WithTransaction	pooch/backend.go	/^func (tasklist *Tasklist) WithTransaction(alreadyLocked bool, f func()) {$/;"	d
+WithTransaction	pooch/backend.go	/^func (tasklist *Tasklist) WithTransaction(alreadyLocked bool, f func()) {$/;"	f
+WrapTemplate	pooch/htmlformat.go	/^func WrapTemplate(t *template.Template) ExecutableTemplate {$/;"	d
+WrapTemplate	pooch/htmlformat.go	/^func WrapTemplate(t *template.Template) ExecutableTemplate {$/;"	f
+WrapperServer	pooch/serve.go	/^func WrapperServer(sub http.HandlerFunc) http.HandlerFunc {$/;"	d
+WrapperServer	pooch/serve.go	/^func WrapperServer(sub http.HandlerFunc) http.HandlerFunc {$/;"	f
+WriteStackTrace	pooch/dbg.go	/^func WriteStackTrace(rerr interface{}, out io.Writer) {$/;"	d
+WriteStackTrace	pooch/dbg.go	/^func WriteStackTrace(rerr interface{}, out io.Writer) {$/;"	f
+_exclEndDay	static/fullcalendar.js	/^function _exclEndDay(end, allDay) {$/;"	f
+addColumns	pooch/backend.go	/^func (tasklist *Tasklist) addColumns(e *Entry) {$/;"	d
+addColumns	pooch/backend.go	/^func (tasklist *Tasklist) addColumns(e *Entry) {$/;"	f
+addDays	static/fullcalendar.js	/^function addDays(d, n, keepTime) { \/\/ deals with daylight savings$/;"	f
+addMinutes	static/fullcalendar.js	/^function addMinutes(d, n) {$/;"	f
+addMonths	static/fullcalendar.js	/^function addMonths(d, n, keepTime) { \/\/ prevents day overflow\/underflow$/;"	f
+addYears	static/fullcalendar.js	/^function addYears(d, n, keepTime) {$/;"	f
+add_entry	static/int.js	/^function add_entry(query) {$/;"	f
+add_row	static/int.js	/^function add_row(id) {$/;"	f
+allDayBounds	static/fullcalendar.js	/^	function allDayBounds(i) {$/;"	f
+allDayTR	static/fullcalendar.js	/^	function allDayTR(i) {$/;"	f
+anyChar	pooch/tokenizer.go	/^func anyChar(ch rune) bool {$/;"	d
+anyChar	pooch/tokenizer.go	/^func anyChar(ch rune) bool {$/;"	f
+arrayMax	static/fullcalendar.js	/^function arrayMax(a) {$/;"	f
+aspectRatio	static/fullcalendar.js	/^	defaultView: 'month',$/;"	p
+buf	pooch/backend.go	/^	var buf []byte = make([]byte, size)$/;"	d
+ca	static/jquery.js	/^(function(E,B){function ka(a,b,d){if(d===B&&a.nodeType===1){d=a.getAttribute("data-"+b);if(typeof d==="string"){try{d=d==="true"?true:d==="false"?false:d==="null"?null:!c.isNaN(d)?parseFloat(d):Ja.test(d)?c.parseJSON(d):d}catch(e){}c.data(a,b,d)}else d=B}return d}function U(){return false}function ca(){return true}function la(a,b,d){d[0].type=a;return c.event.handle.apply(b,d)}function Ka(a){var b,d,e,f,h,l,k,o,x,r,A,C=[];f=[];h=c.data(this,this.nodeType?"events":"__events__");if(typeof h==="function")h=$/;"	f
+calendar.month_names	static/calendar.js	/^calendar = {$/;"	p
+cellDate	static/fullcalendar.js	/^	function cellDate(cell) {$/;"	f
+cellIsAllDay	static/fullcalendar.js	/^	function cellIsAllDay(cell) {$/;"	f
+change_editor_disabled	static/int.js	/^function change_editor_disabled(ed, disabledStatus) {$/;"	f
+change_priority	static/int.js	/^function change_priority(name, event) {$/;"	f
+change_priority_to	static/int.js	/^function change_priority_to(name, priorityNum, priority) {$/;"	f
+check_and_expr	pooch/newparse_test.go	/^func check_and_expr(z *testing.T, r *BoolExpr, expected []string, expVal []string, expExtra []string) {$/;"	d
+check_and_expr	pooch/newparse_test.go	/^func check_and_expr(z *testing.T, r *BoolExpr, expected []string, expVal []string, expExtra []string) {$/;"	f
+clearSelection	static/fullcalendar.js	/^	function clearSelection() {$/;"	f
+clearTime	static/fullcalendar.js	/^function clearTime(d) {$/;"	f
+cloneDate	static/fullcalendar.js	/^function cloneDate(d, dontKeepTime) {$/;"	f
+close_editor	static/int.js	/^function close_editor(row) {$/;"	f
+cmp	static/fullcalendar.js	/^function cmp(a, b) {$/;"	f
+commands	pooch.go	/^var commands map[string](func (args []string)) = map[string](func (args []string)){$/;"	d
+commands	pooch.go	/^var commands map[string](func (args []string)) = map[string](func (args []string)){$/;"	v
+countForwardSegs	static/fullcalendar.js	/^function countForwardSegs(levels) {$/;"	f
+ct	pooch/serve.go	/^	var ct string$/;"	d
+curp	pooch.go	/^	var curp Priority = INVALID$/;"	d
+curp	pooch/serve.go	/^	var curp Priority = INVALID$/;"	d
+d	static/calendar.js	/^		var d = 1;$/;"	v
+dateFormatters.H	static/fullcalendar.js	/^	hh	: function(d)	{ return zeroPad(d.getHours() % 12 || 12) },$/;"	m
+dateFormatters.HH	static/fullcalendar.js	/^	H	: function(d)	{ return d.getHours() },$/;"	m
+dateFormatters.M	static/fullcalendar.js	/^	dddd: function(d,o)	{ return o.dayNames[d.getDay()] },$/;"	m
+dateFormatters.MM	static/fullcalendar.js	/^	M	: function(d)	{ return d.getMonth() + 1 },$/;"	m
+dateFormatters.MMM	static/fullcalendar.js	/^	MM	: function(d)	{ return zeroPad(d.getMonth() + 1) },$/;"	m
+dateFormatters.MMMM	static/fullcalendar.js	/^	MMM	: function(d,o)	{ return o.monthNamesShort[d.getMonth()] },$/;"	m
+dateFormatters.S	static/fullcalendar.js	/^	u	: function(d)	{ return formatDate(d, "yyyy-MM-dd'T'HH:mm:ss'Z'") },$/;"	m
+dateFormatters.T	static/fullcalendar.js	/^	tt	: function(d)	{ return d.getHours() < 12 ? 'am' : 'pm' },$/;"	m
+dateFormatters.TT	static/fullcalendar.js	/^	T	: function(d)	{ return d.getHours() < 12 ? 'A' : 'P' },$/;"	m
+dateFormatters.d	static/fullcalendar.js	/^	HH	: function(d)	{ return zeroPad(d.getHours()) },$/;"	m
+dateFormatters.dd	static/fullcalendar.js	/^	d	: function(d)	{ return d.getDate() },$/;"	m
+dateFormatters.ddd	static/fullcalendar.js	/^	dd	: function(d)	{ return zeroPad(d.getDate()) },$/;"	m
+dateFormatters.dddd	static/fullcalendar.js	/^	ddd	: function(d,o)	{ return o.dayNamesShort[d.getDay()] },$/;"	m
+dateFormatters.h	static/fullcalendar.js	/^	mm	: function(d)	{ return zeroPad(d.getMinutes()) },$/;"	m
+dateFormatters.hh	static/fullcalendar.js	/^	h	: function(d)	{ return d.getHours() % 12 || 12 },$/;"	m
+dateFormatters.m	static/fullcalendar.js	/^	ss	: function(d)	{ return zeroPad(d.getSeconds()) },$/;"	m
+dateFormatters.mm	static/fullcalendar.js	/^	m	: function(d)	{ return d.getMinutes() },$/;"	m
+dateFormatters.s	static/fullcalendar.js	/^var dateFormatters = {$/;"	m
+dateFormatters.ss	static/fullcalendar.js	/^	s	: function(d)	{ return d.getSeconds() },$/;"	m
+dateFormatters.t	static/fullcalendar.js	/^	yyyy: function(d)	{ return d.getFullYear() },$/;"	m
+dateFormatters.tt	static/fullcalendar.js	/^	t	: function(d)	{ return d.getHours() < 12 ? 'a' : 'p' },$/;"	m
+dateFormatters.u	static/fullcalendar.js	/^	TT	: function(d)	{ return d.getHours() < 12 ? 'AM' : 'PM' },$/;"	m
+dateFormatters.yy	static/fullcalendar.js	/^	MMMM: function(d,o)	{ return o.monthNames[d.getMonth()] },$/;"	m
+dateFormatters.yyyy	static/fullcalendar.js	/^	yy	: function(d)	{ return (d.getFullYear()+'').substring(2) },$/;"	m
+date_in_input	static/calendar.js	/^		var date_in_input = input.value;$/;"	v
+datetime	pooch/parsetime.go	/^	var datetime *VarTime = &VarTime{}$/;"	d
+dayDiff	static/fullcalendar.js	/^function dayDiff(d1, d2) { \/\/ d1 - d2$/;"	f
+dayIDs	static/fullcalendar.js	/^var dayIDs = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'],$/;"	v
+decodeStatic	pooch/types.go	/^func decodeStatic(name string) string {$/;"	d
+decodeStatic	pooch/types.go	/^func decodeStatic(name string) string {$/;"	f
+defaultEventEnd	static/fullcalendar.js	/^	function defaultEventEnd(event) {$/;"	f
+defaultSelectionEnd	static/fullcalendar.js	/^	function defaultSelectionEnd(startDate, allDay) {$/;"	f
+defaultView	static/fullcalendar.js	/^var defaults = {$/;"	p
+div	static/calendar.js	/^		var div = document.getElementById(this.opt['calendar']);$/;"	v
+dragStart	static/fullcalendar.js	/^	function dragStart(_dragElement, ev, ui) {$/;"	f
+dragStop	static/fullcalendar.js	/^	function dragStop(_dragElement, ev, ui) {$/;"	f
+editingSavedQueryMode	static/int.js	/^var editingSavedQueryMode = null;$/;"	v
+editor_from_row	static/int.js	/^function editor_from_row(row) {$/;"	f
+editsearch	static/int.js	/^function editsearch() {$/;"	f
+enabledCaching	pooch/backend.go	/^var enabledCaching bool = true$/;"	d
+enabledCaching	pooch/backend.go	/^var enabledCaching bool = true$/;"	v
+encbuf	pooch/backend.go	/^	var encbuf []byte = make([]byte, base64.StdEncoding.EncodedLen(len(buf)))$/;"	d
+entry	pooch.go	/^		var entry *Entry$/;"	d
+err	pooch/backend.go	/^	var err error$/;"	d
+err	pooch/parserint.go	/^	var err error$/;"	d
+err	pooch/serve.go	/^	var err error$/;"	d
+error	pooch/luaint.go	/^	var error interface{} = nil$/;"	d
+eventGUID	static/fullcalendar.js	/^var eventGUID = 1;$/;"	v
+exclEndDay	static/fullcalendar.js	/^function exclEndDay(event) {$/;"	f
+extraClause	pooch/parserint.go	/^		var extraClause string$/;"	d
+fa.function.a	static/jquery.js	/^a+">").appendTo("body"),d=b.css("display");b.remove();if(d==="none"||d==="")d="block";ea[a]=d}return ea[a]}function fa(a){return c.isWindow(a)?a:a.nodeType===9?a.defaultView||a.parentWindow:false}var t=E.document,c=function(){function a(){if(!b.isReady){try{t.documentElement.doScroll("left")}catch(j){setTimeout(a,1);return}b.ready()}}var b=function(j,s){return new b.fn.init(j,s)},d=E.jQuery,e=E.$,f,h=\/^(?:[^<]*(<[\\w\\W]+>)[^>]*$|#([\\w\\-]+)$)\/,l=\/\\S\/,k=\/^\\s+\/,o=\/\\s+$\/,x=\/\\W\/,r=\/\\d\/,A=\/^<(\\w+)\\s*\\\/?>(?:<\\\/\\1>)?$\/,$/;"	f
+fa.var.b	static/jquery.js	/^a+">").appendTo("body"),d=b.css("display");b.remove();if(d==="none"||d==="")d="block";ea[a]=d}return ea[a]}function fa(a){return c.isWindow(a)?a:a.nodeType===9?a.defaultView||a.parentWindow:false}var t=E.document,c=function(){function a(){if(!b.isReady){try{t.documentElement.doScroll("left")}catch(j){setTimeout(a,1);return}b.ready()}}var b=function(j,s){return new b.fn.init(j,s)},d=E.jQuery,e=E.$,f,h=\/^(?:[^<]*(<[\\w\\W]+>)[^>]*$|#([\\w\\-]+)$)\/,l=\/\\S\/,k=\/^\\s+\/,o=\/\\s+$\/,x=\/\\W\/,r=\/\\d\/,A=\/^<(\\w+)\\s*\\\/?>(?:<\\\/\\1>)?$\/,$/;"	f
+fill_editor	static/int.js	/^function fill_editor(name) {$/;"	f
+filter	static/fullcalendar.js	/^				var id = filter + '';$/;"	f
+fixDate	static/fullcalendar.js	/^function fixDate(d, check) { \/\/ force d to be on check's YMD, for daylight savings purposes$/;"	f
+fixDateEx	pooch/parsetime.go	/^func fixDateEx(datetime *VarTime, ref *VarTime) {$/;"	d
+fixDateEx	pooch/parsetime.go	/^func fixDateEx(datetime *VarTime, ref *VarTime) {$/;"	f
+flag	static/calendar.js	/^		var flag = 0;$/;"	v
+formatDate	static/fullcalendar.js	/^function formatDate(date, format, options) {$/;"	f
+formatDates	static/fullcalendar.js	/^function formatDates(date1, date2, format, options) {$/;"	f
+formatString	pooch/types.go	/^		var formatString string$/;"	d
+formatters	pooch/htmlformat.go	/^var formatters template.FuncMap = template.FuncMap{$/;"	d
+formatters	pooch/htmlformat.go	/^var formatters template.FuncMap = template.FuncMap{$/;"	v
+function.resetElement	static/fullcalendar.js	/^			function resetElement() {$/;"	f
+function.updateTimeText	static/fullcalendar.js	/^			function updateTimeText(minuteDelta) {$/;"	f
+guess_next_priority	static/int.js	/^function guess_next_priority(name, special) {$/;"	f
+headerInfo	pooch/serve.go	/^func headerInfo(tl *Tasklist, pageName string, query string, trigger string, isSavedSearch bool, showOtherLink bool, parseError, retrieveError error, options map[string]string) map[string]interface{} {$/;"	d
+headerInfo	pooch/serve.go	/^func headerInfo(tl *Tasklist, pageName string, query string, trigger string, isSavedSearch bool, showOtherLink bool, parseError, retrieveError error, options map[string]string) map[string]interface{} {$/;"	f
+help_commands	pooch.go	/^var help_commands map[string](func ()) = map[string](func ()){$/;"	d
+help_commands	pooch.go	/^var help_commands map[string](func ()) = map[string](func ()){$/;"	v
+hmargins	static/fullcalendar.js	/^function hmargins(_element) {$/;"	f
+hsides	static/fullcalendar.js	/^function hsides(_element, includeMargins) {$/;"	f
+input	pooch.go	/^		var input string$/;"	d
+input.onclick	static/calendar.js	/^		var ths = this;$/;"	f
+internalTasklistOpenOrCreate	pooch/backend.go	/^func internalTasklistOpenOrCreate(filename string) *Tasklist {$/;"	d
+internalTasklistOpenOrCreate	pooch/backend.go	/^func internalTasklistOpenOrCreate(filename string) *Tasklist {$/;"	f
+isNumber	pooch/pureparser.go	/^func isNumber(tk string) (n float64, ok bool) {$/;"	d
+isNumber	pooch/pureparser.go	/^func isNumber(tk string) (n float64, ok bool) {$/;"	f
+isQuickTagStart	pooch/tokenizer.go	/^func isQuickTagStart(ch rune) bool {$/;"	d
+isQuickTagStart	pooch/tokenizer.go	/^func isQuickTagStart(ch rune) bool {$/;"	f
+isTagChar	pooch/tokenizer.go	/^func isTagChar(ch rune) bool {$/;"	d
+isTagChar	pooch/tokenizer.go	/^func isTagChar(ch rune) bool {$/;"	f
+keytable	static/int.js	/^function keytable(e) {$/;"	f
+la	static/jquery.js	/^(function(E,B){function ka(a,b,d){if(d===B&&a.nodeType===1){d=a.getAttribute("data-"+b);if(typeof d==="string"){try{d=d==="true"?true:d==="false"?false:d==="null"?null:!c.isNaN(d)?parseFloat(d):Ja.test(d)?c.parseJSON(d):d}catch(e){}c.data(a,b,d)}else d=B}return d}function U(){return false}function ca(){return true}function la(a,b,d){d[0].type=a;return c.event.handle.apply(b,d)}function Ka(a){var b,d,e,f,h,l,k,o,x,r,A,C=[];f=[];h=c.data(this,this.nodeType?"events":"__events__");if(typeof h==="function")h=$/;"	f
+lazySegBind	static/fullcalendar.js	/^function lazySegBind(container, segs, bindHandlers) {$/;"	f
+luaAssertArgnum	pooch/luaint.go	/^func luaAssertArgnum(L *lua.State, n int, fname string) {$/;"	d
+luaAssertArgnum	pooch/luaint.go	/^func luaAssertArgnum(L *lua.State, n int, fname string) {$/;"	f
+luaAssertNotFreeCursor	pooch/luaint.go	/^func luaAssertNotFreeCursor(tl *Tasklist, fname string) {$/;"	d
+luaAssertNotFreeCursor	pooch/luaint.go	/^func luaAssertNotFreeCursor(tl *Tasklist, fname string) {$/;"	f
+luaClausable	pooch/luaint.go	/^	var luaClausable Clausable = nil$/;"	d
+main	pooch.go	/^func main() {$/;"	d
+main	pooch.go	/^func main() {$/;"	f
+main	pooch.go	/^package main$/;"	p
+makeLogger	pooch/dbg.go	/^func makeLogger(w io.Writer) *log.Logger {$/;"	d
+makeLogger	pooch/dbg.go	/^func makeLogger(w io.Writer) *log.Logger {$/;"	f
+memberof	static/init.lua	/^function memberof(aset, element)$/;"	f
+message	pooch/backend.go	/^		var message string$/;"	d
+mme	pooch/newparse_test.go	/^func mme(z *testing.T, a, b *Entry) {$/;"	d
+mme	pooch/newparse_test.go	/^func mme(z *testing.T, a, b *Entry) {$/;"	f
+mms	pooch/newparse_test.go	/^func mms(z *testing.T, a string, b string, explanation string) {$/;"	d
+mms	pooch/newparse_test.go	/^func mms(z *testing.T, a string, b string, explanation string) {$/;"	f
+mms_large	pooch/newparse_test.go	/^func mms_large(z *testing.T, a string, b string, explanation string) {$/;"	d
+mms_large	pooch/newparse_test.go	/^func mms_large(z *testing.T, a string, b string, explanation string) {$/;"	f
+mmt	pooch/newparse_test.go	/^func mmt(z *testing.T, a string, b []string) {$/;"	d
+mmt	pooch/newparse_test.go	/^func mmt(z *testing.T, a string, b []string) {$/;"	f
+multiuserDb	pooch/multiserve.go	/^var multiuserDb *MultiuserDb$/;"	d
+multiuserDb	pooch/multiserve.go	/^var multiuserDb *MultiuserDb$/;"	v
+name	pooch/backend.go	/^		var name string$/;"	d
+name	pooch/backend.go	/^		var name, value string$/;"	d
+nextDay	pooch/parsetime.go	/^func nextDay(atime time.Time) time.Time {$/;"	d
+nextDay	pooch/parsetime.go	/^func nextDay(atime time.Time) time.Time {$/;"	f
+next_month	static/calendar.js	/^		var next_month = month+1;$/;"	v
+next_month_year	static/calendar.js	/^		var next_month_year = year;$/;"	v
+noop	static/fullcalendar.js	/^function noop() { }$/;"	f
+normalizeValue	pooch/pureparser.go	/^func normalizeValue(value string, timezone int) string {$/;"	d
+normalizeValue	pooch/pureparser.go	/^func normalizeValue(value string, timezone int) string {$/;"	f
+numberRE	pooch/pureparser.go	/^var numberRE *regexp.Regexp = regexp.MustCompile("^[0-9.]+$")$/;"	d
+numberRE	pooch/pureparser.go	/^var numberRE *regexp.Regexp = regexp.MustCompile("^[0-9.]+$")$/;"	v
+ooc	pooch/newparse_test.go	/^func ooc() *Tasklist {$/;"	d
+ooc	pooch/newparse_test.go	/^func ooc() *Tasklist {$/;"	f
+otherPageName	pooch/serve.go	/^	var otherPageName, otherPageLink string$/;"	d
+parseDate	static/fullcalendar.js	/^function parseDate(s, ignoreTimezone) { \/\/ ignoreTimezone defaults to true$/;"	f
+parseISO8601	static/fullcalendar.js	/^function parseISO8601(s, ignoreTimezone) { \/\/ ignoreTimezone defaults to false$/;"	f
+parseNextWeekdayTime	pooch/parsetime.go	/^func parseNextWeekdayTime(input string, timezone int) *VarTime {$/;"	d
+parseNextWeekdayTime	pooch/parsetime.go	/^func parseNextWeekdayTime(input string, timezone int) *VarTime {$/;"	f
+parseTime	static/fullcalendar.js	/^function parseTime(s) { \/\/ returns minutes since start of day$/;"	f
+passhash	pooch/multiserve.go	/^	var passhash []byte$/;"	d
+perform_toggle_on_keyevent	static/int.js	/^function perform_toggle_on_keyevent(e) {$/;"	f
+pooch	pooch/backend.go	/^package pooch$/;"	p
+pooch	pooch/compat.go	/^package pooch$/;"	p
+pooch	pooch/dbg.go	/^package pooch$/;"	p
+pooch	pooch/dbname.go	/^package pooch$/;"	p
+pooch	pooch/htmlformat.go	/^package pooch$/;"	p
+pooch	pooch/luaint.go	/^package pooch$/;"	p
+pooch	pooch/multiserve.go	/^package pooch$/;"	p
+pooch	pooch/newparse_test.go	/^package pooch$/;"	p
+pooch	pooch/parserint.go	/^package pooch$/;"	p
+pooch	pooch/parsetime.go	/^package pooch$/;"	p
+pooch	pooch/pureparser.go	/^package pooch$/;"	p
+pooch	pooch/serve.go	/^package pooch$/;"	p
+pooch	pooch/staticserve.go	/^package pooch$/;"	p
+pooch	pooch/tokenizer.go	/^package pooch$/;"	p
+pooch	pooch/types.go	/^package pooch$/;"	p
+previous_month	static/calendar.js	/^		var previous_month = month-1;$/;"	v
+previous_month_year	static/calendar.js	/^		var previous_month_year = year;$/;"	v
+priority	pooch/backend.go	/^		var priority, count int$/;"	d
+priority_num	pooch/backend.go	/^	var priority_num int$/;"	d
+ptr	pooch/luaint.go	/^	var ptr **Entry = (**Entry)(rawptr)$/;"	d
+ptr	pooch/luaint.go	/^	var ptr **Tasklist = (**Tasklist)(rawptr)$/;"	d
+query	pooch/htmlformat.go	/^     var query = "{{.query|html}}";$/;"	d
+queryForTitle	pooch/serve.go	/^func queryForTitle(query string) string {$/;"	d
+queryForTitle	pooch/serve.go	/^func queryForTitle(query string) string {$/;"	f
+quote	static/json.js	/^    function quote(string) {$/;"	f
+remove_entry	static/int.js	/^function remove_entry(name) {$/;"	f
+removesearch	static/int.js	/^function removesearch() {$/;"	f
+renderSelection	static/fullcalendar.js	/^	function renderSelection(startDate, endDate, allDay) {$/;"	f
+renderSlotSelection	static/fullcalendar.js	/^	function renderSlotSelection(startDate, endDate) {$/;"	f
+repeat_weekdays	static/init.lua	/^function repeat_weekdays(weekdays)$/;"	f
+rtlDefaults.header	static/fullcalendar.js	/^var rtlDefaults = {$/;"	p
+salt	pooch/multiserve.go	/^	var salt string$/;"	d
+save_editor	static/int.js	/^function save_editor(form) {$/;"	f
+save_editor_by_id	static/int.js	/^function save_editor_by_id(name, event) {$/;"	f
+save_open_editor	static/int.js	/^function save_open_editor(should_close_editor) {$/;"	f
+savesearch	static/int.js	/^function savesearch() {$/;"	f
+savesearch_ex	static/int.js	/^function savesearch_ex(name, query) {$/;"	f
+scanerr	pooch/backend.go	/^	var scanerr error$/;"	d
+segCmp	static/fullcalendar.js	/^function segCmp(a, b) {$/;"	f
+segsCollide	static/fullcalendar.js	/^function segsCollide(seg1, seg2) {$/;"	f
+setDefaults	static/fullcalendar.js	/^function setDefaults(d) {$/;"	f
+setMinHeight	static/fullcalendar.js	/^function setMinHeight(element, h) {$/;"	f
+setOuterHeight	static/fullcalendar.js	/^function setOuterHeight(element, height, includeMargins) {$/;"	f
+setOuterWidth	static/fullcalendar.js	/^function setOuterWidth(element, width, includeMargins) {$/;"	f
+setYMD	static/fullcalendar.js	/^function setYMD(date, y, m, d) {$/;"	f
+skipWeekend	static/fullcalendar.js	/^function skipWeekend(date, inc, excl) {$/;"	f
+sliceSegs	static/fullcalendar.js	/^function sliceSegs(events, visEventEnds, start, end) {$/;"	f
+slotSelectionMousedown	static/fullcalendar.js	/^	function slotSelectionMousedown(ev) {$/;"	f
+smartProperty	static/fullcalendar.js	/^function smartProperty(obj, name) { \/\/ get a camel-cased\/namespaced property of an object$/;"	f
+sort	pooch/pureparser.go	/^	var sort string$/;"	d
+stackSegs	static/fullcalendar.js	/^function stackSegs(segs) {$/;"	f
+standardTokTable	pooch/tokenizer.go	/^var standardTokTable []TokenizerFunc = []TokenizerFunc{$/;"	d
+standardTokTable	pooch/tokenizer.go	/^var standardTokTable []TokenizerFunc = []TokenizerFunc{$/;"	v
+startMultilineRE	pooch/pureparser.go	/^var startMultilineRE *regexp.Regexp = regexp.MustCompile("^[ \\t\\n\\r]*{$")$/;"	d
+startMultilineRE	pooch/pureparser.go	/^var startMultilineRE *regexp.Regexp = regexp.MustCompile("^[ \\t\\n\\r]*{$")$/;"	v
+startSecs	pooch/serve.go	/^	var startSecs, endSecs int64$/;"	d
+start_day	static/calendar.js	/^		var start_day = first_day.getDay();$/;"	v
+staticservedeps	Makefile	/^staticservedeps = static\/* static\/dot-luv\/* static\/dot-luv\/images\/*$/;"	m
+stmt	pooch/backend.go	/^	var stmt *sqlite.Stmt$/;"	d
+str	static/json.js	/^    function str(key, holder) {$/;"	f
+t.build	static/fullcalendar.js	/^	var cols;$/;"	f
+t.cell	static/fullcalendar.js	/^	};$/;"	f
+t.cellIsAllDay	static/fullcalendar.js	/^	t.cellDate = cellDate;$/;"	f
+t.clear	static/fullcalendar.js	/^	};$/;"	f
+t.formatDate	static/fullcalendar.js	/^	t.incrementDate = incrementDate;$/;"	f
+t.formatDates	static/fullcalendar.js	/^	t.formatDate = function(format, date) { return formatDate(format, date, options) };$/;"	f
+t.getBodyContent	static/fullcalendar.js	/^	t.getMaxMinute = function() { return maxMinute };$/;"	f
+t.getColCnt	static/fullcalendar.js	/^	t.getRowCnt = function() { return rowCnt };$/;"	f
+t.getColWidth	static/fullcalendar.js	/^	t.getColCnt = function() { return colCnt };$/;"	f
+t.getDaySegmentContainer	static/fullcalendar.js	/^	t.getColWidth = function() { return colWidth };$/;"	f
+t.getHoverListener	static/fullcalendar.js	/^	t.defaultEventEnd = defaultEventEnd;$/;"	f
+t.getMaxMinute	static/fullcalendar.js	/^	t.getMinMinute = function() { return minMinute };$/;"	f
+t.getMinMinute	static/fullcalendar.js	/^	t.getSlotSegmentContainer = function() { return slotSegmentContainer };$/;"	f
+t.getRowCnt	static/fullcalendar.js	/^	t.allDayBounds = allDayBounds;$/;"	f
+t.getSlotHeight	static/fullcalendar.js	/^	t.getColWidth = function() { return colWidth };$/;"	f
+t.getSlotSegmentContainer	static/fullcalendar.js	/^	t.getDaySegmentContainer = function() { return daySegmentContainer };$/;"	f
+t.left	static/fullcalendar.js	/^	}$/;"	f
+t.rect	static/fullcalendar.js	/^	};$/;"	f
+t.right	static/fullcalendar.js	/^	};$/;"	f
+t.start	static/fullcalendar.js	/^	var cell;$/;"	f
+t.stop	static/fullcalendar.js	/^	}$/;"	f
+tae	pooch/newparse_test.go	/^func tae(z *testing.T, in string, expected []string) {$/;"	d
+tae	pooch/newparse_test.go	/^func tae(z *testing.T, in string, expected []string) {$/;"	f
+tae2	pooch/newparse_test.go	/^func tae2(z *testing.T, in string, includeExpected []string, excludeExpected []string, query string) {$/;"	d
+tae2	pooch/newparse_test.go	/^func tae2(z *testing.T, in string, includeExpected []string, excludeExpected []string, query string) {$/;"	f
+tae_ex	pooch/newparse_test.go	/^func tae_ex(in string) (*Parser, *ParseResult) {$/;"	d
+tae_ex	pooch/newparse_test.go	/^func tae_ex(in string) (*Parser, *ParseResult) {$/;"	f
+tae_options	pooch/newparse_test.go	/^func tae_options(z *testing.T, in string, expected []string, options []string) {$/;"	d
+tae_options	pooch/newparse_test.go	/^func tae_options(z *testing.T, in string, expected []string, options []string) {$/;"	f
+tae_showcols	pooch/newparse_test.go	/^func tae_showcols(z *testing.T, in string, expected []string, showCols []string) {$/;"	d
+tae_showcols	pooch/newparse_test.go	/^func tae_showcols(z *testing.T, in string, expected []string, showCols []string) {$/;"	f
+tae_wval	pooch/newparse_test.go	/^func tae_wval(z *testing.T, in string, expected []string, expVal []string, expExtra []string) {$/;"	d
+tae_wval	pooch/newparse_test.go	/^func tae_wval(z *testing.T, in string, expected []string, expVal []string, expExtra []string) {$/;"	f
+tasklistCache	pooch/backend.go	/^var tasklistCache map[string]*Tasklist = make(map[string]*Tasklist)$/;"	d
+tasklistCache	pooch/backend.go	/^var tasklistCache map[string]*Tasklist = make(map[string]*Tasklist)$/;"	v
+tasklistCacheMutex	pooch/backend.go	/^var tasklistCacheMutex sync.Mutex$/;"	d
+tasklistCacheMutex	pooch/backend.go	/^var tasklistCacheMutex sync.Mutex$/;"	v
+tdHeightBug	static/fullcalendar.js	/^var tdHeightBug;$/;"	v
+textra	pooch/newparse_test.go	/^func textra(z *testing.T, input string, normal string, extra string, command string) {$/;"	d
+textra	pooch/newparse_test.go	/^func textra(z *testing.T, input string, normal string, extra string, command string) {$/;"	f
+the_year	static/calendar.js	/^		var the_year = existing_date.getYear();$/;"	v
+timeParseLoop	pooch/parsetime.go	/^func timeParseLoop(input string, timezone int, formats []DateTimeFormat) *VarTime {$/;"	d
+timeParseLoop	pooch/parsetime.go	/^func timeParseLoop(input string, timezone int, formats []DateTimeFormat) *VarTime {$/;"	f
+timePosition	static/fullcalendar.js	/^	function timePosition(day, time) { \/\/ both date objects. day holds 00:00 of current day$/;"	f
+timestamp	pooch/backend.go	/^		var timestamp int64$/;"	d
+tis	pooch/newparse_test.go	/^func tis(z *testing.T, tl *Tasklist, input string, expectedOutput string) {$/;"	d
+tis	pooch/newparse_test.go	/^func tis(z *testing.T, tl *Tasklist, input string, expectedOutput string) {$/;"	f
+to	pooch/luaint.go	/^			panic(errors.New( "Wrong argument type to " + name + " only query objects accepted as arguments"))$/;"	d
+to	pooch/luaint.go	/^		panic(errors.New("Wrong argument type to notq only query objects accepted as arguments"))$/;"	d
+toJSONString	static/json.js	/^if (!Object.prototype.toJSONString) {$/;"	m
+toggle	static/int.js	/^function toggle(query) {$/;"	f
+toggle_addpop	static/int.js	/^function toggle_addpop() {$/;"	f
+toggle_editor	static/int.js	/^function toggle_editor(name, event) {$/;"	f
+toggle_navpop	static/int.js	/^function toggle_navpop() {$/;"	f
+toggle_runpop	static/int.js	/^function toggle_runpop() {$/;"	f
+toggle_searchpop	static/int.js	/^function toggle_searchpop() {$/;"	f
+topBug	static/fullcalendar.js	/^var topBug;$/;"	v
+topCorrect	static/fullcalendar.js	/^function topCorrect(tr) { \/\/ tr\/th\/td or anything else$/;"	f
+tpn	pooch/newparse_test.go	/^func tpn(z *testing.T, tl *Tasklist, entryText string, queryText string, entry *Entry) {$/;"	d
+tpn	pooch/newparse_test.go	/^func tpn(z *testing.T, tl *Tasklist, entryText string, queryText string, entry *Entry) {$/;"	f
+triggerAt	pooch/backend.go	/^	var triggerAt time.Time = *(entry.TriggerAt())$/;"	d
+triggerAt	pooch/parserint.go	/^	var triggerAt *time.Time = nil$/;"	d
+triggerAt	pooch/pureparser.go	/^	var triggerAt *time.Time = nil$/;"	d
+triggerAtString	pooch/backend.go	/^	var triggerAtString string$/;"	d
+trigger_str	pooch/backend.go	/^	var trigger_str, id, title, text, sort, columns string$/;"	d
+tse	pooch/newparse_test.go	/^func tse(z *testing.T, in string, name string, op string, value string) {$/;"	d
+tse	pooch/newparse_test.go	/^func tse(z *testing.T, in string, name string, op string, value string) {$/;"	f
+tsearch	pooch/newparse_test.go	/^func tsearch(z *testing.T, tl *Tasklist, queryText string, expectedIds []string) {$/;"	d
+tsearch	pooch/newparse_test.go	/^func tsearch(z *testing.T, tl *Tasklist, queryText string, expectedIds []string) {$/;"	f
+username	pooch/multiserve.go	/^	var username string$/;"	d
+value	pooch/backend.go	/^	var value string$/;"	d
+value	static/calendar.js	/^			var value = ele.currentStyle[property]||ele.currentStyle[alt_property_name];$/;"	v
+vmargins	static/fullcalendar.js	/^function vmargins(_element) {$/;"	f
+vsides	static/fullcalendar.js	/^function vsides(_element, includeMargins) {$/;"	f
+weekdayConversion	pooch/parsetime.go	/^var weekdayConversion map[string]int = map[string]int{$/;"	d
+weekdayConversion	pooch/parsetime.go	/^var weekdayConversion map[string]int = map[string]int{$/;"	v
+width	static/calendar.js	/^		var width = parseInt(this.getStyle(input,'width'));$/;"	v
+y	static/calendar.js	/^		var y = 0;$/;"	v
+zeroDate	static/fullcalendar.js	/^function zeroDate() { \/\/ returns a Date with time 00:00:00 and dateOfMonth=1$/;"	f
+zeroPad	static/fullcalendar.js	/^function zeroPad(n) {$/;"	f
