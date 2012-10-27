@@ -234,19 +234,19 @@ func (expr *BoolExpr) IntoClause(tl *Tasklist, depth string, negate bool) string
 func (pr *ParseResult) GetLuaClause(tl *Tasklist) (string, error) {
 	if pr.extra == "" { return "", nil }
 
-	tl.mutex.Lock()
-	defer tl.mutex.Unlock()
-
 	tl.SetTasklistInLua()
 	tl.ResetLuaFlags()
 
+	tl.luaState.CheckStack(1)
 	if tl.luaState.LoadString("return " + pr.extra) != 0 {
 		errorMessage := tl.luaState.ToString(-1)
 		tl.LogError(fmt.Sprintf("Error while loading lua code: %s", errorMessage))
 		return "", MakeParseError(fmt.Sprintf("Error while loading lua code: %s", errorMessage))
 	}
 
-	if tl.luaState.PCall(0, 1, 0) != 0 {
+	fmt.Printf("Executing: %s\n", pr.extra)
+	if ret := tl.luaState.PCall(0, 1, 0); ret != 0 {
+		//fmt.Printf("PCall error: %d\n", ret)
 		errorMessage := tl.luaState.ToString(-1)
 		tl.LogError(fmt.Sprintf("Error while executing lua code: %s", errorMessage))
 		return "", MakeParseError(fmt.Sprintf("Error while executing lua code: %s", errorMessage))

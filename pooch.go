@@ -16,6 +16,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	. "./pooch"
+	"runtime"
 )
 
 //import _ "http/pprof"
@@ -36,6 +37,7 @@ var commands map[string](func (args []string)) = map[string](func (args []string
 	"errlog": CmdErrorLog,
 
 	"multiserve": CmdMultiServe,
+	"multiserveplain": CmdMultiServePlain,
 
 	"setopt": CmdSetOption,
 	"getopt": CmdGetOption,
@@ -59,6 +61,7 @@ var help_commands map[string](func ()) = map[string](func ()){
 	"errlog": HelpErrorLog,
 	"compat": CompatHelp,
 	"multiserve": HelpMultiServe,
+	"multiserveplain": HelpMultiServePlain,
 	"setopt": HelpSetOption,
 	"getopt": HelpGetOption,
 	"run": HelpRun,
@@ -124,7 +127,7 @@ func CmdQuickUpdate(args []string) {
 		entry := tl.ParseNew(strings.Join(args[1:], " "), "")
 
 		entry.SetId(args[0])
-		tl.Update(entry, false, false)
+		tl.Update(entry, false)
 	})
 }
 
@@ -242,13 +245,13 @@ func CmdListEx(v []*Entry, showCols []string, timezone int) {
 		fmt.Printf(" %s%s", colName, RepeatString(" ", col_sizes[colName] - len(colName)))
 	}
 	fmt.Printf("\n")
-	
+
 	for _, entry := range v {
 		if entry.Priority() != curp {
 			curp = entry.Priority()
 			fmt.Printf("\n%s:\n", strings.ToUpper(curp.String()))
 		}
-		
+
 		timeString := TimeString(entry.TriggerAt(), entry.Sort(), timezone)
 
 		fmt.Printf("%s%s %s%s %s%s %s%s",
@@ -297,9 +300,20 @@ func CmdMultiServe(args []string) {
 	MultiServe(args[0], args[1])
 }
 
+
 func HelpMultiServe() {
 	fmt.Fprintf(os.Stderr, "usage: multiserve <port> <directory> <logfile>\n\n")
 	fmt.Fprintf(os.Stderr, "\tStarts a multi-user http server, information will be stored in <directory>. Writes logs to <logfile>\n\n")
+}
+
+func CmdMultiServePlain(args []string) {
+	SecureCookies = false
+	CmdMultiServe(args)
+}
+
+func HelpMultiServePlain() {
+	fmt.Fprintf(os.Stderr, "usage: multiserveplain <port> <directory> <logfile>\n\n")
+	fmt.Fprintf(os.Stderr, "\tJust like multiserve, but cookies are stored insecurely (allows using multiserve without an https proxy)\n")
 }
 
 func CmdTsvUpdate(argv []string) {
@@ -313,7 +327,7 @@ func CmdTsvUpdate(argv []string) {
 			entry := ParseTsvFormat(line, tl, tl.GetTimezone());
 			if tl.Exists(entry.Id()) {
 				//fmt.Printf("UPDATING\t%s\t%s\n", entry.Id(), entry.TriggerAt().Format("2006-01-02"))
-				tl.Update(entry, false, false)
+				tl.Update(entry, false)
 			} else {
 				fmt.Printf("ADDING\t%s\t%s\n", entry.Id(), entry.TriggerAt().Format("2006-01-02"))
 				tl.Add(entry)
@@ -510,6 +524,7 @@ func main() {
 		w.WriteString("\n")
 		w.WriteString("\tserve\tStart http server\n")
 		w.WriteString("\tmultiserve\tStart multiuser http server\n")
+		w.WriteString("\tmultiserveplain\tStart multiuser http server, does not request secure cookies\n")
 		w.WriteString("\n")
 		w.WriteString("\tsetopt\tSets option\n")
 		w.WriteString("\tgetopt\tGets option value\n")
@@ -519,6 +534,8 @@ func main() {
 		w.Flush()
 		tw.Flush()
 	}
+
+	//fmt.Printf("Processors: %d\n", runtime.GOMAXPROCS(0))
 
 	flag.Parse()
 

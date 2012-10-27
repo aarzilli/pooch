@@ -19,6 +19,8 @@ type MultiuserDb struct {
 	directory string
 }
 
+var SecureCookies = true
+
 func OpenMultiuserDb(directory string) *MultiuserDb{
 	multiuserDb, err := sqlite.Open(path.Join(directory, "users.db"))
 	Must(err)
@@ -114,6 +116,8 @@ func (mdb *MultiuserDb) WithOpenUser(req *http.Request, fn func(tl *Tasklist)) b
 	if username != "" {
 		tl := mdb.OpenOrCreateUserDb(username)
 		defer tl.Close()
+		tl.mutex.Lock()
+		defer tl.mutex.Unlock()
 		fn(tl)
 		return true
 	}
@@ -150,7 +154,11 @@ var multiuserDb *MultiuserDb
 
 func AddCookies(c http.ResponseWriter, cookies map[string]string) {
 	for k, v := range cookies {
-		c.Header().Set("Set-Cookie", fmt.Sprintf("%s=%s; Max-Age=2592000; path=/; Secure", k, v))
+		s := ""
+		if SecureCookies {
+			s = " Secure"
+		}
+		c.Header().Set("Set-Cookie", fmt.Sprintf("%s=%s; Max-Age=2592000; path=/;%s", k, v, s))
 		//c.Header().Set("Set-Cookie", fmt.Sprintf("%s=%s; Max-Age=10; path=/", k, v))
 	}
 }

@@ -51,25 +51,18 @@ func (tasklist *Tasklist) MustExec(stmt string, v...interface{}) {
 	MustExec(tasklist.conn, stmt, v...)
 }
 
-func (tasklist *Tasklist) WithTransaction(alreadyLocked bool, f func()) {
-	if enabledCaching {
-		if !alreadyLocked {
-			tasklist.mutex.Lock()
-			defer tasklist.mutex.Unlock()
+func (tasklist *Tasklist) WithTransaction(f func()) {
+	tasklist.MustExec("BEGIN EXCLUSIVE TRANSACTION")
+	defer func() {
+		if rerr := recover(); rerr != nil {
+			Logf(ERROR, "Rolling back a failed transaction, because of %v\n", rerr)
+			tasklist.conn.Exec("ROLLBACK TRANSACTION")
+			panic(rerr)
+		} else {
+			Logf(DEBUG, "Transaction committed\n")
+			tasklist.MustExec("COMMIT TRANSACTION")
 		}
-	} else {
-		tasklist.MustExec("BEGIN EXCLUSIVE TRANSACTION")
-		defer func() {
-			if rerr := recover(); rerr != nil {
-				Logf(ERROR, "Rolling back a failed transaction, because of %v\n", rerr)
-				tasklist.conn.Exec("ROLLBACK TRANSACTION")
-				panic(rerr)
-			} else {
-				Logf(DEBUG, "Transaction committed\n")
-				tasklist.MustExec("COMMIT TRANSACTION")
-			}
-		}()
-	}
+	}()
 
 	f()
 }
@@ -264,7 +257,7 @@ func (tasklist *Tasklist) addColumns(e *Entry) {
 func (tasklist *Tasklist) Add(e *Entry) {
 	triggerAtString := FormatTriggerAtForAdd(e)
 
-	tasklist.WithTransaction(false, func() {
+	tasklist.WithTransaction(func() {
 		priority := e.Priority()
 		tasklist.MustExec("INSERT INTO tasks(id, title_field, text_field, priority, trigger_at_field, sort) VALUES (?, ?, ?, ?, ?, ?)", e.Id(), e.Title(), e.Text(), priority.ToInteger(), triggerAtString, e.Sort())
 		tasklist.MustExec("INSERT INTO ridx(id, title_field, text_field) VALUES (?, ?, ?)", e.Id(), e.Title(), e.Text())
@@ -289,17 +282,17 @@ func (tl *Tasklist) RemoveSaveSearch(name string) {
 }
 
 func (tl *Tasklist) SaveSearch(name string, query string) {
-	tl.WithTransaction(false, func() {
+	tl.WithTransaction(func() {
 		tl.RemoveSaveSearch(name)
 		tl.MustExec("INSERT INTO saved_searches(name, value) VALUES(?, ?)", name, query)
 	})
 }
 
-func (tasklist *Tasklist) Update(e *Entry, simpleUpdate bool, alreadyLocked bool) {
+func (tasklist *Tasklist) Update(e *Entry, simpleUpdate bool) {
 	triggerAtString := FormatTriggerAtForAdd(e)
 	priority := e.Priority()
 
-	tasklist.WithTransaction(alreadyLocked, func() {
+	tasklist.WithTransaction(func() {
 		tasklist.MustExec("UPDATE tasks SET title_field = ?, text_field = ?, priority = ?, trigger_at_field = ?, sort = ? WHERE id = ?", e.Title(), e.Text(), priority.ToInteger(), triggerAtString, e.Sort(), e.Id())
 		if !simpleUpdate {
 			tasklist.MustExec("UPDATE ridx SET title_field = ?, text_field = ? WHERE id = ?", e.Title(), e.Text(), e.Id())
@@ -392,7 +385,7 @@ func (tl *Tasklist) GetListEx(stmt *sqlite.Stmt, code string) ([]*Entry, error) 
 
 			if tl.luaFlags.persist {
 				if !tl.luaFlags.remove && tl.luaFlags.cursorEdited {
-					tl.Update(entry, false, false)
+					tl.Update(entry, false)
 				}
 				if tl.luaFlags.cursorCloned {
 					newentry := GetEntryFromLua(tl.luaState, CURSOR, "%internal%")
@@ -608,7 +601,7 @@ func (tl *Tasklist) RunTimedTriggers() {
 
 				if !tl.luaFlags.remove && tl.luaFlags.cursorEdited {
 					entry.SetPriority(NOW)
-					tl.Update(entry, false, false)
+					tl.Update(entry, false)
 					update = false
 				}
 			}
@@ -632,7 +625,7 @@ func (tl *Tasklist) RunTimedTriggers() {
 func (tl *Tasklist) UpgradePriority(id string, special bool) Priority {
 	entry := tl.Get(id)
 	simpleUpdate := entry.UpgradePriority(special)
-	tl.Update(entry, simpleUpdate, false)
+	tl.Update(entry, simpleUpdate)
 	return entry.Priority()
 }
 

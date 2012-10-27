@@ -24,6 +24,8 @@ func WithOpenDefault(rest func(tl *Tasklist)) {
 	if dbname == "" { panic("POOCHDB Not Set") }
 	tl := OpenOrCreate(dbname)
 	defer tl.Close()
+	tl.mutex.Lock()
+	defer tl.mutex.Unlock()
 	rest(tl)
 }
 

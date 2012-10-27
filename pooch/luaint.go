@@ -253,7 +253,7 @@ func LuaIntWriteCursor(L *lua.State) int {
 	tl := GetTasklistFromLua(L)
 	luaAssertNotFreeCursor(tl, "writecursor()")
 	cursor := GetEntryFromLua(L, CURSOR, "writecursor()")
-	tl.Update(cursor, false, true)
+	tl.Update(cursor, false)
 	return 0
 }
 
@@ -743,24 +743,16 @@ func (tl *Tasklist) DoStringNoLock(code string, cursor *Entry, freeCursor bool) 
 }
 
 func (tl *Tasklist) DoString(code string, cursor *Entry) error {
-	tl.mutex.Lock()
-	defer tl.mutex.Unlock()
 	return tl.DoStringNoLock(code, cursor, false)
 }
 
 func (tl *Tasklist) DoRunString(code string, args []string) error {
-	tl.mutex.Lock()
-	defer tl.mutex.Unlock()
-
 	PushStringVec(tl.luaState, args)
 	tl.luaState.SetGlobal(RUN_ARGUMENTS_VAR)
 	return tl.DoStringNoLock(code, nil, true)
 }
 
 func (tl *Tasklist) CallLuaFunction(fname string, cursor *Entry) error {
-	tl.mutex.Lock()
-	defer tl.mutex.Unlock()
-
 	tl.SetEntryInLua(CURSOR, cursor)
 	tl.SetTasklistInLua()
 	tl.ResetLuaFlags()
