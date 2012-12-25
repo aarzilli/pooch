@@ -36,7 +36,7 @@ function perform_toggle_on_keyevent(e) {
     switch(e.which) {
     case 97: // a key
         toggle_addpop();
-        return false; 
+        return false;
     case 115: // s key
         toggle_searchpop();
         return false;
@@ -62,7 +62,7 @@ function keytable(e) {
 
     if (document.activeElement.type == null) {
         return perform_toggle_on_keyevent(e)
-    } 
+    }
     nothing_enabled = ($("#searchpop").get(0).style['display'] == 'none') && ($("#addpop").get(0).style['display'] == 'none');
 
     if (!nothing_enabled) {
@@ -81,7 +81,7 @@ function remove_entry(name) {
 	  for (var i in maintable.rows) {
 	    if (maintable.rows[i] == null) continue; // deleted rows
 	    if (maintable.rows[i].id == null) continue; // rows without id
-            
+
 	    if (maintable.rows[i].id == "editor_" + name) {
 	      maintable.deleteRow(i);
 	      maintable.deleteRow(i-1); // this is the title
@@ -97,7 +97,7 @@ function remove_entry(name) {
 function save_editor(form) {
     if (form == null) return;
     if (form.elements['edtitle'].disabled != "") return;
-    
+
     obj = new Object();
     obj.title = form.elements['edtitle'].value;
     obj.text = form.elements['edtext'].value;
@@ -105,9 +105,8 @@ function save_editor(form) {
     obj.sort = form.elements['edsort'].value;
     obj.id = form.elements['edid'].value;
     obj.priority = parseInt(form.elements['edprio'].value);
-    obj.cols = form.elements['edcols'].value;
     $("#loading_"+obj.id).get(0).style.display = "inline";
-    
+
     $.ajax({ type: "POST", url: "/save", data: obj.toJSONString(), success: function(data, textStatus, req) {
 	  if (data.match(/^saved-at-timestamp: /)) {
 	    $("#ts_"+obj.id).html(data.substr("saved-at-timestamp: ".length));
@@ -121,13 +120,13 @@ function save_editor(form) {
 function add_row(id) {
   $.ajax({ url: "htmlget?type=add&id=" + encodeURIComponent(id), success: function(data, textStatus, req) {
 	var newrows = data.split("\u2029", 2);
-	
+
 	var maintable = $("#maintable").get(0);
-	
+
 	var newrow1 = maintable.insertRow(0);
 	newrow1.setAttribute("class", "entry");
 	newrow1.innerHTML = newrows[0];
-	  
+
 	var newrow2 = maintable.insertRow(1);
 	newrow2.setAttribute("id", "editor_"+encodeURIComponent(id));
 	newrow2.setAttribute("class", "editor");
@@ -144,7 +143,7 @@ function add_entry(query) {
                 if (data.match(/^added: /)) {
                     newid = data.substr("added: ".length);
                     add_row(newid);
-                    
+
                     $('#newentry').val("");
                     $("#addpop").get(0).style["display"] = "none";
                 } else {
@@ -162,7 +161,6 @@ function change_editor_disabled(ed, disabledStatus) {
     ed.elements['edsort'].disabled = disabledStatus;
     ed.elements['edid'].disabled = disabledStatus;
     ed.elements['edprio'].disabled = disabledStatus;
-    ed.elements['edcols'].disabled = disabledStatus;
     ed.elements['savebtn'].disabled = disabledStatus;
 }
 
@@ -179,8 +177,7 @@ function fill_editor(name) {
 	ed.elements['edsort'].value = v.Sort;
 	ed.elements['edid'].value = v.Id;
 	ed.elements['edprio'].value = v.Priority;
-	ed.elements['edcols'].value = v.Cols;
-	
+
 	$("#ts_" + v.Id).html(timestamp);
 	change_editor_disabled(ed, "");
 	$("#loading_"+name).get(0).style.display = "none";
@@ -199,7 +196,7 @@ function save_open_editor(should_close_editor) {
         if (orow == null) continue; // deleted rows
         if (orow.style == null) continue;
         if (orow.id == null) continue;
-        
+
         if ((orow.id.match(/^editor_/)) && (orow.style['display'] != 'none')) {
             if (should_close_editor) {
                 close_editor(orow)
@@ -231,7 +228,7 @@ function toggle_editor(name, event) {
             if (orow == null) continue;
             if (orow.style == null) continue;
             if (orow.id == null) continue;
-            
+
             if ((orow.id.match(/^editor_/)) && (orow.style['display'] != 'none')) {
                 close_editor(orow)
             }
@@ -249,7 +246,7 @@ function change_priority_to(name, priorityNum, priority) {
     var epr = $('#epr_'+name);
     epr.val(priority);
     epr.attr("class", "prioritybutton priorityclass_" + priority);
-    
+
     // changes the value saved inside the editor div so that saving the editor contents doesn't revert a changed priority
     var ed = $("#ediv_"+name).get(0);
     ed.elements["edprio"].value = priorityNum;
@@ -302,7 +299,7 @@ function change_priority(name, event) {
     $("#ploading_"+name).get(0).style['visibility'] = 'visible';
 
     guess_next_priority(name, event.shiftKey);
-    
+
     $.ajax({ url: "change-priority?id=" + encodeURIComponent(name) + "&special=" + event.shiftKey, success:
             function(data, textStatus, req) {
                 if (data.match(/^priority-change-to: /)) {

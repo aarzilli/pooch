@@ -235,8 +235,6 @@ var EntryListEntryEditorHTML ExecutableTemplate = MakeExecutableTemplate("EntryL
           <input name='edtitle' type='text' disabled='disabled'/><br>
           <textarea name='edtext' disabled='disabled' rows=20>
           </textarea>
-          <textarea name='edcols' disabled='disabled' rows=20>
-          </textarea>
 
 		  <input name='edid' type='hidden'/>
 		  <input name='edprio' type='hidden'/>

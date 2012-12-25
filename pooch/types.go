@@ -19,7 +19,8 @@ import (
 	"bufio"
 )
 
-var TRIGGER_AT_FORMAT string = "2006-01-02 15:04"
+const TRIGGER_AT_FORMAT = "2006-01-02 15:04"
+const TEXT_COLS_SEPARATOR = "\n#+\n"
 
 type ParseError struct {
 	error string
@@ -95,7 +96,6 @@ type UnmarshalEntry struct {
 	Priority Priority
 	TriggerAt string
 	Sort string
-	Cols string
 }
 
 type Columns map[string]string
@@ -129,11 +129,10 @@ func MarshalEntry(entry *Entry, timezone int) *UnmarshalEntry {
 	return &UnmarshalEntry{
 		entry.Id(),
 		entry.Title(),
-		entry.Text(),
+		entry.Text() + "\n" + TEXT_COLS_SEPARATOR + entry.ColString(),
 		entry.Priority(),
 		triggerAtString,
-		entry.Sort(),
-		entry.ColString()}
+		entry.Sort()}
 }
 
 func DemarshalEntry(umentry *UnmarshalEntry, timezone int) *Entry {
@@ -142,7 +141,14 @@ func DemarshalEntry(umentry *UnmarshalEntry, timezone int) *Entry {
 	sort := umentry.Sort
 	if sort == "" { sort = SortFromTriggerAt(triggerAt, false) }
 
-	cols, foundcat := ParseCols(umentry.Cols, timezone)
+	v := strings.SplitN(umentry.Text, TEXT_COLS_SEPARATOR, 2)
+	text := strings.TrimRight(v[0], "\n")
+	var colstr = ""
+	if len(v) > 1 {
+		colstr = v[1]
+	}
+
+	cols, foundcat := ParseCols(colstr, timezone)
 
 	if !foundcat {
 		cols["uncat"] = ""
@@ -151,7 +157,7 @@ func DemarshalEntry(umentry *UnmarshalEntry, timezone int) *Entry {
 	return MakeEntry(
 		umentry.Id,
 		umentry.Title,
-		umentry.Text,
+		text,
 		umentry.Priority,
 		triggerAt,
 		sort,

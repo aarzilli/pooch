@@ -170,6 +170,8 @@ CmdListExTsv	pooch.go	/^func CmdListExTsv(v []*Entry, showCols []string, timezon
 CmdListExTsv	pooch.go	/^func CmdListExTsv(v []*Entry, showCols []string, timezone int) {$/;"	f
 CmdMultiServe	pooch.go	/^func CmdMultiServe(args []string) {$/;"	d
 CmdMultiServe	pooch.go	/^func CmdMultiServe(args []string) {$/;"	f
+CmdMultiServePlain	pooch.go	/^func CmdMultiServePlain(args []string) {$/;"	d
+CmdMultiServePlain	pooch.go	/^func CmdMultiServePlain(args []string) {$/;"	f
 CmdQuickAdd	pooch.go	/^func CmdQuickAdd(args []string) {$/;"	d
 CmdQuickAdd	pooch.go	/^func CmdQuickAdd(args []string) {$/;"	f
 CmdQuickUpdate	pooch.go	/^func CmdQuickUpdate(args []string) {$/;"	d
@@ -390,6 +392,8 @@ HelpHelp	pooch.go	/^func HelpHelp() {$/;"	d
 HelpHelp	pooch.go	/^func HelpHelp() {$/;"	f
 HelpMultiServe	pooch.go	/^func HelpMultiServe() {$/;"	d
 HelpMultiServe	pooch.go	/^func HelpMultiServe() {$/;"	f
+HelpMultiServePlain	pooch.go	/^func HelpMultiServePlain() {$/;"	d
+HelpMultiServePlain	pooch.go	/^func HelpMultiServePlain() {$/;"	f
 HelpQuickAdd	pooch.go	/^func HelpQuickAdd() {$/;"	d
 HelpQuickAdd	pooch.go	/^func HelpQuickAdd() {$/;"	f
 HelpQuickUpdate	pooch.go	/^func HelpQuickUpdate() {$/;"	d
@@ -781,6 +785,8 @@ SearchDayOfTheWeek	pooch/parsetime.go	/^func SearchDayOfTheWeek(datetime *VarTim
 SearchDayOfTheWeek	pooch/parsetime.go	/^func SearchDayOfTheWeek(datetime *VarTime) *VarTime {$/;"	f
 SearchFile	pooch/dbname.go	/^func SearchFile(name string) (outname string, found bool) {$/;"	d
 SearchFile	pooch/dbname.go	/^func SearchFile(name string) (outname string, found bool) {$/;"	f
+SecureCookies	pooch/multiserve.go	/^var SecureCookies = true$/;"	d
+SecureCookies	pooch/multiserve.go	/^var SecureCookies = true$/;"	v
 SelectionManager	static/fullcalendar.js	/^function SelectionManager() {$/;"	f
 SelectionManager.daySelectionMousedown	static/fullcalendar.js	/^	function daySelectionMousedown(ev) { \/\/ not really a generic manager method, oh well$/;"	f
 SelectionManager.reportSelection	static/fullcalendar.js	/^	function reportSelection(startDate, endDate, allDay, ev) {$/;"	f
@@ -960,8 +966,8 @@ Truncate	pooch/backend.go	/^func (tl *Tasklist) Truncate() {$/;"	f
 U	static/jquery.js	/^(function(E,B){function ka(a,b,d){if(d===B&&a.nodeType===1){d=a.getAttribute("data-"+b);if(typeof d==="string"){try{d=d==="true"?true:d==="false"?false:d==="null"?null:!c.isNaN(d)?parseFloat(d):Ja.test(d)?c.parseJSON(d):d}catch(e){}c.data(a,b,d)}else d=B}return d}function U(){return false}function ca(){return true}function la(a,b,d){d[0].type=a;return c.event.handle.apply(b,d)}function Ka(a){var b,d,e,f,h,l,k,o,x,r,A,C=[];f=[];h=c.data(this,this.nodeType?"events":"__events__");if(typeof h==="function")h=$/;"	f
 UnmarshalEntry	pooch/types.go	/^type UnmarshalEntry struct {$/;"	d
 UnmarshalEntry	pooch/types.go	/^type UnmarshalEntry struct {$/;"	t
-Update	pooch/backend.go	/^func (tasklist *Tasklist) Update(e *Entry, simpleUpdate bool, alreadyLocked bool) {$/;"	d
-Update	pooch/backend.go	/^func (tasklist *Tasklist) Update(e *Entry, simpleUpdate bool, alreadyLocked bool) {$/;"	f
+Update	pooch/backend.go	/^func (tasklist *Tasklist) Update(e *Entry, simpleUpdate bool) {$/;"	d
+Update	pooch/backend.go	/^func (tasklist *Tasklist) Update(e *Entry, simpleUpdate bool) {$/;"	f
 UpgradePriority	pooch/backend.go	/^func (tl *Tasklist) UpgradePriority(id string, special bool) Priority {$/;"	d
 UpgradePriority	pooch/backend.go	/^func (tl *Tasklist) UpgradePriority(id string, special bool) Priority {$/;"	f
 UpgradePriority	pooch/types.go	/^func (e *Entry) UpgradePriority(special bool) bool {$/;"	d
@@ -1000,8 +1006,8 @@ WithOpenDefault	pooch/dbname.go	/^func WithOpenDefault(rest func(tl *Tasklist)) 
 WithOpenDefault	pooch/dbname.go	/^func WithOpenDefault(rest func(tl *Tasklist)) {$/;"	f
 WithOpenUser	pooch/multiserve.go	/^func (mdb *MultiuserDb) WithOpenUser(req *http.Request, fn func(tl *Tasklist)) bool{$/;"	d
 WithOpenUser	pooch/multiserve.go	/^func (mdb *MultiuserDb) WithOpenUser(req *http.Request, fn func(tl *Tasklist)) bool{$/;"	f
-WithTransaction	pooch/backend.go	/^func (tasklist *Tasklist) WithTransaction(alreadyLocked bool, f func()) {$/;"	d
-WithTransaction	pooch/backend.go	/^func (tasklist *Tasklist) WithTransaction(alreadyLocked bool, f func()) {$/;"	f
+WithTransaction	pooch/backend.go	/^func (tasklist *Tasklist) WithTransaction(f func()) {$/;"	d
+WithTransaction	pooch/backend.go	/^func (tasklist *Tasklist) WithTransaction(f func()) {$/;"	f
 WrapTemplate	pooch/htmlformat.go	/^func WrapTemplate(t *template.Template) ExecutableTemplate {$/;"	d
 WrapTemplate	pooch/htmlformat.go	/^func WrapTemplate(t *template.Template) ExecutableTemplate {$/;"	f
 WrapperServer	pooch/serve.go	/^func WrapperServer(sub http.HandlerFunc) http.HandlerFunc {$/;"	d

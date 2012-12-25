@@ -54,13 +54,7 @@
 }
 
 .editor textarea[name="edtext"] {
-  width: 65%;
-  margin-right: 1%;
-  display: inline;
-}
-
-.editor textarea[name="edcols"] {
-  width: 32%;
+  width: 99%;
   display: inline;
 }
 
