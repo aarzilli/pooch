@@ -588,7 +588,7 @@ var LONG_OPTION map[string]bool = map[string]bool{
 	"setup": true,
 }
 
-func OptionServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
+func OptionServer(c http.ResponseWriter, req *http.Request, multiuserDb *MultiuserDb, tl *Tasklist) {
 	if req.FormValue("save") == "save" {
 		Must(req.ParseForm())
 		settings := make(map[string]string)
@@ -615,10 +615,14 @@ func OptionServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 		}
 	}
 
+	if multiuserDb != nil {
+		OptionsPageAPITokens(multiuserDb.ListAPITokens(multiuserDb.UsernameFromCookie(req)), c)
+	}
+
 	OptionsPageEnd(nil, c)
 }
 
-func SetupHandleFunc(wrapperTasklistServer func(TasklistServer)http.HandlerFunc, wrapperTasklistWithIdServer func(TasklistWithIdServer)http.HandlerFunc) {
+func SetupHandleFunc(wrapperTasklistServer func(TasklistServer)http.HandlerFunc, wrapperTasklistWithIdServer func(TasklistWithIdServer)http.HandlerFunc, multiuserDb *MultiuserDb) {
 	http.HandleFunc("/", WrapperServer(StaticInMemoryServer))
 	http.HandleFunc("/static-hello.html", WrapperServer(HelloServer))
 
@@ -628,7 +632,10 @@ func SetupHandleFunc(wrapperTasklistServer func(TasklistServer)http.HandlerFunc,
 	http.HandleFunc("/run", WrapperServer(wrapperTasklistServer(RunServer)))
 	http.HandleFunc("/stat", WrapperServer(wrapperTasklistServer(StatServer)))
 	http.HandleFunc("/cal", WrapperServer(wrapperTasklistServer(CalendarServer)))
-	http.HandleFunc("/opts", WrapperServer(wrapperTasklistServer(OptionServer)))
+	http.HandleFunc("/opts", WrapperServer(wrapperTasklistServer(
+		func (res http.ResponseWriter, req *http.Request, tl *Tasklist) {
+			OptionServer(res, req, multiuserDb, tl)
+		})))
 	http.HandleFunc("/errorlog", WrapperServer(wrapperTasklistServer(ErrorLogServer)))
 	http.HandleFunc("/explain", WrapperServer(wrapperTasklistServer(ExplainServer)))
 
@@ -653,7 +660,7 @@ func SetupHandleFunc(wrapperTasklistServer func(TasklistServer)http.HandlerFunc,
 }
 
 func Serve(port string) {
-	SetupHandleFunc(SingleWrapperTasklistServer, SingleWrapperTasklistWithIdServer)
+	SetupHandleFunc(SingleWrapperTasklistServer, SingleWrapperTasklistWithIdServer, nil)
 	err := http.ListenAndServe(":" + port, nil)
 	if err != nil {
  		Log(ERROR, "Couldn't serve:", err)

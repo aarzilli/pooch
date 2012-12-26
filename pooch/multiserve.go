@@ -26,11 +26,38 @@ func OpenMultiuserDb(directory string) *MultiuserDb{
 	Must(err)
 	MustExec(multiuserDb, "CREATE TABLE IF NOT EXISTS users (username TEXT, salt TEXT, passhash BLOB)")
 	MustExec(multiuserDb, "CREATE TABLE IF NOT EXISTS cookies (username TEXT, cookie TEXT)")
+	MustExec(multiuserDb, "CREATE TABLE IF NOT EXISTS tokens (username TEXT, token TEXT)")
 	return &MultiuserDb{multiuserDb, directory}
 }
 
 func (mdb *MultiuserDb) SaveIdCookie(username, idCookie string) {
 	MustExec(mdb.conn, "INSERT INTO cookies(username, cookie) VALUES(?,?)", username, idCookie)
+}
+
+func (mdb *MultiuserDb) AddAPIToken(username string) {
+	token := MakeRandomString(40);
+	MustExec(mdb.conn, "INSERT INTO tokens(username, token) VALUES(?,?)", username, token)
+}
+
+func (mdb *MultiuserDb) RemoveAPIToken(username, token string) {
+	MustExec(mdb.conn, "DELETE FROM tokens WHERE username = ? AND token = ?;", username, token)
+}
+
+func (mdb *MultiuserDb) ListAPITokens(username string) []string {
+	stmt, serr := mdb.conn.Prepare("SELECT token FROM tokens WHERE username = ?")
+	Must(serr)
+	defer stmt.Finalize()
+	Must(stmt.Exec(username))
+
+	r := make([]string, 0)
+
+	for stmt.Next() {
+		var s string
+		stmt.Scan(&s)
+		r = append(r, s)
+	}
+
+	return r
 }
 
 func (mdb *MultiuserDb) Exists(username string) bool {
@@ -186,7 +213,7 @@ func GetIdCookie(c *http.Request) string {
 }
 
 func LoginServer(c http.ResponseWriter, req *http.Request) {
-		defer func() {
+	defer func() {
 		if r := recover(); r != nil {
 			LoginHTML(map[string]string{ "problem": fmt.Sprintf("Login failed with internal error: %s\n", r)}, c)
 			panic(r)
@@ -233,14 +260,25 @@ func WhoAmIServer(c http.ResponseWriter, req *http.Request) {
 	WhoAmIHTML(map[string]string{ "username": username }, c)
 }
 
+func APITokensServer(c http.ResponseWriter, req *http.Request) {
+	username := multiuserDb.UsernameFromCookie(req)
+	switch req.FormValue("action") {
+	case "add":
+		multiuserDb.AddAPIToken(username)
+	case "remove":
+		multiuserDb.RemoveAPIToken(username, req.FormValue("token"))
+	}
+}
+
 func MultiServe(port string, directory string) {
 	multiuserDb = OpenMultiuserDb(directory)
 
 	http.HandleFunc("/login", WrapperServer(LoginServer))
 	http.HandleFunc("/register", WrapperServer(RegisterServer))
 	http.HandleFunc("/whoami", WrapperServer(WhoAmIServer))
+	http.HandleFunc("/tokens", WrapperServer(APITokensServer))
 
-	SetupHandleFunc(MultiWrapperTasklistServer, MultiWrapperTasklistWithIdServer)
+	SetupHandleFunc(MultiWrapperTasklistServer, MultiWrapperTasklistWithIdServer, multiuserDb)
 
 	if err := http.ListenAndServe(":" + port, nil); err != nil {
 		Log(ERROR, "Couldn't serve: ", err)

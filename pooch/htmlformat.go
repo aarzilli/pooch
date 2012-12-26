@@ -486,6 +486,8 @@ var OptionsPageHeader ExecutableTemplate = MakeExecutableTemplate("OptionsPageHe
   <head>
     <title>Options</title>
     <link type='image/png' rel='icon' href='animals-dog.png'>
+    <script src='/jquery.js'></script>
+    <script src='/opts.js'></script>
   </head>
   <body>
     <h2>Options</h2>
@@ -499,6 +501,17 @@ var OptionsPageLine ExecutableTemplate = MakeExecutableTemplate("OptionsPageLine
 
 var OptionsLongPageLine ExecutableTemplate = MakeExecutableTemplate("OptionsLongPage", `
       <label for='<name|html}'>{{.name|html}}</label>&nbsp;<textarea name='{{.name|html}}' id='{{.name|html}}' rows='20' cols='80'>{{.value|html}}</textarea></br>
+`)
+
+var OptionsPageAPITokens ExecutableTemplate = MakeExecutableTemplate("OptionsPageAPITokens", `
+	<hr>
+	Released API tokens:
+	<ul>
+		{{range .}}
+		<li>{{.|html}} <input type='button' value='Revoke' onclick='tokremove("{{.|html}}")'></li>
+		{{end}}
+	</ul>
+	<input type='button' value="Add a token" onclick='tokadd()'>
 `)
 
 var OptionsPageEnd ExecutableTemplate = MakeExecutableTemplate("OptionsPageEnd", `
