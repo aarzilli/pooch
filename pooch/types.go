@@ -447,3 +447,8 @@ func TimeString(triggerAt *time.Time, sort string, timezone int) string {
 	return ""
 }
 
+type ListJsonAnswer struct {
+	ParseError error
+	RetrieveError error
+	Results []UnmarshalEntry
+}

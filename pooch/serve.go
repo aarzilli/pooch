@@ -373,6 +373,41 @@ func RunServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	ListEnderHTML(nil, c)
 }
 
+func ListJsonServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
+	var answ ListJsonAnswer
+	serializeAnswer := func() {
+		if err := json.NewEncoder(c).Encode(answ); err != nil {
+			panic(fmt.Sprintf("Error while encoding response: %s", err))
+		}
+	}
+
+	timezone := tl.GetTimezone()
+	query := strings.Replace(req.FormValue("q"), "\r", "", -1)
+
+	theselect, code, _, _, _, _, _, perr := tl.ParseSearch(query, nil)
+
+	answ.ParseError = perr
+	if perr != nil {
+		serializeAnswer()
+		return
+	}
+
+	v, rerr := tl.Retrieve(theselect, code)
+
+	answ.RetrieveError = rerr
+	if rerr != nil {
+		serializeAnswer()
+		return
+	}
+
+	answ.Results = make([]UnmarshalEntry, 0)
+
+	for _, entry := range v {
+		answ.Results = append(answ.Results, *MarshalEntry(entry, timezone))
+	}
+
+	serializeAnswer()
+}
 
 func ListServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	query := strings.Replace(req.FormValue("q"), "\r", "", -1)
@@ -589,6 +624,7 @@ func SetupHandleFunc(wrapperTasklistServer func(TasklistServer)http.HandlerFunc,
 
 	// Entry point urls
 	http.HandleFunc("/list", WrapperServer(wrapperTasklistServer(ListServer)))
+
 	http.HandleFunc("/run", WrapperServer(wrapperTasklistServer(RunServer)))
 	http.HandleFunc("/stat", WrapperServer(wrapperTasklistServer(StatServer)))
 	http.HandleFunc("/cal", WrapperServer(wrapperTasklistServer(CalendarServer)))
@@ -605,6 +641,9 @@ func SetupHandleFunc(wrapperTasklistServer func(TasklistServer)http.HandlerFunc,
 	http.HandleFunc("/htmlget", WrapperServer(wrapperTasklistWithIdServer(HtmlGetServer)))
 	http.HandleFunc("/save-search", WrapperServer(wrapperTasklistServer(SaveSearchServer)))
 	http.HandleFunc("/remove-search", WrapperServer(wrapperTasklistServer(RemoveSearchServer)))
+
+	// Json interface entry points
+	http.HandleFunc("/list.json", WrapperServer(wrapperTasklistServer(ListJsonServer)))
 
 	// Calendar ajax urls
 	http.HandleFunc("/calevents", WrapperServer(wrapperTasklistServer(CalendarEventServer)))
