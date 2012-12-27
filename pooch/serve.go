@@ -616,7 +616,7 @@ func OptionServer(c http.ResponseWriter, req *http.Request, multiuserDb *Multius
 	}
 
 	if multiuserDb != nil {
-		OptionsPageAPITokens(multiuserDb.ListAPITokens(multiuserDb.UsernameFromCookie(req)), c)
+		OptionsPageAPITokens(multiuserDb.ListAPITokens(multiuserDb.UsernameFromReq(req)), c)
 	}
 
 	OptionsPageEnd(nil, c)

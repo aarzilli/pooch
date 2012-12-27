@@ -117,7 +117,7 @@ func (mdb *MultiuserDb) Register(username, password string) {
 	MustExec(mdb.conn, "INSERT INTO users(username, salt, passhash) VALUES(?, ?, ?)", username, salt, hashedPassword)
 }
 
-func (mdb *MultiuserDb) UsernameFromCookie(req *http.Request) string {
+func (mdb *MultiuserDb) usernameFromCookie(req *http.Request) string {
 	stmt, err := mdb.conn.Prepare("SELECT username FROM cookies WHERE cookie = ?")
 	Must(err)
 	defer stmt.Finalize()
@@ -132,6 +132,33 @@ func (mdb *MultiuserDb) UsernameFromCookie(req *http.Request) string {
 	return username
 }
 
+func (mdb *MultiuserDb) usernameFromAPIToken(req *http.Request) string {
+	stmt, err := mdb.conn.Prepare("SELECT username FROM tokens WHERE token = ?")
+	Must(err)
+	defer stmt.Finalize()
+
+	Must(stmt.Exec(req.FormValue("apiToken")))
+
+	if !stmt.Next() { return "" }
+
+	var username string
+	Must(stmt.Scan(&username))
+
+	return username
+}
+
+/*
+Returns the username from the cookie or from an API token in the request
+*/
+func (mdb *MultiuserDb) UsernameFromReq(req *http.Request) string {
+	username := mdb.usernameFromCookie(req)
+	if username == "" {
+		username = mdb.usernameFromAPIToken(req)
+	}
+
+	return username
+}
+
 func (mdb *MultiuserDb) OpenOrCreateUserDb(username string) *Tasklist {
 	if username == "" { return nil }
 	file := path.Join(mdb.directory, username + ".pooch")
@@ -139,7 +166,7 @@ func (mdb *MultiuserDb) OpenOrCreateUserDb(username string) *Tasklist {
 }
 
 func (mdb *MultiuserDb) WithOpenUser(req *http.Request, fn func(tl *Tasklist)) bool{
-	username := mdb.UsernameFromCookie(req)
+	username := mdb.UsernameFromReq(req)
 	if username != "" {
 		tl := mdb.OpenOrCreateUserDb(username)
 		defer tl.Close()
@@ -256,12 +283,12 @@ func RegisterServer(c http.ResponseWriter, req *http.Request) {
 }
 
 func WhoAmIServer(c http.ResponseWriter, req *http.Request) {
-	username := multiuserDb.UsernameFromCookie(req)
+	username := multiuserDb.UsernameFromReq(req)
 	WhoAmIHTML(map[string]string{ "username": username }, c)
 }
 
 func APITokensServer(c http.ResponseWriter, req *http.Request) {
-	username := multiuserDb.UsernameFromCookie(req)
+	username := multiuserDb.UsernameFromReq(req)
 	switch req.FormValue("action") {
 	case "add":
 		multiuserDb.AddAPIToken(username)
