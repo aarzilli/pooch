@@ -184,7 +184,7 @@ var ListHeaderHTML ExecutableTemplate = MakeExecutableTemplate("ListHeader", `
      {{end}}
   </style>
 </head>
-<body onkeypress='keytable(event)'>
+<body onkeydown='keytable(event)' onkeypress='keypress(event)'>
 `)
 
 var EntryListPriorityChangeHTML ExecutableTemplate = MakeExecutableTemplate("EntryListPriorityChange", `
@@ -378,7 +378,7 @@ var CalendarHeaderHTML ExecutableTemplate = MakeExecutableTemplate("CalendarHead
      var query = "{{.query|html}}";
   </script>
 </head>
-<body onkeypress='keytable(event)'>
+<body onkeydown='keytable(event)' onkeypress='keypress(event)'>
 `)
 
 var CalendarHTML ExecutableTemplate = MakeExecutableTemplate("Calendar", `

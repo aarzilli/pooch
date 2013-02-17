@@ -32,13 +32,26 @@ function toggle_runpop() {
     toggle("#runpop");
 }
 
+var cancelNextKeypress = false;
+
+function keypress(e) {
+	if (cancelNextKeypress) {
+		cancelNextKeypress = false;
+		e.preventDefault();
+		return false;
+	}
+	return true;
+}
+
 function perform_toggle_on_keyevent(e) {
     switch(e.which) {
-    case 97: // a key
+    case 65: // a key
         toggle_addpop();
+        e.preventDefault();
         return false;
-    case 115: // s key
+    case 83: // s key
         toggle_searchpop();
+        e.preventDefault();
         return false;
     default:
         return true;
@@ -50,6 +63,8 @@ function keytable(e) {
     case 27:
         $("#searchpop").get(0).style['display'] = 'none';
         $("#addpop").get(0).style['display'] = 'none';
+        cancelNextKeypress = true;
+        e.preventDefault();
         return false;
     case 13:
         if (e.altKey) {
@@ -57,11 +72,15 @@ function keytable(e) {
                 $("#searchform").get(0).submit();
             }
         }
+        cancelNextKeypress = true;
+        e.preventDefault();
         return false;
     }
 
     if (document.activeElement.type == null) {
-        return perform_toggle_on_keyevent(e)
+        var r = perform_toggle_on_keyevent(e);
+        cancelNextKeypress = !r;
+        return r;
     }
     nothing_enabled = ($("#searchpop").get(0).style['display'] == 'none') && ($("#addpop").get(0).style['display'] == 'none');
 
@@ -70,7 +89,9 @@ function keytable(e) {
     }
 
     if ((document.activeElement.id == "q") || (document.activeElement.id == "newentry")) {
-        return perform_toggle_on_keyevent(e);
+        var r = perform_toggle_on_keyevent(e);
+        cancelNextKeypress = !r;
+        return r;
     }
 }
 

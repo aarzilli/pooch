@@ -20,7 +20,6 @@ Notable files inside static/ directory are:
 * calendar.css and calendar.js -> define the date picking calendar in /list mode (taken from openjs.com, see files for credits)
 * fullcalendar.css, fullcalendar.js -> implementation of the actual calendar html (taken from arshaw.com, see files for credits)
 * jquery.js and jquery-ui-custom.js -> jquery, needed for fullcalendar to work (but eventually I will migrate cint.js and int.js to jquery too)
-* shortcut.js -> utility to define keyboard shortcuts in javascript (taken from openjs.com, see files for credits)
 * static-test.html -> a static html test file
 
 All are compiled to go with make-staticserve.pl
