@@ -71,11 +71,12 @@ function keytable(e) {
         if (e.altKey) {
             if ($("#searchpop").get(0).style['display'] != 'none') {
                 $("#searchform").get(0).submit();
+                cancelNextKeypress = true;
+                e.preventDefault();
+                return false;
             }
         }
-        cancelNextKeypress = true;
-        e.preventDefault();
-        return false;
+        return true;
     }
 
     if (document.activeElement.type == null) {
