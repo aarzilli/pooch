@@ -55,6 +55,7 @@ var CommonHeaderHTML ExecutableTemplate = MakeExecutableTemplate("CommonHeader",
            <label for='q'>Query:</label>&nbsp;
            <textarea name='q' id='q' cols='50' rows='10'>{{.query|html}}</textarea>
            <input type='submit' value='search'>
+           <input type='button' value='cancel' onclick='javascript:toggle_searchpop()'/>
            &nbsp;
            <div class='popbuttons'>
            {{if .removeSearch }}
@@ -76,6 +77,7 @@ var CommonHeaderHTML ExecutableTemplate = MakeExecutableTemplate("CommonHeader",
 	          <label for='newentry'>New entry:</label>&nbsp;
 	          <input size='50' type='text' id='newentry' name='text'/>
 	          <input type='button' value='add' onclick='javascript:add_entry("{{.query|html}}")'/>
+	          <input type='button' value='cancel' onclick='javascript:toggle_addpop()'/>
 	        </form>
 	      </div>
 	    </div>
