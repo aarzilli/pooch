@@ -17,6 +17,7 @@ function toggle(query) {
 function toggle_searchpop() {
     toggle("#searchpop");
     $("#q").get(0).focus();
+    $("#q").get(0).select();
 }
 
 function toggle_addpop() {
