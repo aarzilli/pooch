@@ -153,11 +153,11 @@ var ListHeaderHTML ExecutableTemplate = MakeExecutableTemplate("ListHeader", `
   <title>Pooch: {{.queryForTitle|html}}</title>
   <link type='text/css' rel='stylesheet' href='listcommon.css'>
   <link type='text/css' rel='stylesheet' href='{{.theme}}'>
-  <link type='text/css' rel='stylesheet' href='calendar.css'>
+  <link rel='stylesheet' type='text/css' href='dot-luv/jquery-ui.custom.css'>
   <link type='image/png' rel='icon' href='animals-dog.png'>
   <script src='/jquery.js'></script>
+  <script src='jquery-ui-custom.js'></script>
   <script src='/int.js'></script>
-  <script src='/calendar.js'></script>
   <style>
      {{if .hide_eid}}
         .eid {
@@ -241,7 +241,10 @@ var EntryListEntryEditorHTML ExecutableTemplate = MakeExecutableTemplate("EntryL
 		  <input name='edprio' type='hidden'/>
 
 		  <p>When: <input type='text' id='edat_{{.Id|html}}' name='edat' size=10 disabled='disabled'/>
-          <script>calendar.set("edat_{{.Id|html}}")</script>
+          <script>
+             $("#edat_{{.Id|html}}").datepicker();
+             $("#edat_{{.Id|html}}").datepicker("option", "dateFormat", "yy-mm-dd");
+          </script>
 		  &nbsp; Sort by: <input type='text' name='edsort' size=10 disabled='disabled'/>
           &nbsp; ID: {{.Id|html}}
           &nbsp; Timestamp: <img id='loading_{{.Id|html}}' style='display: none' src='loading.gif'/> <span id='ts_{{.Id|html}}'> </span></p>
