@@ -153,7 +153,6 @@ var ListHeaderHTML ExecutableTemplate = MakeExecutableTemplate("ListHeader", `
   <link type='text/css' rel='stylesheet' href='{{.theme}}'>
   <link type='text/css' rel='stylesheet' href='calendar.css'>
   <link type='image/png' rel='icon' href='animals-dog.png'>
-  <script src='/json.js'></script>
   <script src='/jquery.js'></script>
   <script src='/int.js'></script>
   <script src='/calendar.js'></script>

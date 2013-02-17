@@ -107,7 +107,7 @@ function save_editor(form) {
     obj.priority = parseInt(form.elements['edprio'].value);
     $("#loading_"+obj.id).get(0).style.display = "inline";
 
-    $.ajax({ type: "POST", url: "/save", data: obj.toJSONString(), success: function(data, textStatus, req) {
+    $.ajax({ type: "POST", url: "/save", data: JSON.stringify(obj), success: function(data, textStatus, req) {
 	  if (data.match(/^saved-at-timestamp: /)) {
 	    $("#ts_"+obj.id).html(data.substr("saved-at-timestamp: ".length));
 	  } else {
@@ -169,7 +169,7 @@ function fill_editor(name) {
   $.ajax({url: "get?id=" + encodeURIComponent(name), success: function(data, textStatus, req) {
 	var timestamp = data.split("\n", 2)[0];
 	var jsonObj = data.substr(timestamp.length);
-	v = jsonObj.parseJSON();
+	v = $.parseJSON(jsonObj);
 	var ed = $("#ediv_" + name).first().get(0);
 	ed.elements['edtitle'].value = v.Title;
 	ed.elements['edtext'].value = v.Text;

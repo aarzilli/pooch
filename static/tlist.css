@@ -37,7 +37,7 @@ table {
 }
 
 .colname {
-    font-size: normal;
+    font-size: medium;
     font-weight: bold;
     padding-top: 10px;
 }
@@ -75,7 +75,7 @@ table {
 .prioritybutton {
     font-weight: bolder;
     font-size: xx-small;
-    width: 60px; 
+    width: 60px;
     background-color: black;
 }
 
@@ -105,7 +105,9 @@ table {
 
 .code {
     font-family: ocra10, monospace;
-    -moz-font-feature-settings: "liga=0";
+    -moz-font-feature-settings: "liga" 0;
+    -webkit-font-feature-settings: "liga" 0;
+    font-feature-settings: "liga" 0;
 }
 
 .statstable {

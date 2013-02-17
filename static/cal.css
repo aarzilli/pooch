@@ -3,27 +3,32 @@
  Copyright 2010, Alessandro Arzilli
  */
 
-.alt1, .fc-agenda .alt1, .fc-event-time, .alt1 a {
+.alt0, .fc-agenda .alt0, .fc-event-time, .alt0 a, .alt0 .fc-event-inner {
+	background-color: #36c;
+	border-color: #36c;
+}
+
+.alt1, .fc-agenda .alt1, .fc-event-time, .alt1 a, .alt1 .fc-event-inner {
     background-color: maroon;
     border-color: maroon;
 }
 
-.alt2, .fc-agenda .alt2, .fc-event-time, .alt2 a {
+.alt2, .fc-agenda .alt2, .fc-event-time, .alt2 a, .alt2 .fc-event-inner {
     background-color: navy;
     border-color: navy;
 }
 
-.alt3, .fc-agenda .alt3, .fc-event-time, .alt3 a {
+.alt3, .fc-agenda .alt3, .fc-event-time, .alt3 a, .alt3 .fc-event-inner {
     background-color: green;
     border-color: green;
 }
 
-.alt4, .fc-agenda .alt4, .fc-event-time, .alt4 a {
+.alt4, .fc-agenda .alt4, .fc-event-time, .alt4 a, .alt4 .fc-event-inner {
     background-color: fuchsia;
     border-color: fuchsia;
 }
 
-.alt5, .fc-agenda .alt5, .fc-event-time, .alt5 a {
+.alt5, .fc-agenda .alt5, .fc-event-time, .alt5 a,.alt5 .fc-event-inner {
     background-color: purple;
     border-color: purple;
 }

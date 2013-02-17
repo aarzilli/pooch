@@ -244,7 +244,7 @@ func (pr *ParseResult) GetLuaClause(tl *Tasklist) (string, error) {
 		return "", MakeParseError(fmt.Sprintf("Error while loading lua code: %s", errorMessage))
 	}
 
-	fmt.Printf("Executing: %s\n", pr.extra)
+	//fmt.Printf("Executing: %s\n", pr.extra)
 	if ret := tl.luaState.PCall(0, 1, 0); ret != 0 {
 		//fmt.Printf("PCall error: %d\n", ret)
 		errorMessage := tl.luaState.ToString(-1)
