@@ -1,6 +1,6 @@
 /*
  This program is distributed under the terms of GPLv3
- Copyright 2010, Alessandro Arzilli
+ Copyright 2010-2012, Alessandro Arzilli
  */
 
 package pooch

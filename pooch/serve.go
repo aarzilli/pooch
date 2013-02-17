@@ -1,6 +1,6 @@
 /*
  This program is distributed under the terms of GPLv3
- Copyright 2010, Alessandro Arzilli
+ Copyright 2010-2012, Alessandro Arzilli
  */
 
 package pooch
@@ -415,11 +415,12 @@ func ListServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 
 	theselect, code, trigger, isSavedSearch, _, showCols, options, perr := tl.ParseSearch(query, nil)
 
-	/* Will not allow adding elements to an empty page
-	if isEmpty {
-		http.Redirect(c, req, "/stat", 301)
+	fmt.Printf("forced: <%s>\n", req.FormValue("fixed"))
+	if _, ok := options["cal"]; ok && (req.FormValue("fixed") == "") {
+		// we want to use a calendar!
+		CalendarServerInner(c, req, tl, trigger, isSavedSearch, perr)
 		return
-	}*/
+	}
 
 	v, rerr := tl.Retrieve(theselect, code)
 
@@ -469,15 +470,20 @@ func ListServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	ListEnderHTML(nil, c)
 }
 
+func CalendarServerInner(c http.ResponseWriter, req *http.Request, tl *Tasklist, trigger string, isSavedSearch bool, perr error) {
+	query := req.FormValue("q")
+	theme := tl.GetSetting("theme")
+
+	CalendarHeaderHTML(map[string]string{ "query": query, "theme": theme  }, c)
+	CommonHeaderHTML(headerInfo(tl, "/cal", query, trigger, isSavedSearch, true, perr, nil, nil), c)
+	CalendarHTML(map[string]string{ "query": query }, c)
+}
+
 func CalendarServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	query := req.FormValue("q")
 	_, _, trigger, isSavedSearch, _, _, _, err := tl.ParseSearch(query, nil)
 
-	theme := tl.GetSetting("theme")
-
-	CalendarHeaderHTML(map[string]string{ "query": query, "theme": theme  }, c)
-	CommonHeaderHTML(headerInfo(tl, "/cal", query, trigger, isSavedSearch, true, err, nil, nil), c)
-	CalendarHTML(map[string]string{ "query": query }, c)
+	CalendarServerInner(c, req, tl, trigger, isSavedSearch, err)
 }
 
 func GetCalendarEvents(tl *Tasklist, query string, start, end string, endSecs int64) []EventForJSON {

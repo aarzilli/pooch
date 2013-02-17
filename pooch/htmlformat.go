@@ -1,6 +1,6 @@
 /*
  This program is distributed under the terms of GPLv3
- Copyright 2010, Alessandro Arzilli
+ Copyright 2010-2012, Alessandro Arzilli
  */
 
 package pooch
@@ -82,7 +82,7 @@ var CommonHeaderHTML ExecutableTemplate = MakeExecutableTemplate("CommonHeader",
 	      </div>
 	    </div>
 	    <div class='mainmenu_item'>
-	      <a href="{{.otherPageName}}?q={{.query|url}}">[see as {{.otherPageLink}}]</a>
+	      <a href="{{.otherPageName}}?q={{.query|url}}&fixed=1">[see as {{.otherPageLink}}]</a>
 	    </div>
 	    <div class='mainmenu_item'>
 	      <a href="/explain?q={{.query|url}}">[see explanation]</a>
