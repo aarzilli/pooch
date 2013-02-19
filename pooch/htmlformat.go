@@ -36,10 +36,57 @@ func MakeExecutableTemplate(name string, rawTemplate string) ExecutableTemplate 
 	return WrapTemplate(t)
 }
 
-var CommonHeaderHTML ExecutableTemplate = MakeExecutableTemplate("CommonHeader", `
+var CommonHeaderHTML ExecutableTemplate = MakeExecutableTemplate("ListHeader", `
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Pooch: {{.queryForTitle|html}}</title>
+  <link rel='stylesheet' type='text/css' href='dot-luv/jquery-ui.custom.css'>
+  <link type='text/css' rel='stylesheet' href='jstree_default/style.css'>
+  <link rel='stylesheet' type='text/css' href='fullcalendar.css'/>
+  <link rel='stylesheet' type='text/css' href='cal.css'>
+  <link type='text/css' rel='stylesheet' href='listcommon.css'>
+  <link type='text/css' rel='stylesheet' href='{{.theme}}'>
+  <link type='image/png' rel='icon' href='animals-dog.png'>
+  <script src='/jquery.js'></script>
+  <script src='jquery-ui-custom.js'></script>
+  <script src='fullcalendar.js'></script>
+  <script src='jstree.js'></script>
+  <script src='/int.js'></script>
+  <script src='cint.js'></script>
+  <style>
+     {{if .hide_eid}}
+        .eid {
+           display: none;
+		}
+     {{end}}
+     {{if .hide_etime}}
+        .etime {
+            display: none;
+        }
+     {{end}}
+     {{if .hide_epr}}
+        .epr {
+            display: none;
+        }
+     {{end}}
+     {{if .hide_prchange}}
+        .prchange {
+            visibility: hidden;
+        }
+     {{end}}
+     {{if .hide_ecats}}
+        .ecats {
+            display: none;
+        }
+     {{end}}
+  </style>
   <script>
-    thisPage = "{{.pageName}}";
+     var query = "{{.query|html}}";
+     thisPage = "{{.pageName}}";
   </script>
+</head>
+<body onkeydown='keytable(event)' onkeypress='keypress(event)'>
   <div class='advmenu'>
     <a href='/opts'>options</a>
     &nbsp;
@@ -82,7 +129,7 @@ var CommonHeaderHTML ExecutableTemplate = MakeExecutableTemplate("CommonHeader",
 	      </div>
 	    </div>
 	    <div class='mainmenu_item'>
-	      <a href="{{.otherPageName}}?q={{.query|url}}&fixed=1">[see as {{.otherPageLink}}]</a>
+	      <a href="{{.otherPageName}}&q={{.query|url}}">[see as {{.otherPageLink}}]</a>
 	    </div>
 	    <div class='mainmenu_item'>
 	      <a href="/explain?q={{.query|url}}">[see explanation]</a>
@@ -109,9 +156,6 @@ var CommonHeaderHTML ExecutableTemplate = MakeExecutableTemplate("CommonHeader",
   {{if .retrieveError}}
     <div class='screrror'>Error while executing search: {{.retrieveError|html}} <a href='/errorlog'>Full error log</a></div>
   {{end}}
-`)
-
-var EntryListHeaderHTML ExecutableTemplate = MakeExecutableTemplate("EntryListHeader", `
   <table width='100%'><tr>
     <td valign='top' id='ontonav_td'>
       <img id='ontosaving' style='visibility: hidden' src='loading.gif'/>
@@ -158,52 +202,11 @@ var EntryListHeaderHTML ExecutableTemplate = MakeExecutableTemplate("EntryListHe
       	}).bind("move_node.jstree", save_ontology).bind("create_node.jstree", save_ontology).bind("delete_node.jstree", save_ontology).bind("dblclick.jstree", click_ontology);
       </script>
     </td>
-    <td valign='top' id='maintable_td'><table class='maintable' id='maintable'>
+    <td valign='top' id='maintable_td'>
 `)
 
-var ListHeaderHTML ExecutableTemplate = MakeExecutableTemplate("ListHeader", `
-<!DOCTYPE html>
-<html>
-<head>
-  <title>Pooch: {{.queryForTitle|html}}</title>
-  <link rel='stylesheet' type='text/css' href='dot-luv/jquery-ui.custom.css'>
-  <link type='text/css' rel='stylesheet' href='jstree_default/style.css'>
-  <link type='text/css' rel='stylesheet' href='listcommon.css'>
-  <link type='text/css' rel='stylesheet' href='{{.theme}}'>
-  <link type='image/png' rel='icon' href='animals-dog.png'>
-  <script src='/jquery.js'></script>
-  <script src='jquery-ui-custom.js'></script>
-  <script src='jstree.js'></script>
-  <script src='/int.js'></script>
-  <style>
-     {{if .hide_eid}}
-        .eid {
-           display: none;
-		}
-     {{end}}
-     {{if .hide_etime}}
-        .etime {
-            display: none;
-        }
-     {{end}}
-     {{if .hide_epr}}
-        .epr {
-            display: none;
-        }
-     {{end}}
-     {{if .hide_prchange}}
-        .prchange {
-            visibility: hidden;
-        }
-     {{end}}
-     {{if .hide_ecats}}
-        .ecats {
-            display: none;
-        }
-     {{end}}
-  </style>
-</head>
-<body onkeydown='keytable(event)' onkeypress='keypress(event)'>
+var EntryListHeaderHTML ExecutableTemplate = MakeExecutableTemplate("EntryListHeader", `
+<table class='maintable' id='maintable'>
 `)
 
 var EntryListPriorityChangeHTML ExecutableTemplate = MakeExecutableTemplate("EntryListPriorityChange", `
@@ -380,34 +383,12 @@ var ErrorLogEnderHTML ExecutableTemplate = MakeExecutableTemplate("ErrorLogEnder
 </html>
 `)
 
-var CalendarHeaderHTML ExecutableTemplate = MakeExecutableTemplate("CalendarHeader", `
-<!DOCTYPE html>
-<html>
-<head>
-  <link rel='stylesheet' type='text/css' href='dot-luv/jquery-ui.custom.css'>
-  <link type='text/css' rel='stylesheet' href='listcommon.css'>
-  <link rel='stylesheet' type='text/css' href='fullcalendar.css'/>
-  <link rel='stylesheet' type='text/css' href='cal.css'/>
-  <link type='image/png' rel='icon' href='animals-dog.png'>
-  <link rel='stylesheet' type='text/css' href='{{.theme}}'/>
-  <script src='jquery.js'></script>
-  <script src='jquery-ui-custom.js'></script>
-  <script src='fullcalendar.js'></script>
-  <script src='int.js'></script>
-  <script src='cint.js'></script>
-  <title>{{.query|html}} calendar</title>
-  <script>
-     var query = "{{.query|html}}";
-  </script>
-</head>
-<body onkeydown='keytable(event)' onkeypress='keypress(event)'>
-`)
-
 var CalendarHTML ExecutableTemplate = MakeExecutableTemplate("Calendar", `
   <p>
   <div id='calendar'></div>
   <script>
   </script>
+  </td></tr></table>
 </body>
 </html>
 `)

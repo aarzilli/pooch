@@ -247,10 +247,10 @@ func headerInfo(tl *Tasklist, pageName string, query string, trigger string, isS
 	var otherPageName, otherPageLink string
 	if showOtherLink {
 		if pageName == "/list" {
-			otherPageName = "/cal"
+			otherPageName = "/list?view=cal"
 			otherPageLink = "calendar"
 		} else {
-			otherPageName = "/list"
+			otherPageName = "/list?view=list"
 			otherPageLink = "list"
 		}
 	}
@@ -292,7 +292,6 @@ func headerInfo(tl *Tasklist, pageName string, query string, trigger string, isS
 func StatServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	headerInfo := headerInfo(tl, "/list", "", "", false, false, nil, nil, nil)
 
-	ListHeaderHTML(headerInfo, c)
 	CommonHeaderHTML(headerInfo, c)
 
 	StatHeaderHTML(nil, c)
@@ -319,9 +318,6 @@ func RunServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 
 	headerInfo := headerInfo(tl, "/list", commandstr, "", false, false, nil, nil, map[string]string{ "hideprioritycol": "", "showidcol": "", "hidecatscol": "" })
 
-	//TODO: options?
-
-	ListHeaderHTML(headerInfo, c)
 	CommonHeaderHTML(headerInfo, c)
 	EntryListHeaderHTML(nil, c)
 
@@ -402,8 +398,17 @@ func ListServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 
 	theselect, code, trigger, isSavedSearch, _, showCols, options, perr := tl.ParseSearch(query, nil)
 
-	fmt.Printf("forced: <%s>\n", req.FormValue("fixed"))
-	if _, ok := options["cal"]; ok && (req.FormValue("fixed") == "") {
+	calView := false
+
+	if req.FormValue("view") == "cal" {
+		calView = true
+	} else if req.FormValue("view") == "list" {
+		// list view is default
+	} else if _, ok := options["cal"]; ok {
+		calView = true
+	}
+
+	if calView {
 		// we want to use a calendar!
 		CalendarServerInner(c, req, tl, trigger, isSavedSearch, perr)
 		return
@@ -420,7 +425,6 @@ func ListServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 
 	headerInfo := headerInfo(tl, "/list", query, trigger, isSavedSearch, true, perr, rerr, options)
 
-	ListHeaderHTML(headerInfo, c)
 	CommonHeaderHTML(headerInfo, c)
 	EntryListHeaderHTML(nil, c)
 
@@ -459,18 +463,9 @@ func ListServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 
 func CalendarServerInner(c http.ResponseWriter, req *http.Request, tl *Tasklist, trigger string, isSavedSearch bool, perr error) {
 	query := req.FormValue("q")
-	theme := tl.GetSetting("theme")
 
-	CalendarHeaderHTML(map[string]string{ "query": query, "theme": theme  }, c)
 	CommonHeaderHTML(headerInfo(tl, "/cal", query, trigger, isSavedSearch, true, perr, nil, nil), c)
 	CalendarHTML(map[string]string{ "query": query }, c)
-}
-
-func CalendarServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
-	query := req.FormValue("q")
-	_, _, trigger, isSavedSearch, _, _, _, err := tl.ParseSearch(query, nil)
-
-	CalendarServerInner(c, req, tl, trigger, isSavedSearch, err)
 }
 
 func GetCalendarEvents(tl *Tasklist, query string, start, end string, endSecs int64) []EventForJSON {
@@ -691,7 +686,6 @@ func SetupHandleFunc(wrapperTasklistServer func(TasklistServer)http.HandlerFunc,
 
 	http.HandleFunc("/run", WrapperServer(wrapperTasklistServer(RunServer)))
 	http.HandleFunc("/stat", WrapperServer(wrapperTasklistServer(StatServer)))
-	http.HandleFunc("/cal", WrapperServer(wrapperTasklistServer(CalendarServer)))
 	http.HandleFunc("/opts", WrapperServer(wrapperTasklistServer(
 		func (res http.ResponseWriter, req *http.Request, tl *Tasklist) {
 			OptionServer(res, req, multiuserDb, tl)
