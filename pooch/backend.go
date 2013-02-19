@@ -26,8 +26,6 @@ type Tasklist struct {
 	mutex *sync.Mutex
 	refs int
 	timestamp int64
-	ignoreColumn map[string]bool
-	subcolumns map[string][]string
 	executionLimitEnabled bool
 }
 
@@ -96,7 +94,7 @@ func internalTasklistOpenOrCreate(filename string) *Tasklist {
 	MustExec(conn, "CREATE TABLE IF NOT EXISTS private_settings(name TEXT UNIQUE, value TEXT);")
 	MustExec(conn, "INSERT OR IGNORE INTO private_settings(name, value) VALUES (\"enable_lua_execution_limit\", \"1\")")
 
-	tasklist := &Tasklist{filename, conn, MakeLuaState(), &LuaFlags{}, &sync.Mutex{}, 1, time.Now().Unix(), make(map[string]bool), make(map[string][]string, 0), true}
+	tasklist := &Tasklist{filename, conn, MakeLuaState(), &LuaFlags{}, &sync.Mutex{}, 1, time.Now().Unix(), true}
 
 	if tasklist.GetPrivateSetting("enable_lua_execution_limit") == "0" {
 		Logf(INFO, "Tasklist '%s' runs without lua execution limits", filename)
@@ -115,11 +113,6 @@ func internalTasklistOpenOrCreate(filename string) *Tasklist {
 
 
 	return tasklist
-}
-
-func (tl *Tasklist) ResetSetup() {
-	tl.ignoreColumn = make(map[string]bool)
-	tl.subcolumns = make(map[string][]string)
 }
 
 func (tl *Tasklist) Truncate() {
@@ -696,7 +689,6 @@ func (tl *Tasklist) GetStatistics() []*Statistic {
 	r = append(r, tl.GetStatistic(""))
 
 	for _, tag := range tl.GetTags() {
-		if tl.ignoreColumn[tag] { continue }
 		r = append(r, tl.GetStatistic(tag))
 	}
 

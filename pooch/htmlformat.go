@@ -89,37 +89,6 @@ var CommonHeaderHTML ExecutableTemplate = MakeExecutableTemplate("CommonHeader",
 	    </div>
     {{end}}
     <div class='mainmenu_item'>
-      <a href='javascript:toggle_navpop()'>[navigation]</a>
-      <div id='navpop' class='popup' style='display: none'>
-         <ul class='navlist'>
-           <li><a href='{{.pageName}}?q='>index</a></li>
-           {{with $parent := .}}
-              {{range .savedSearches}}
-              <li><a href="{{$parent.pageName}}?q=%23%25{{.|url}}">#%{{.|html}}</a></li>
-              {{end}}
-           {{end}}
-         </ul>
-         <hr/>
-         <ul class='navlist'>
-           {{with $parent := .}}
-             {{range .subtags}}
-                <li><a href="{{$parent.pageName}}?q={{.|url}}">{{.|html}}</a></li>
-             {{else}}
-             {{end}}
-           {{end}}
-         </ul>
-         <hr/>
-         <ul class='navlist'>
-           {{with $parent := .}}
-             {{range .toplevel}}
-               <li><a href="{{$parent.pageName}}?q={{.|url}}">{{.|html}}</a></li>
-             {{else}}
-             {{end}}
-           {{end}}
-        </ul>
-      </div>
-    </div>
-    <div class='mainmenu_item'>
       <a href='javascript:toggle_runpop()'>[run]</a>
       <div id='runpop' class='popup' style='display: none'>
         <form method='get' action='/run'>
@@ -143,7 +112,53 @@ var CommonHeaderHTML ExecutableTemplate = MakeExecutableTemplate("CommonHeader",
 `)
 
 var EntryListHeaderHTML ExecutableTemplate = MakeExecutableTemplate("EntryListHeader", `
-  <table class='maintable' id='maintable'>
+  <table width='100%'><tr>
+    <td valign='top' id='ontonav_td'>
+      <img id='ontosaving' style='visibility: hidden' src='loading.gif'/>
+      <div id='ontonav'/>
+      <script>
+      	$("#ontonav").jstree({
+      	  "plugins": [ "json_data", "themes", "ui", "dnd", "crrm", "contextmenu" ],
+      	  "themes": { "theme": "default", "dots": true, "icons": false },
+      	  "json_data": {
+      	    "ajax": { "url": "ontology" },
+      	  },
+      	  "crrm": {
+      	    "move": {
+      	      check_move: function() {
+      	      	var m = this._get_move();
+      	      	return m.r.children("a").get(0).text.match(/#%/) == null;
+      	      }
+      	    },
+      	  },
+      	  "contextmenu": {
+      	    "items": function($node) { return {
+      	      "create": {
+      	        "label": "Create",
+      	        "action": function (obj) { this.create(obj); }
+      	      },
+      	      "remove": {
+      	        "label": "Remove",
+      	        "action": function (obj) { this.remove(obj); }
+      	      },
+      	      "cut": {
+      	        "label": "Cut",
+      	        "action": function (obj) { this.cut(obj); }
+      	      },
+      	      "copy": {
+      	        "label": "Copy",
+      	        "action": function (obj) { this.copy(obj); }
+      	      },
+      	      "paste": {
+      	        "label": "Paste",
+      	        "action": function (obj) { this.paste(obj); }
+      	      }
+      	    } }
+      	  },
+      	}).bind("move_node.jstree", save_ontology).bind("create_node.jstree", save_ontology).bind("delete_node.jstree", save_ontology).bind("dblclick.jstree", click_ontology);
+      </script>
+    </td>
+    <td valign='top' id='maintable_td'><table class='maintable' id='maintable'>
 `)
 
 var ListHeaderHTML ExecutableTemplate = MakeExecutableTemplate("ListHeader", `
@@ -151,12 +166,14 @@ var ListHeaderHTML ExecutableTemplate = MakeExecutableTemplate("ListHeader", `
 <html>
 <head>
   <title>Pooch: {{.queryForTitle|html}}</title>
+  <link rel='stylesheet' type='text/css' href='dot-luv/jquery-ui.custom.css'>
+  <link type='text/css' rel='stylesheet' href='jstree_default/style.css'>
   <link type='text/css' rel='stylesheet' href='listcommon.css'>
   <link type='text/css' rel='stylesheet' href='{{.theme}}'>
-  <link rel='stylesheet' type='text/css' href='dot-luv/jquery-ui.custom.css'>
   <link type='image/png' rel='icon' href='animals-dog.png'>
   <script src='/jquery.js'></script>
   <script src='jquery-ui-custom.js'></script>
+  <script src='jstree.js'></script>
   <script src='/int.js'></script>
   <style>
      {{if .hide_eid}}
@@ -261,7 +278,7 @@ var EntryListEntryEditorHTML ExecutableTemplate = MakeExecutableTemplate("EntryL
 `)
 
 var ListEnderHTML ExecutableTemplate = MakeExecutableTemplate("ListEnder", `
-  </table>
+  </table></td></tr></table>
 </body></html>
 `)
 
@@ -275,7 +292,7 @@ var ErrorLogHeaderHTML ExecutableTemplate = MakeExecutableTemplate("ErrorLogHead
 </head>
 <body>
   <p><pre class='code'>{{.code|html}}</pre></p>
-  <table width='100%' id='maintable' style='border-collapse: collapse;'>
+  <table width='100%' id='maintable' style='border-collapse: collapse; display: inline;'>
 `)
 
 var ErrorLogEntryHTML ExecutableTemplate = MakeExecutableTemplate("ErrorLogEntry", `

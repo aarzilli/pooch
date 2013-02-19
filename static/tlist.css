@@ -113,3 +113,19 @@ table {
 .statstable {
     margin-top: 40px;
 }
+
+.jstree a {
+    color: silver;
+}
+
+.jstree-default .jstree-hovered {
+    background:  #163A59;
+}
+
+.jstree-default .jstree-clicked {
+    background:  #163A59;
+}
+
+.jstree-default.jstree-focused {
+    background: black;
+}

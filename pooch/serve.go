@@ -255,15 +255,6 @@ func headerInfo(tl *Tasklist, pageName string, query string, trigger string, isS
 		}
 	}
 
-	savedSearches := tl.GetSavedSearches()
-	subtags := tl.subcolumns[trigger]
-	toplevel := make([]string, 0)
-	for _, tag := range tl.GetTags() {
-		if !tl.ignoreColumn[tag] {
-			toplevel = append(toplevel, "#"+tag)
-		}
-	}
-
 	r := map[string]interface{}{
 		"pageName": pageName,
 		"query": query,
@@ -275,10 +266,6 @@ func headerInfo(tl *Tasklist, pageName string, query string, trigger string, isS
 		"parseError": parseError,
 		"otherPageName": otherPageName,
 		"otherPageLink": otherPageLink,
-
-		"savedSearches": savedSearches,
-		"subtags": subtags,
-		"toplevel": toplevel,
 	};
 
 	if options != nil {
@@ -597,13 +584,12 @@ var LONG_OPTION map[string]bool = map[string]bool{
 func OptionServer(c http.ResponseWriter, req *http.Request, multiuserDb *MultiuserDb, tl *Tasklist) {
 	if req.FormValue("save") == "save" {
 		Must(req.ParseForm())
-		settings := make(map[string]string)
+		settings := tl.GetSettings()
 		for k, v := range req.Form {
 			if k != "save" { settings[k] = v[0] }
 		}
 		tl.SetSettings(settings)
 
-		tl.ResetSetup()
 		if settings["setup"] != "" {
 			tl.DoString(settings["setup"], nil)
 		}
@@ -626,6 +612,74 @@ func OptionServer(c http.ResponseWriter, req *http.Request, multiuserDb *Multius
 	}
 
 	OptionsPageEnd(nil, c)
+}
+
+func getTagsInOntology(knownTags map[string]bool, ontology []OntologyNodeIn) {
+	if ontology == nil {
+		return
+	}
+	for _, on := range ontology {
+		knownTags[on.Data] = true
+		getTagsInOntology(knownTags, on.Children)
+	}
+}
+
+func convertOntologyNodeInToOut(on OntologyNodeIn) interface{} {
+	if (on.Children == nil) || (len(on.Children) == 0) {
+		return on.Data
+	}
+	return OntologyNodeOut{ on.Data, "open", convertOntologyInToOut(on.Children) }
+}
+
+func convertOntologyInToOut(ontology []OntologyNodeIn) []interface{} {
+	r := []interface{}{}
+	for _, on := range ontology {
+		r = append(r, convertOntologyNodeInToOut(on))
+	}
+	return r
+}
+
+func OntologyServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
+	var ontology []OntologyNodeIn
+	_ = json.Unmarshal([]byte(tl.GetSetting("ontology")), &ontology)
+	knownTags := map[string]bool{}
+
+	getTagsInOntology(knownTags, ontology)
+
+	savedSearches := tl.GetSavedSearches()
+	tags := tl.GetTags()
+
+	for _, ss := range savedSearches {
+		n :=  "#%" + ss
+		if _, ok := knownTags[n]; !ok {
+			ontology = append(ontology, OntologyNodeIn{ n, "open", nil})
+		}
+	}
+
+	for _, t := range tags {
+		n :=  "#" + t
+		if _, ok := knownTags[n]; !ok {
+			ontology = append(ontology, OntologyNodeIn{ n, "open", nil})
+		}
+	}
+
+	r := convertOntologyInToOut(ontology)
+
+	//r := []interface{}{ "Uno", OntologyNode{ "Due", "open", []interface{}{ "Tre" } }, OntologyNode{ "Tre", "open", []interface{}{} } }
+	e := json.NewEncoder(c)
+	Must(e.Encode(r))
+}
+
+func OntologySaveServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
+	or := []OntologyNodeIn{}
+	Must(json.NewDecoder(req.Body).Decode(&or))
+	//fmt.Printf("Output: %v\n", or)
+
+	mor, err := json.Marshal(or)
+	Must(err)
+	tl.SetSetting("ontology", string(mor))
+
+	c.Write([]byte("ok"))
 }
 
 func SetupHandleFunc(wrapperTasklistServer func(TasklistServer)http.HandlerFunc, wrapperTasklistWithIdServer func(TasklistWithIdServer)http.HandlerFunc, multiuserDb *MultiuserDb) {
@@ -654,6 +708,8 @@ func SetupHandleFunc(wrapperTasklistServer func(TasklistServer)http.HandlerFunc,
 	http.HandleFunc("/htmlget", WrapperServer(wrapperTasklistWithIdServer(HtmlGetServer)))
 	http.HandleFunc("/save-search", WrapperServer(wrapperTasklistServer(SaveSearchServer)))
 	http.HandleFunc("/remove-search", WrapperServer(wrapperTasklistServer(RemoveSearchServer)))
+	http.HandleFunc("/ontology", WrapperServer(wrapperTasklistServer(OntologyServer)))
+	http.HandleFunc("/ontologysave", WrapperServer(wrapperTasklistServer(OntologySaveServer)))
 
 	// Json interface entry points
 	http.HandleFunc("/list.json", WrapperServer(wrapperTasklistServer(ListJsonServer)))

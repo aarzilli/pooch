@@ -452,3 +452,15 @@ type ListJsonAnswer struct {
 	RetrieveError error
 	Results []UnmarshalEntry
 }
+
+type OntologyNodeOut struct {
+	Data string `json:"data,omitempty"`
+	State string `json:"state"`
+	Children []interface{} `json:"children"`
+}
+
+type OntologyNodeIn struct {
+	Data string `json:"data,omitempty"`
+	State string `json:"state"`
+	Children []OntologyNodeIn `json:"children"`
+}

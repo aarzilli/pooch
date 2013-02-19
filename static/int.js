@@ -25,10 +25,6 @@ function toggle_addpop() {
     $("#newentry").get(0).focus();
 }
 
-function toggle_navpop() {
-    toggle("#navpop");
-}
-
 function toggle_runpop() {
     toggle("#runpop");
 }
@@ -371,4 +367,32 @@ function editsearch() {
 
 function removesearch() {
   $.ajax({ url: "remove-search?query=" + encodeURIComponent($('#q').val()) });
+}
+
+function save_ontology() {
+  var o = JSON.stringify($("#ontonav").jstree("get_json"));
+  $("#ontosaving").get(0).style.visibility = "visible";
+  $.ajax({ type: "POST", url: "/ontologysave?save=1", data: o, success: function(data, textStatus, req) {
+    if (data != "ok") {
+      alert(data);
+    }
+    $("#ontosaving").get(0).style.visibility = "hidden";
+  }});
+}
+
+function click_ontology(event) {
+  var path = "";
+  var c = $(event.target).parents().get(0);
+
+  for (;;) {
+    var n = $(c).children("a").get(0).text.replace(/\s+/g, "");
+    path = n + " " + path;
+
+    c = $(c).parents().get(0);
+    c = $(c).parents().get(0);
+
+    if (c.tagName != "LI") break;
+  }
+
+  window.location = "list?q=" + encodeURIComponent(path);
 }

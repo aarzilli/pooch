@@ -10,7 +10,7 @@ GOFILES=\
 	pooch/staticserve.go pooch/htmlformat.go pooch/serve.go pooch/multiserve.go\
 	pooch.go
 
-staticservedeps = static/* static/dot-luv/* static/dot-luv/images/*
+staticservedeps = static/* static/dot-luv/* static/dot-luv/images/* static/jstree_default/*
 pooch/staticserve.go: $(staticservedeps)
 	perl make-staticserve.pl $(staticservedeps) > pooch/staticserve.go
 

@@ -65,3 +65,11 @@
 .stat_tag, .stat_total, .stat_done, .stat_timed {
   border-right: solid thin;
 }
+
+#ontosaving {
+  margin-top: 2ex;
+}
+
+#ontonav_td {
+  width: 15%;
+}
