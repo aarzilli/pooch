@@ -159,7 +159,10 @@ var CommonHeaderHTML ExecutableTemplate = MakeExecutableTemplate("ListHeader", `
   <table width='100%'><tr>
     <td valign='top' id='ontonav_td'>
       <img id='ontosaving' style='visibility: hidden' src='loading.gif'/>
-      <div id='ontonav'/>
+      <div id='ontonav'>
+      </div>
+      <br/>
+      <input type='button' value='Save' onclick='save_ontology()'/>
       <script>
       	$("#ontonav").jstree({
       	  "plugins": [ "json_data", "themes", "ui", "dnd", "crrm", "contextmenu" ],
@@ -199,7 +202,7 @@ var CommonHeaderHTML ExecutableTemplate = MakeExecutableTemplate("ListHeader", `
       	      }
       	    } }
       	  },
-      	}).bind("move_node.jstree", save_ontology).bind("create_node.jstree", save_ontology).bind("delete_node.jstree", save_ontology).bind("dblclick.jstree", click_ontology);
+        }).bind("dblclick.jstree", click_ontology);
       </script>
     </td>
     <td valign='top' id='maintable_td'>
