@@ -35,6 +35,7 @@ var commands map[string](func (args []string)) = map[string](func (args []string
 	"rename": CmdRename,
 	"rentag": CmdRenTag,
 	"errlog": CmdErrorLog,
+	"ontocheck": CmdOntoCheck,
 
 	"multiserve": CmdMultiServe,
 	"multiserveplain": CmdMultiServePlain,
@@ -60,6 +61,7 @@ var help_commands map[string](func ()) = map[string](func ()){
 	"rentag": HelpRenTag,
 	"errlog": HelpErrorLog,
 	"compat": CompatHelp,
+	"ontocheck": HelpOntoCheck,
 	"multiserve": HelpMultiServe,
 	"multiserveplain": HelpMultiServePlain,
 	"setopt": HelpSetOption,
@@ -480,6 +482,20 @@ func HelpRun() {
 	fmt.Fprintf(os.Stderr, "\tRuns function passing arguments\n")
 }
 
+func CmdOntoCheck(args []string) {
+	CheckArgsOpenDb(args, map[string]bool{}, 0, 0, "ontocheck", func(tl *Tasklist, args []string, flags map[string]bool) {
+		errors := tl.OntoCheck(true)
+		for _, ontoerr := range errors {
+			fmt.Printf("Entry %s in categories [%s] (problem hint: %s)\n", ontoerr.Entry.Id(), ontoerr.ProblemCategory, ontoerr.ProblemDetail)
+		}
+	})
+}
+
+func HelpOntoCheck() {
+	fmt.Fprintf(os.Stderr, "Usage: ontocheck\n\n")
+	fmt.Fprintf(os.Stderr, "\tCheck that category hierarchy and category usages match\n")
+}
+
 func CmdHelp(args []string) {
 	CheckArgs(args, map[string]bool{}, 0, 1, "help")
 	if len(args) <= 0 {
@@ -519,6 +535,7 @@ func main() {
 		w.WriteString("\tremove\tRemove entry\n")
 		w.WriteString("\trename\tRename entry\n")
 		w.WriteString("\trentag\tRename tags\n")
+		w.WriteString("\tontocheck\tChecks compilance to category hierarchy\n")
 		w.WriteString("\n")
 		w.WriteString("\tsetopt\tSets options\n")
 		w.WriteString("\n")

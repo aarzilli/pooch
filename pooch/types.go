@@ -464,3 +464,9 @@ type OntologyNodeIn struct {
 	State string `json:"state"`
 	Children []OntologyNodeIn `json:"children"`
 }
+
+type OntoCheckError struct {
+	Entry *Entry
+	ProblemCategory string
+	ProblemDetail string
+}

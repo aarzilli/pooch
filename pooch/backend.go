@@ -1,6 +1,6 @@
 /*
  This program is distributed under the terms of GPLv3
- Copyright 2010, Alessandro Arzilli
+ Copyright 2010 - 2013, Alessandro Arzilli
  */
 
 package pooch
@@ -11,9 +11,11 @@ import (
 	"io"
 	"crypto/rand"
 	"encoding/base64"
+	"encoding/json"
 	"strings"
 	"sync"
 	"strconv"
+	"regexp"
 	"code.google.com/p/gosqlite/sqlite"
 	"github.com/aarzilli/golua/lua"
 )
@@ -697,4 +699,118 @@ func (tl *Tasklist) GetStatistics() []*Statistic {
 
 func (tl *Tasklist) ShowReturnValueRequest() bool {
 	return tl.luaFlags.showReturnValue
+}
+
+func (tl *Tasklist) GetOntology() []OntologyNodeIn {
+	var ontology []OntologyNodeIn
+	_ = json.Unmarshal([]byte(tl.GetSetting("ontology")), &ontology)
+	return ontology
+}
+
+type InvOntologyEntry struct {
+	cat string
+	parents []string
+}
+
+func (ioe *InvOntologyEntry) String() string {
+	return fmt.Sprintf("<%s> [%s]", ioe.cat, strings.Join(ioe.parents, ","))
+}
+
+var initialHash = regexp.MustCompile("^#")
+
+func invertOntology(p []string, ontology []OntologyNodeIn, r []InvOntologyEntry) []InvOntologyEntry {
+	for  _, on := range ontology {
+		n := initialHash.ReplaceAllString(on.Data, "")
+
+		pp := make([]string, len(p))
+		copy(pp, p)
+		r = append(r, InvOntologyEntry{ n, pp })
+
+		ph := make([]string, len(p))
+		copy(ph, p)
+		ph = append(ph, n)
+
+		if on.Children != nil {
+			r = invertOntology(ph, on.Children, r)
+		}
+	}
+	return r
+}
+
+type OntoCheckResult int
+const (
+	DOES_NOT_APPLY = OntoCheckResult(iota);
+	MATCH_OK;
+	MATCH_FAIL )
+
+func checkEntryOnOntology(debug bool, e *Entry, ioe InvOntologyEntry) (out OntoCheckResult, mismatchParent string) {
+	if _, ok := e.columns[ioe.cat]; !ok {
+		return DOES_NOT_APPLY, ""
+	}
+
+	for _, p := range ioe.parents {
+		if _, ok := e.columns[p]; !ok {
+			return MATCH_FAIL, p
+		}
+	}
+	return MATCH_OK, ""
+}
+
+func (tl *Tasklist) OntoCheck(debug bool) []OntoCheckError {
+	if debug { fmt.Printf("Retrieving ontology\n") }
+
+	errors := []OntoCheckError{}
+
+	io := []InvOntologyEntry{}
+	io = invertOntology([]string{}, tl.GetOntology(), io)
+
+	if debug { fmt.Printf("Retrieving full contents\n") }
+	theselect, _, _, _, _, _, _, perr := tl.ParseSearch("#:w/done", nil)
+	Must(perr)
+	v, rerr := tl.Retrieve(theselect, "")
+	Must(rerr)
+
+	if debug { fmt.Printf("%d entries loaded\nChecking\n", len(v)) }
+
+	unk := 0
+
+	for _, entry := range v {
+		result := DOES_NOT_APPLY
+		failAt := ""
+		failWith := ""
+		for _, ioe := range io {
+			r, failParent := checkEntryOnOntology(debug, entry, ioe)
+			if r == MATCH_OK {
+				result = MATCH_OK
+				break
+			} else if r == MATCH_FAIL {
+				result = MATCH_FAIL
+				if failAt != "" {
+					failAt += ","
+					failWith = ""
+				} else {
+					failWith = failParent
+				}
+				failAt += ioe.cat
+				// continue searching for a successful one
+			}
+		}
+
+		if result == DOES_NOT_APPLY {
+			if debug {
+				fmt.Printf("No rule found to apply to entry: %s\n", entry.Id())
+			}
+			unk++
+		}
+
+		if result == MATCH_FAIL {
+			errors = append(errors, OntoCheckError{entry, failAt, failWith})
+		}
+	}
+
+	if debug {
+		fmt.Printf("Done: %d errors %d unknown\n", len(errors), unk)
+	}
+
+	return errors
 }

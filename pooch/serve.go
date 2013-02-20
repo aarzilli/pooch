@@ -193,9 +193,6 @@ func ErrorLogServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	ErrorLogEnderHTML(nil, c)
 }
 
-
-
-
 func ExplainServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	css := tl.GetSetting("theme")
 
@@ -634,9 +631,8 @@ func convertOntologyInToOut(ontology []OntologyNodeIn) []interface{} {
 	return r
 }
 
-func OntologyServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
-	var ontology []OntologyNodeIn
-	_ = json.Unmarshal([]byte(tl.GetSetting("ontology")), &ontology)
+func ontologyServerGet(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
+	ontology := tl.GetOntology()
 	knownTags := map[string]bool{}
 
 	getTagsInOntology(knownTags, ontology)
@@ -665,6 +661,59 @@ func OntologyServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	Must(e.Encode(r))
 }
 
+func ontologyServerCheck(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
+	timezone := tl.GetTimezone()
+	errors := tl.OntoCheck(true)
+	headerInfo := headerInfo(tl, "/list", "", "", false, true, nil, nil, map[string]string{})
+	CommonHeaderHTML(headerInfo, c)
+	EntryListHeaderHTML(nil, c)
+
+	first := true
+
+	colNames := []string{ "problem", "hint" }
+
+	for idx, oee := range errors {
+		entry := oee.Entry
+		if first {
+			EntryListPriorityChangeHTML(map[string]interface{}{ "entry": entry, "colNames": colNames, "PrioritySize": 5 }, c)
+			first = false
+		}
+
+
+		htmlClass := "entry"
+		if idx % 2 != 0 {
+			htmlClass += " oddentry"
+		}
+
+		cols := []string{}
+		cols = append(cols, oee.ProblemCategory)
+		cols = append(cols, oee.ProblemDetail)
+
+		entryEntry := map[string]interface{} {
+			"heading": entry.Id(),
+			"entry": entry,
+			"etime": TimeString(entry.TriggerAt(), entry.Sort(), timezone),
+			"ecats": entry.CatString(),
+			"htmlClass": htmlClass,
+			"cols": cols,
+		}
+
+		EntryListEntryHTML(entryEntry, c)
+		EntryListEntryEditorHTML(entryEntry, c)
+	}
+
+	ListEnderHTML(nil, c)
+}
+
+func OntologyServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
+	if req.FormValue("check") == "1" {
+		ontologyServerCheck(c, req, tl)
+	} else {
+		ontologyServerGet(c, req, tl)
+	}
+
+}
+
 func OntologySaveServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	or := []OntologyNodeIn{}
 	Must(json.NewDecoder(req.Body).Decode(&or))
@@ -683,7 +732,6 @@ func SetupHandleFunc(wrapperTasklistServer func(TasklistServer)http.HandlerFunc,
 
 	// Entry point urls
 	http.HandleFunc("/list", WrapperServer(wrapperTasklistServer(ListServer)))
-
 	http.HandleFunc("/run", WrapperServer(wrapperTasklistServer(RunServer)))
 	http.HandleFunc("/stat", WrapperServer(wrapperTasklistServer(StatServer)))
 	http.HandleFunc("/opts", WrapperServer(wrapperTasklistServer(
