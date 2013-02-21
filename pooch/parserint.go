@@ -54,6 +54,42 @@ func ExtractColumnsFromSearch(search *ParseResult) Columns {
 	return cols
 }
 
+func (tl *Tasklist) ExpandColumnsFromOntology(cols Columns) {
+	io := InvertOntology([]string{}, tl.GetOntology(), []InvOntologyEntry{})
+
+	var addcols = make(Columns)
+
+	for k, v := range cols {
+		if v != "" {
+			continue
+		}
+
+		var colioe *InvOntologyEntry = nil
+		for i, ioe := range io {
+			if ioe.cat == k {
+				if colioe == nil {
+					colioe = &io[i]
+				} else {
+					colioe = nil
+					break
+				}
+			}
+		}
+
+		if colioe == nil {
+			continue
+		}
+
+		for _, p := range colioe.parents {
+			addcols[p] = ""
+		}
+	}
+
+	for k, _ := range addcols {
+		cols[k] = ""
+	}
+}
+
 func (tl *Tasklist) ParseNew(entryText, queryText string) *Entry {
 	parsed := tl.ParseEx(entryText)
 
@@ -96,6 +132,8 @@ func (tl *Tasklist) ParseNew(entryText, queryText string) *Entry {
 			if v == "" { catFound = true }
 		}
 	}
+
+	tl.ExpandColumnsFromOntology(cols)
 
 	// extra field parsing
 	extraCols, extraCatFound := ParseCols(parsed.extra, parsed.timezone)

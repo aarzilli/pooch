@@ -410,12 +410,50 @@ func (entry *Entry) Print() {
 	tw.Flush()
 }
 
-func (e *Entry) CatString() string {
+type Pair struct {
+	Key string
+	Value int
+}
+
+type Pairs []Pair
+
+func (ps Pairs) Len() int {
+	return len(ps)
+}
+
+func (ps Pairs) Less(i, j int) bool {
+	return ps[i].Value < ps[j].Value
+}
+
+func (ps Pairs) Swap(i, j int) {
+	t := ps[i]
+	ps[i] = ps[j]
+	ps[j] = t
+}
+
+func (e *Entry) CatString(catordering map[string]int) string {
 	r := make([]string, 0)
 
 	for k, v := range e.Columns() {
 		if v != "" { continue; }
 		r = append(r, k)
+	}
+
+	if catordering != nil {
+		ps := make(Pairs, len(r))
+		for i, v := range r {
+			vv, ok := catordering[v]
+			if !ok {
+				vv = 1000
+			}
+			ps[i] = Pair{ v, vv }
+		}
+		sort.Sort(ps)
+		for i, v := range ps {
+			r[i] = v.Key
+		}
+		fmt.Printf("Category vector (sorted): %v\n", ps)
+		fmt.Printf("Category vector (sorted): %v\n", r)
 	}
 
 	return "#" + strings.Join(r, "#")

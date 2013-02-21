@@ -160,10 +160,12 @@ func CmdSearch(args []string) {
 		entries, serr := tl.Retrieve(theselect, command)
 		Must(serr)
 
+		catordering := tl.CategoryDepth()
+
 		switch {
 		case tsv: CmdListExTsv(entries, showCols, timezone)
 		case js: CmdListExJS(entries, timezone)
-		default: CmdListEx(entries, showCols, timezone)
+		default: CmdListEx(entries, showCols, timezone, catordering)
 		}
 	})
 }
@@ -208,7 +210,7 @@ func GetSizesForList(v []*Entry, showCols []string) (id_size, title_size, cat_si
 	for _, e := range v {
 		if len(e.Title())+1 > title_size { title_size = len(e.Title())+1 }
 		if len(e.Id())+1 > id_size { id_size = len(e.Id())+1 }
-		if len(e.CatString())+1 > cat_size { cat_size = len(e.CatString())+1 }
+		if len(e.CatString(nil))+1 > cat_size { cat_size = len(e.CatString(nil))+1 }
 
 		for _, showCol := range showCols {
 			if len(e.Columns()[showCol])+1 > colSizes[showCol] { colSizes[showCol] = len(e.Columns()[showCol])+1 }
@@ -237,7 +239,7 @@ func CmdListExTsv(v []*Entry, showCols []string, timezone int) {
 	}
 }
 
-func CmdListEx(v []*Entry, showCols []string, timezone int) {
+func CmdListEx(v []*Entry, showCols []string, timezone int, catordering map[string]int) {
 	id_size, title_size, cat_size, col_sizes := GetSizesForList(v, showCols)
 
 	var curp Priority = INVALID
@@ -260,7 +262,7 @@ func CmdListEx(v []*Entry, showCols []string, timezone int) {
 			entry.Id(), RepeatString(" ", id_size - len(entry.Id())),
 			entry.Title(), RepeatString(" ", title_size - len(entry.Title())),
 			timeString, RepeatString(" ", 19 - len(timeString)),
-			entry.CatString(), RepeatString(" ", cat_size - len(entry.CatString())))
+			entry.CatString(catordering), RepeatString(" ", cat_size - len(entry.CatString(catordering))))
 
 		for _, colName := range showCols {
 			fmt.Printf(" %s%s", entry.Columns()[colName], RepeatString(" ", col_sizes[colName] - len(entry.Columns()[colName])))
@@ -472,7 +474,7 @@ func CmdRun(args []string) {
 
 		if tl.ShowReturnValueRequest() {
 			entries, cols := tl.LuaResultToEntries()
-			CmdListEx(entries, cols, tl.GetTimezone())
+			CmdListEx(entries, cols, tl.GetTimezone(), nil)
 		}
 	})
 }

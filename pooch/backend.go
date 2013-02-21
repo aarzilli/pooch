@@ -718,7 +718,7 @@ func (ioe *InvOntologyEntry) String() string {
 
 var initialHash = regexp.MustCompile("^#")
 
-func invertOntology(p []string, ontology []OntologyNodeIn, r []InvOntologyEntry) []InvOntologyEntry {
+func InvertOntology(p []string, ontology []OntologyNodeIn, r []InvOntologyEntry) []InvOntologyEntry {
 	for  _, on := range ontology {
 		n := initialHash.ReplaceAllString(on.Data, "")
 
@@ -731,7 +731,7 @@ func invertOntology(p []string, ontology []OntologyNodeIn, r []InvOntologyEntry)
 		ph = append(ph, n)
 
 		if on.Children != nil {
-			r = invertOntology(ph, on.Children, r)
+			r = InvertOntology(ph, on.Children, r)
 		}
 	}
 	return r
@@ -762,7 +762,7 @@ func (tl *Tasklist) OntoCheck(debug bool) []OntoCheckError {
 	errors := []OntoCheckError{}
 
 	io := []InvOntologyEntry{}
-	io = invertOntology([]string{}, tl.GetOntology(), io)
+	io = InvertOntology([]string{}, tl.GetOntology(), io)
 
 	if debug { fmt.Printf("Retrieving full contents\n") }
 	theselect, _, _, _, _, _, _, perr := tl.ParseSearch("#:w/done", nil)
@@ -813,4 +813,30 @@ func (tl *Tasklist) OntoCheck(debug bool) []OntoCheckError {
 	}
 
 	return errors
+}
+
+func (tl *Tasklist) CategoryDepth() map[string]int {
+	io := InvertOntology([]string{}, tl.GetOntology(), []InvOntologyEntry{})
+	appearsAsParent := map[string]bool{}
+	r := map[string]int{}
+	for _, ioe := range io {
+		if _, ok := r[ioe.cat]; ok {
+			r[ioe.cat] = 1000
+		} else {
+			r[ioe.cat] = len(ioe.parents)
+		}
+
+		for _, p := range ioe.parents {
+			appearsAsParent[p] = true
+		}
+	}
+
+	for cat, v := range r {
+		if v != 0 { continue }
+		_, ok := appearsAsParent[cat]
+		if _, ok := appearsAsParent[cat]; ok { continue }
+		r[cat] = 1000
+	}
+
+	return r
 }

@@ -420,6 +420,8 @@ func ListServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	if _, ok := options["hidecatscol"]; ok { prioritySize-- }
 	if _, ok := options["showidcol"]; ok { prioritySize++ }
 
+	catordering := tl.CategoryDepth()
+
 	headerInfo := headerInfo(tl, "/list", query, trigger, isSavedSearch, true, perr, rerr, options)
 
 	CommonHeaderHTML(headerInfo, c)
@@ -446,7 +448,7 @@ func ListServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 			"heading": entry.Id(),
 			"entry": entry,
 			"etime": TimeString(entry.TriggerAt(), entry.Sort(), timezone),
-			"ecats": entry.CatString(),
+			"ecats": entry.CatString(catordering),
 			"htmlClass": htmlClass,
 			"cols": cols,
 		}
@@ -527,7 +529,7 @@ func HtmlGetServer(c http.ResponseWriter, req *http.Request, tl *Tasklist, id st
 		"heading": nil,
 		"entry": entry,
 		"etime": TimeString(entry.TriggerAt(), entry.Sort(), tl.GetTimezone()),
-		"ecats": entry.CatString(),
+		"ecats": entry.CatString(nil),
 		"cols": []string{},
 	}
 
@@ -672,6 +674,8 @@ func ontologyServerCheck(c http.ResponseWriter, req *http.Request, tl *Tasklist)
 
 	colNames := []string{ "problem", "hint" }
 
+	catordering := tl.CategoryDepth()
+
 	for idx, oee := range errors {
 		entry := oee.Entry
 		if first {
@@ -693,7 +697,7 @@ func ontologyServerCheck(c http.ResponseWriter, req *http.Request, tl *Tasklist)
 			"heading": entry.Id(),
 			"entry": entry,
 			"etime": TimeString(entry.TriggerAt(), entry.Sort(), timezone),
-			"ecats": entry.CatString(),
+			"ecats": entry.CatString(catordering),
 			"htmlClass": htmlClass,
 			"cols": cols,
 		}
