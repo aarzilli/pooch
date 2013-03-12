@@ -1,6 +1,6 @@
 /*
  This program is distributed under the terms of GPLv3
- Copyright 2010-2012, Alessandro Arzilli
+ Copyright 2010-2013, Alessandro Arzilli
  */
 
 package pooch
@@ -364,7 +364,7 @@ func ListJsonServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	timezone := tl.GetTimezone()
 	query := strings.Replace(req.FormValue("q"), "\r", "", -1)
 
-	theselect, code, _, _, _, _, _, perr := tl.ParseSearch(query, nil)
+	theselect, code, _, _, _, _, options, perr := tl.ParseSearch(query, nil)
 
 	answ.ParseError = perr
 	if perr != nil {
@@ -372,7 +372,8 @@ func ListJsonServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 		return
 	}
 
-	v, rerr := tl.Retrieve(theselect, code)
+	_, incsub := options["sub"]
+	v, rerr := tl.Retrieve(theselect, code, incsub)
 
 	answ.RetrieveError = rerr
 	if rerr != nil {
@@ -390,6 +391,7 @@ func ListJsonServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 }
 
 func ListServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
+	gutsOnly := req.FormValue("guts") != ""
 	query := strings.Replace(req.FormValue("q"), "\r", "", -1)
 	timezone := tl.GetTimezone()
 
@@ -411,7 +413,8 @@ func ListServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 		return
 	}
 
-	v, rerr := tl.Retrieve(theselect, code)
+	_, incsub := options["sub"]
+	v, rerr := tl.Retrieve(theselect, code, incsub)
 
 	prioritySize := 5
 
@@ -424,8 +427,10 @@ func ListServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 
 	headerInfo := headerInfo(tl, "/list", query, trigger, isSavedSearch, true, perr, rerr, options)
 
-	CommonHeaderHTML(headerInfo, c)
-	EntryListHeaderHTML(nil, c)
+	if !gutsOnly {
+		CommonHeaderHTML(headerInfo, c)
+		EntryListHeaderHTML(nil, c)
+	}
 
 	var curp Priority = INVALID
 	for idx, entry := range v {
@@ -457,7 +462,9 @@ func ListServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 		EntryListEntryEditorHTML(entryEntry, c)
 	}
 
-	ListEnderHTML(nil, c)
+	if !gutsOnly {
+		ListEnderHTML(nil, c)
+	}
 }
 
 func CalendarServerInner(c http.ResponseWriter, req *http.Request, tl *Tasklist, trigger string, isSavedSearch bool, perr error) {
@@ -476,7 +483,7 @@ func GetCalendarEvents(tl *Tasklist, query string, start, end string, endSecs in
 	pr.AddIncludeClause(&SimpleExpr{ ":when", "<", end, nil, 0, "" })
 	pr.options["w/done"] = "w/done"
 	theselect, _, _ := pr.IntoSelect(tl, nil)
-	v, _ := tl.Retrieve(theselect, pr.command)
+	v, _ := tl.Retrieve(theselect, pr.command, false)
 
 	timezone := tl.GetTimezone()
 

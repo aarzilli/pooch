@@ -349,8 +349,10 @@ func (tl *Tasklist) Get(id string) *Entry {
 	return entry
 }
 
-func (tl *Tasklist) GetListEx(stmt *sqlite.Stmt, code string) ([]*Entry, error) {
+func (tl *Tasklist) GetListEx(stmt *sqlite.Stmt, code string, incsub bool) ([]*Entry, error) {
 	var err error
+
+	fmt.Printf("Incsub: %v\n", incsub)
 
 	if code != "" {
 		tl.luaState.CheckStack(1)
@@ -391,19 +393,32 @@ func (tl *Tasklist) GetListEx(stmt *sqlite.Stmt, code string) ([]*Entry, error) 
 			if tl.luaFlags.filterOut { continue }
 		}
 
+		if !incsub {
+			skip := false
+			for k, _ := range entry.Columns() {
+				if strings.HasPrefix(k, "sub/") {
+					skip = true
+					break
+				}
+			}
+			if skip {
+				continue
+			}
+		}
+
 		v = append(v, entry)
 	}
 	return v, err
 }
 
-func (tl *Tasklist) Retrieve(theselect, code string) ([]*Entry, error) {
+func (tl *Tasklist) Retrieve(theselect, code string, incsub bool) ([]*Entry, error) {
 	stmt, serr := tl.conn.Prepare(theselect)
 	Must(serr)
 	defer stmt.Finalize()
 	serr = stmt.Exec()
 	Must(serr)
 
-	return tl.GetListEx(stmt, code)
+	return tl.GetListEx(stmt, code, incsub)
 }
 
 func (tl *Tasklist) RetrieveErrors() []*ErrorEntry {
@@ -534,7 +549,9 @@ func (tl *Tasklist) GetTags() []string {
 	for stmt.Next() {
 		name := ""
 		Must(stmt.Scan(&name))
-		r = append(r, name)
+		if !(strings.HasPrefix(name, "sub/")) {
+			r = append(r, name)
+		}
 	}
 
 	return r
@@ -767,7 +784,7 @@ func (tl *Tasklist) OntoCheck(debug bool) []OntoCheckError {
 	if debug { fmt.Printf("Retrieving full contents\n") }
 	theselect, _, _, _, _, _, _, perr := tl.ParseSearch("#:w/done", nil)
 	Must(perr)
-	v, rerr := tl.Retrieve(theselect, "")
+	v, rerr := tl.Retrieve(theselect, "", false)
 	Must(rerr)
 
 	if debug { fmt.Printf("%d entries loaded\nChecking\n", len(v)) }
@@ -833,7 +850,6 @@ func (tl *Tasklist) CategoryDepth() map[string]int {
 
 	for cat, v := range r {
 		if v != 0 { continue }
-		_, ok := appearsAsParent[cat]
 		if _, ok := appearsAsParent[cat]; ok { continue }
 		r[cat] = 1000
 	}

@@ -157,7 +157,7 @@ func CmdSearch(args []string) {
 
 		Logf(DEBUG, "Search statement\n%s\n", theselect)
 
-		entries, serr := tl.Retrieve(theselect, command)
+		entries, serr := tl.Retrieve(theselect, command, false)
 		Must(serr)
 
 		catordering := tl.CategoryDepth()

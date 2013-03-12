@@ -452,8 +452,6 @@ func (e *Entry) CatString(catordering map[string]int) string {
 		for i, v := range ps {
 			r[i] = v.Key
 		}
-		fmt.Printf("Category vector (sorted): %v\n", ps)
-		fmt.Printf("Category vector (sorted): %v\n", r)
 	}
 
 	return "#" + strings.Join(r, "#")

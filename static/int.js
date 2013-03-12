@@ -184,23 +184,27 @@ function change_editor_disabled(ed, disabledStatus) {
 }
 
 function fill_editor(name) {
-  $("#loading_"+name).get(0).style.display = "inline";
-  $.ajax({url: "get?id=" + encodeURIComponent(name), success: function(data, textStatus, req) {
-	var timestamp = data.split("\n", 2)[0];
-	var jsonObj = data.substr(timestamp.length);
-	v = $.parseJSON(jsonObj);
-	var ed = $("#ediv_" + name).first().get(0);
-	ed.elements['edtitle'].value = v.Title;
-	ed.elements['edtext'].value = v.Text;
-	ed.elements['edat'].value = v.TriggerAt;
-	ed.elements['edsort'].value = v.Sort;
-	ed.elements['edid'].value = v.Id;
-	ed.elements['edprio'].value = v.Priority;
+    $("#loading_"+name).get(0).style.display = "inline";
+    $.ajax({url: "get?id=" + encodeURIComponent(name), success: function(data, textStatus, req) {
+        var timestamp = data.split("\n", 2)[0];
+        var jsonObj = data.substr(timestamp.length);
+        v = $.parseJSON(jsonObj);
+        var ed = $("#ediv_" + name).first().get(0);
+        ed.elements['edtitle'].value = v.Title;
+        ed.elements['edtext'].value = v.Text;
+        ed.elements['edat'].value = v.TriggerAt;
+        ed.elements['edsort'].value = v.Sort;
+        ed.elements['edid'].value = v.Id;
+        ed.elements['edprio'].value = v.Priority;
 
-	$("#ts_" + v.Id).html(timestamp);
-	change_editor_disabled(ed, "");
-	$("#loading_"+name).get(0).style.display = "none";
-      }});
+        $("#ts_" + v.Id).html(timestamp);
+        change_editor_disabled(ed, "");
+        $("#loading_"+name).get(0).style.display = "none";
+        $.ajax({url: "list?guts=1&q=" + encodeURIComponent("#:sub #:w/done #sub/" + v.Id), success: function(data, textStatus, req) {
+            var tbl = $("#subs_" + v.Id).first().get(0);
+            tbl.innerHTML = data
+        }});
+    }});
 }
 
 function editor_from_row(row) {
@@ -240,8 +244,9 @@ function close_editor(row) {
 function toggle_editor(name, event) {
     var row = $("#editor_"+name).get(0);
     if (row.style['display'] == 'none') {
-        orows = document.getElementsByTagName("tr");
-        for (var i in document.getElementsByTagName("tr")) {
+        var tbl = $("#editor_"+name).parent().parent().first().get(0);
+        orows = tbl.getElementsByTagName("tr");
+        for (var i in tbl.getElementsByTagName("tr")) {
             orow = orows[i];
 
             if (orow == null) continue;
@@ -257,7 +262,7 @@ function toggle_editor(name, event) {
 
         fill_editor(name);
     } else {
-        close_editor(row)
+        close_editor(row);
     }
 }
 

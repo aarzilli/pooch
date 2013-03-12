@@ -1,6 +1,6 @@
 /*
  This program is distributed under the terms of GPLv3
- Copyright 2010-2012, Alessandro Arzilli
+ Copyright 2010-2013, Alessandro Arzilli
  */
 
 package pooch
@@ -100,7 +100,7 @@ var CommonHeaderHTML ExecutableTemplate = MakeExecutableTemplate("ListHeader", `
       <div id='searchpop' class='popup' style='display: none'>
          <form id='searchform' method='get' action='{{.pageName}}'>
            <label for='q'>Query:</label>&nbsp;
-           <textarea name='q' id='q' cols='50' rows='10'>{{.query|html}}</textarea>
+           <textarea name='q' id='q' cols='50' rows='5'>{{.query|html}}</textarea>
            <input type='submit' value='search'>
            <input type='button' value='cancel' onclick='javascript:toggle_searchpop()'/>
            &nbsp;
@@ -254,10 +254,10 @@ var EntryListEntryEditorHTML ExecutableTemplate = MakeExecutableTemplate("EntryL
     <tr id='editor_{{.|html}}' class='editor' style='display: none'>
     {{end}}
     {{with .entry}}
-      <td colspan=4>
+      <td colspan='5'>
         <form id='ediv_{{.Id|html}}'>
           <input name='edtitle' type='text' disabled='disabled'/><br>
-          <textarea name='edtext' disabled='disabled' rows=20>
+          <textarea name='edtext' disabled='disabled' rows=5>
           </textarea>
 
 		  <input name='edid' type='hidden'/>
@@ -276,6 +276,9 @@ var EntryListEntryEditorHTML ExecutableTemplate = MakeExecutableTemplate("EntryL
           <input type='button' name='savebtn' value='save' onclick='javascript:save_editor_by_id("{{.Id|html}}", event)' disabled='disabled'/>
           <input type='button' value='reload' onclick='javascript:fill_editor("{{.Id|html}}")'/></p>
         </form>
+        <table id='subs_{{.Id|html}}' style='margin-left: 30px; border-collapse: collapse;'>
+          <tr><td>ciao</td></tr>
+        </table>
       </td>
     {{end}}
     {{with .heading}}
@@ -505,7 +508,7 @@ var OptionsPageLine ExecutableTemplate = MakeExecutableTemplate("OptionsPageLine
 `)
 
 var OptionsLongPageLine ExecutableTemplate = MakeExecutableTemplate("OptionsLongPage", `
-      <label for='<name|html}'>{{.name|html}}</label>&nbsp;<textarea name='{{.name|html}}' id='{{.name|html}}' rows='20' cols='80'>{{.value|html}}</textarea></br>
+      <label for='<name|html}'>{{.name|html}}</label>&nbsp;<textarea name='{{.name|html}}' id='{{.name|html}}' rows='5' cols='80'>{{.value|html}}</textarea></br>
 `)
 
 var OptionsPageAPITokens ExecutableTemplate = MakeExecutableTemplate("OptionsPageAPITokens", `
