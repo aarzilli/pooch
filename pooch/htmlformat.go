@@ -260,7 +260,6 @@ var EntryListEntryEditorHTML ExecutableTemplate = MakeExecutableTemplate("EntryL
         <input type='button' onclick='show_subs("{{.Id|html}}")' value='Show sub-items'/>
         &nbsp;
         <input type='button' onclick='toggle_addpop_sub("{{.Id|html}}")' value="Add subitem"/>
-        <p>
         <form id='ediv_{{.Id|html}}'>
           <input name='edtitle' type='text' disabled='disabled'/><br>
           <textarea name='edtext' disabled='disabled' rows=5>
