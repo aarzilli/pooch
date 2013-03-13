@@ -25,6 +25,14 @@ function toggle_addpop() {
     $("#newentry").get(0).focus();
 }
 
+function toggle_addpop_sub(id) {
+    toggle("#addpop");
+    var ne = $("#newentry");
+    ne.val("#sub/" + id + " ");
+    ne.get(0).setSelectionRange(6 + id.length, 6 + id.length);
+    ne.get(0).focus();
+}
+
 function toggle_runpop() {
     toggle("#runpop");
 }
@@ -136,32 +144,37 @@ function save_editor(form) {
 	}});
 }
 
-function add_row(id) {
+function add_row(id, parent) {
   $.ajax({ url: "htmlget?type=add&id=" + encodeURIComponent(id), success: function(data, textStatus, req) {
-	var newrows = data.split("\u2029", 2);
+    var newrows = data.split("\u2029", 2);
 
-	var maintable = $("#maintable").get(0);
+    var tbl = (parent == undefined) ?
+       $("#maintable").get(0) :
+       $("#subs_" + parent).get(0);
 
-	var newrow1 = maintable.insertRow(0);
-	newrow1.setAttribute("class", "entry");
-	newrow1.innerHTML = newrows[0];
+    var newrow1 = tbl.insertRow(0);
+    newrow1.setAttribute("class", "entry");
+    newrow1.innerHTML = newrows[0];
 
-	var newrow2 = maintable.insertRow(1);
-	newrow2.setAttribute("id", "editor_"+encodeURIComponent(id));
-	newrow2.setAttribute("class", "editor");
-	newrow2.setAttribute("style", "display: none");
-	newrow2.innerHTML = newrows[1];
+    var newrow2 = tbl.insertRow(1);
+    newrow2.setAttribute("id", "editor_"+encodeURIComponent(id));
+    newrow2.setAttribute("class", "editor");
+    newrow2.setAttribute("style", "display: none");
+    newrow2.innerHTML = newrows[1];
 
-	save_open_editor(true);
-      }});
+    if (parent == undefined) {
+      save_open_editor(true);
+    }
+  }});
 }
 
 function add_entry(query) {
     var netext = $('#newentry').val();
     $.ajax({ url: "qadd?q=" + encodeURIComponent(query) + "&text=" + encodeURIComponent(netext), success: function(data, textStatus, req) {
                 if (data.match(/^added: /)) {
-                    newid = data.substr("added: ".length);
-                    add_row(newid);
+                    resp = data.substr("added: ".length).split(/ /);
+
+                    add_row(resp[0], resp[1]);
 
                     $('#newentry').val("");
                     $("#addpop").get(0).style["display"] = "none";
@@ -203,6 +216,11 @@ function fill_editor(name) {
         $.ajax({url: "list?guts=1&q=" + encodeURIComponent("#:sub #:w/done #sub/" + v.Id), success: function(data, textStatus, req) {
             var tbl = $("#subs_" + v.Id).first().get(0);
             tbl.innerHTML = data
+            if (data != "") {
+                show_subs(v.Id);
+            } else {
+                show_editor(v.Id);
+            }
         }});
     }});
 }
@@ -400,4 +418,14 @@ function click_ontology(event) {
   }
 
   window.location = "list?q=" + encodeURIComponent(path);
+}
+
+function show_editor(id) {
+  $("#subs_" + id).first().get(0).style["display"] = "none";
+  $("#ediv_" + id).first().get(0).style["display"] = "block";
+}
+
+function show_subs(id) {
+  $("#subs_" + id).first().get(0).style["display"] = "block";
+  $("#ediv_" + id).first().get(0).style["display"] = "none";
 }

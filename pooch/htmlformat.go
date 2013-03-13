@@ -255,6 +255,12 @@ var EntryListEntryEditorHTML ExecutableTemplate = MakeExecutableTemplate("EntryL
     {{end}}
     {{with .entry}}
       <td colspan='5'>
+        <input type='button' onclick='show_editor("{{.Id|html}}")' value="Show editor"/>
+        &nbsp;
+        <input type='button' onclick='show_subs("{{.Id|html}}")' value='Show sub-items'/>
+        &nbsp;
+        <input type='button' onclick='toggle_addpop_sub("{{.Id|html}}")' value="Add subitem"/>
+        <p>
         <form id='ediv_{{.Id|html}}'>
           <input name='edtitle' type='text' disabled='disabled'/><br>
           <textarea name='edtext' disabled='disabled' rows=5>
@@ -276,7 +282,7 @@ var EntryListEntryEditorHTML ExecutableTemplate = MakeExecutableTemplate("EntryL
           <input type='button' name='savebtn' value='save' onclick='javascript:save_editor_by_id("{{.Id|html}}", event)' disabled='disabled'/>
           <input type='button' value='reload' onclick='javascript:fill_editor("{{.Id|html}}")'/></p>
         </form>
-        <table id='subs_{{.Id|html}}' style='margin-left: 30px; border-collapse: collapse;'>
+        <table id='subs_{{.Id|html}}' style='margin-left: 30px; border-collapse: collapse; display: none;'>
           <tr><td>ciao</td></tr>
         </table>
       </td>

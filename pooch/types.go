@@ -187,6 +187,15 @@ func (e *Entry) SetColumns(cols Columns) *Entry { e.columns = cols; return e }
 func (e *Entry) SetColumn(name, value string) *Entry { e.columns[name] = value; return e }
 func (e *Entry) RemoveColumn(name string) *Entry { delete(e.columns, name); return e }
 
+func IsSubitem(cols Columns) (bool, string) {
+	for k, _ := range cols {
+		if strings.HasPrefix(k, "sub/") {
+			return true, k[4:]
+		}
+	}
+	return false, ""
+}
+
 func (e *Entry) MergeColumns(cols Columns) *Entry {
 	for k, v := range cols {
 		e.columns[k] = v

@@ -123,17 +123,19 @@ func (tl *Tasklist) ParseNew(entryText, queryText string) *Entry {
 		}
 	}
 
-	// extraction of columns from search expression
-	searchParsed := tl.ParseEx(queryText)
-	searchCols := ExtractColumnsFromSearch(searchParsed)
-	if searchCols != nil {
-		for k, v := range searchCols {
-			cols[k] = v;
-			if v == "" { catFound = true }
+	if isi, _ := IsSubitem(cols); isi {
+		// extraction of columns from search expression
+		searchParsed := tl.ParseEx(queryText)
+		searchCols := ExtractColumnsFromSearch(searchParsed)
+		if searchCols != nil {
+			for k, v := range searchCols {
+				cols[k] = v;
+				if v == "" { catFound = true }
+			}
 		}
-	}
 
-	tl.ExpandColumnsFromOntology(cols)
+		tl.ExpandColumnsFromOntology(cols)
+	}
 
 	// extra field parsing
 	extraCols, extraCatFound := ParseCols(parsed.extra, parsed.timezone)

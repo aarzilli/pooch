@@ -150,7 +150,13 @@ func QaddServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	entry := tl.ParseNew(CheckFormValue(req, "text"), req.FormValue("q"))
 
 	tl.Add(entry)
-	io.WriteString(c, "added: " + entry.Id())
+
+	isi, parent := IsSubitem(entry.Columns())
+	if isi {
+		io.WriteString(c, "added: " + entry.Id() + " " + parent)
+	} else {
+		io.WriteString(c, "added: " + entry.Id())
+	}
 }
 
 func SaveServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
