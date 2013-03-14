@@ -123,7 +123,7 @@ func (tl *Tasklist) ParseNew(entryText, queryText string) *Entry {
 		}
 	}
 
-	if isi, _ := IsSubitem(cols); isi {
+	if isi, _ := IsSubitem(cols); !isi {
 		// extraction of columns from search expression
 		searchParsed := tl.ParseEx(queryText)
 		searchCols := ExtractColumnsFromSearch(searchParsed)
