@@ -1,11 +1,12 @@
 Available search options
 
 @:w/done		includes results marked "done" in listing
-@:hidetimecol		hides sort/when column in listing 
+@:hidetimecol		hides sort/when column in listing
 @:hideprioritycol	hides priority button in listing
 @:hidecatscol		hides categories column in listing
 @:hideprioritychange	hides priority changes headers in listing (but the empty line will remain)
 @:showidcol 		shows id column in listing (hidden by default, precedes title)
+@:sub			retrieves subcategories too
 
 
 

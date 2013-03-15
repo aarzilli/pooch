@@ -352,8 +352,6 @@ func (tl *Tasklist) Get(id string) *Entry {
 func (tl *Tasklist) GetListEx(stmt *sqlite.Stmt, code string, incsub bool) ([]*Entry, error) {
 	var err error
 
-	fmt.Printf("Incsub: %v\n", incsub)
-
 	if code != "" {
 		tl.luaState.CheckStack(1)
 		tl.luaState.PushNil()

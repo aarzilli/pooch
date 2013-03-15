@@ -213,7 +213,7 @@ function fill_editor(name) {
         $("#ts_" + v.Id).html(timestamp);
         change_editor_disabled(ed, "");
         $("#loading_"+name).get(0).style.display = "none";
-        $.ajax({url: "list?guts=1&q=" + encodeURIComponent("#:sub #:w/done #sub/" + v.Id), success: function(data, textStatus, req) {
+        $.ajax({url: "list?guts=1&q=" + encodeURIComponent("#:sub #:w/done #:ssort #sub/" + v.Id), success: function(data, textStatus, req) {
             var tbl = $("#subs_" + v.Id).first().get(0);
             tbl.innerHTML = data
             if (data != "") {

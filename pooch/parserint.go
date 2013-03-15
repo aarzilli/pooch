@@ -123,6 +123,12 @@ func (tl *Tasklist) ParseNew(entryText, queryText string) *Entry {
 		}
 	}
 
+	sort := SortFromTriggerAt(triggerAt, tl.GetSetting("defaultsorttime") == "1")
+	if sortv, ok := cols["sort"]; ok {
+		sort = sortv
+		delete(cols, "sort")
+	}
+
 	if isi, _ := IsSubitem(cols); !isi {
 		// extraction of columns from search expression
 		searchParsed := tl.ParseEx(queryText)
@@ -144,7 +150,7 @@ func (tl *Tasklist) ParseNew(entryText, queryText string) *Entry {
 
 	if id == "" { id = tl.MakeRandomId() }
 	if !catFound { cols["uncat"] = "" }
-	sort := SortFromTriggerAt(triggerAt, tl.GetSetting("defaultsorttime") == "1")
+
 
 	if !prioritySet {
 		if triggerAt != nil { priority = TIMED }
@@ -358,7 +364,14 @@ func (pr *ParseResult) IntoSelect(tl *Tasklist, luaClausable Clausable) (string,
 		whereStr = "\nWHERE\n" + strings.Join(where, "\nAND\n")
 	}
 
-	return SELECT_HEADER + whereStr + "\nGROUP BY tasks.id\nORDER BY priority, trigger_at_field ASC, sort DESC", nil, err
+	fmt.Printf("ssort specified: %v\n", pr.options)
+
+	orderBy := "ORDER BY priority, trigger_at_field ASC, sort DESC"
+	if _, found := pr.options["ssort"]; found {
+		orderBy = "ORDER BY priority, sort ASC"
+	}
+
+	return SELECT_HEADER + whereStr + "\nGROUP BY tasks.id\n" + orderBy , nil, err
 }
 
 func (pr *ParseResult) IntoTrigger() string {
