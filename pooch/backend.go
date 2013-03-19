@@ -647,6 +647,24 @@ type Statistic struct {
 	Notes, Sticky int
 }
 
+func (tl *Tasklist) CountCategoryItems(cat string) (r int) {
+	stmt, err := tl.conn.Prepare("SELECT count(distinct id) FROM columns WHERE name = ?")
+	Must(err)
+	defer stmt.Finalize()
+	Must(stmt.Exec("sub/" + cat))
+
+	fmt.Printf("Counting category items for %s\n", cat)
+
+	if stmt.Next() {
+		fmt.Printf("\tGot\n")
+		stmt.Scan(&r)
+	}
+
+	fmt.Printf("\tReturn %d\n", r)
+
+	return
+}
+
 func (tl *Tasklist) GetStatistic(tag string) *Statistic {
 	var stmt *sqlite.Stmt
 	var err error
@@ -854,3 +872,4 @@ func (tl *Tasklist) CategoryDepth() map[string]int {
 
 	return r
 }
+

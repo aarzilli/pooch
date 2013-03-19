@@ -422,6 +422,8 @@ func ListServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	_, incsub := options["sub"]
 	v, rerr := tl.Retrieve(theselect, code, incsub)
 
+	_, subsort := options["ssort"]
+
 	prioritySize := 5
 
 	if _, ok := options["hidetimecol"]; ok { prioritySize-- }
@@ -440,7 +442,7 @@ func ListServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 
 	var curp Priority = INVALID
 	for idx, entry := range v {
-		if curp != entry.Priority() {
+		if (curp != entry.Priority()) && !subsort {
 			EntryListPriorityChangeHTML(map[string]interface{}{ "entry": entry, "colNames": showCols, "PrioritySize": prioritySize }, c)
 			curp = entry.Priority()
 		}

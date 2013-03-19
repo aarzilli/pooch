@@ -90,6 +90,11 @@ func (tl *Tasklist) ExpandColumnsFromOntology(cols Columns) {
 	}
 }
 
+func (tl *Tasklist) SortFromSubitems(subitemId string) string {
+	n := tl.CountCategoryItems(subitemId)
+	return fmt.Sprintf("%03d0", n+1)
+}
+
 func (tl *Tasklist) ParseNew(entryText, queryText string) *Entry {
 	parsed := tl.ParseEx(entryText)
 
@@ -123,13 +128,19 @@ func (tl *Tasklist) ParseNew(entryText, queryText string) *Entry {
 		}
 	}
 
-	sort := SortFromTriggerAt(triggerAt, tl.GetSetting("defaultsorttime") == "1")
+	subitem, subitemId := IsSubitem(cols)
+
+	var sort string
 	if sortv, ok := cols["sort"]; ok {
 		sort = sortv
 		delete(cols, "sort")
+	} else if subitem {
+		sort = tl.SortFromSubitems(subitemId)
+	} else {
+		sort = SortFromTriggerAt(triggerAt, tl.GetSetting("defaultsorttime") == "1")
 	}
 
-	if isi, _ := IsSubitem(cols); !isi {
+	if !subitem {
 		// extraction of columns from search expression
 		searchParsed := tl.ParseEx(queryText)
 		searchCols := ExtractColumnsFromSearch(searchParsed)
@@ -364,11 +375,9 @@ func (pr *ParseResult) IntoSelect(tl *Tasklist, luaClausable Clausable) (string,
 		whereStr = "\nWHERE\n" + strings.Join(where, "\nAND\n")
 	}
 
-	fmt.Printf("ssort specified: %v\n", pr.options)
-
 	orderBy := "ORDER BY priority, trigger_at_field ASC, sort DESC"
 	if _, found := pr.options["ssort"]; found {
-		orderBy = "ORDER BY priority, sort ASC"
+		orderBy = "ORDER BY sort ASC"
 	}
 
 	return SELECT_HEADER + whereStr + "\nGROUP BY tasks.id\n" + orderBy , nil, err
