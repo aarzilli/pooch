@@ -102,16 +102,17 @@ function keytable(e) {
 }
 
 function remove_entry(name) {
+  var tbl = $("#editor_"+name).parent().parent().first().get(0);
   $.ajax({ url: "remove?id=" + encodeURIComponent(name), success: function(data, textStatus, req) {
 	if (data.match(/^removed/)) {
-	  var maintable = $("#maintable").get(0);
-	  for (var i in maintable.rows) {
-	    if (maintable.rows[i] == null) continue; // deleted rows
-	    if (maintable.rows[i].id == null) continue; // rows without id
+	  //var maintable = $("#maintable").get(0);
+	  for (var i in tbl.rows) {
+	    if (tbl.rows[i] == null) continue; // deleted rows
+	    if (tbl.rows[i].id == null) continue; // rows without id
 
-	    if (maintable.rows[i].id == "editor_" + name) {
-	      maintable.deleteRow(i);
-	      maintable.deleteRow(i-1); // this is the title
+	    if (tbl.rows[i].id == "editor_" + name) {
+	      tbl.deleteRow(i);
+	      tbl.deleteRow(i-1); // this is the title
 	      break;
 	    }
 	  }
