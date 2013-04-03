@@ -737,10 +737,9 @@ func (tl *Tasklist) CallLuaFunction(fname string, cursor *Entry) error {
 
 	tl.luaState.CheckStack(1)
 	tl.luaState.GetGlobal(fname)
-	if tl.luaState.PCall(0, 0, 0) != 0 {
-		errorMessage := tl.luaState.ToString(-1)
-		tl.LogError(fmt.Sprintf("Error while executing lua code: %s", errorMessage))
-		return &LuaIntError{errorMessage}
+	if err := tl.luaState.Call(0, 0); err != nil {
+		tl.LogError(fmt.Sprintf("Error while executing lua code: %s", err.Error()))
+		return &LuaIntError{err.Error()}
 	}
 
 	return nil

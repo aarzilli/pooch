@@ -302,11 +302,9 @@ func (pr *ParseResult) GetLuaClause(tl *Tasklist) (string, error) {
 	}
 
 	//fmt.Printf("Executing: %s\n", pr.extra)
-	if ret := tl.luaState.PCall(0, 1, 0); ret != 0 {
-		//fmt.Printf("PCall error: %d\n", ret)
-		errorMessage := tl.luaState.ToString(-1)
-		tl.LogError(fmt.Sprintf("Error while executing lua code: %s", errorMessage))
-		return "", MakeParseError(fmt.Sprintf("Error while executing lua code: %s", errorMessage))
+	if err := tl.luaState.Call(0, 1); err != nil {
+		tl.LogError(fmt.Sprintf("Error while executing lua code: %s", err.Error()))
+		return "", MakeParseError(fmt.Sprintf("Error while executing lua code: %s", err.Error()))
 	}
 
 	tl.luaState.CheckStack(1)
