@@ -229,7 +229,7 @@ var EntryListEntryHTML ExecutableTemplate = MakeExecutableTemplate("EntryListEnt
     {{with .entry}}
       <td class='eid'>{{.Id|html}}</td>
 
-      <td class='etitle' onclick='javascript:toggle_editor("{{.Id|html}}", event)'><a href='javascript:toggle_editor("{{.Id|html}}", event)'>{{.Title|html}}</a></td>
+      <td class='etitle' onclick='javascript:toggle_editor("{{.Id|html}}", event, null)'><a href='javascript:toggle_editor("{{.Id|html}}", event, null)'>{{.Title|html}}</a></td>
 
       <td class='epr'>
         <input type='button' class='prioritybutton priorityclass_{{.Priority|priority}}' id='epr_{{.Id|html}}' value='{{.Priority|priority}}' onclick='javascript:change_priority("{{.Id|html}}", event)'/>
@@ -279,7 +279,7 @@ var EntryListEntryEditorHTML ExecutableTemplate = MakeExecutableTemplate("EntryL
 
           <p><input type='button' style='float: right' value='remove' onclick='javascript:remove_entry("{{.Id|html}}", event)'/>
           <input type='button' name='savebtn' value='save' onclick='javascript:save_editor_by_id("{{.Id|html}}", event)' disabled='disabled'/>
-          <input type='button' value='reload' onclick='javascript:fill_editor("{{.Id|html}}")'/></p>
+          <input type='button' value='reload' onclick='javascript:fill_editor("{{.Id|html}}", null)'/></p>
         </form>
         <table id='subs_{{.Id|html}}' style='margin-left: 30px; border-collapse: collapse; display: none;'>
           <tr><td>ciao</td></tr>
@@ -533,5 +533,4 @@ var OptionsPageEnd ExecutableTemplate = MakeExecutableTemplate("OptionsPageEnd",
   </body>
 </html>
 `)
-
 

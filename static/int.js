@@ -197,7 +197,7 @@ function change_editor_disabled(ed, disabledStatus) {
     ed.elements['savebtn'].disabled = disabledStatus;
 }
 
-function fill_editor(name) {
+function fill_editor(name, contfn) {
     $("#loading_"+name).get(0).style.display = "inline";
     $.ajax({url: "get?id=" + encodeURIComponent(name), success: function(data, textStatus, req) {
         var timestamp = data.split("\n", 2)[0];
@@ -219,10 +219,17 @@ function fill_editor(name) {
             tbl.innerHTML = data
             if (data != "") {
                 show_subs(v.Id);
+                if (contfn != null) {
+                    contfn();
+                }
             } else {
                 show_editor(v.Id);
             }
         }});
+
+        if (contfn == null) {
+            window.location.hash = window.location.hash + "#" + encodeURIComponent(v.Id);
+        }
     }});
 }
 
@@ -258,9 +265,18 @@ function close_editor(row) {
     save_editor(ed);
     change_editor_disabled(ed, "disabled");
     row.style['display'] = 'none';
+    var removeid = ed.elements['edid'].value;
+    var vs = window.location.hash.split("#");
+    var vr = [];
+    for (var i = 0; i < vs.length; ++i) {
+        if (vs[i] == "") continue;
+        if (vs[i] == removeid) continue;
+        vr.push(vs[i]);
+    }
+    window.location.hash = "#" + vr.join("#");
 }
 
-function toggle_editor(name, event) {
+function toggle_editor(name, event, contfn) {
     var row = $("#editor_"+name).get(0);
     if (row.style['display'] == 'none') {
         var tbl = $("#editor_"+name).parent().parent().first().get(0);
@@ -279,7 +295,7 @@ function toggle_editor(name, event) {
 
         row.style['display'] = '';
 
-        fill_editor(name);
+        fill_editor(name, contfn);
     } else {
         close_editor(row);
     }
@@ -430,3 +446,19 @@ function show_subs(id) {
   $("#subs_" + id).first().get(0).style["display"] = "block";
   $("#ediv_" + id).first().get(0).style["display"] = "none";
 }
+
+function onload_open_function(v, start) {
+  return function() {
+    for (var i = start; i < v.length; ++i) {
+      if (v[i] == "") continue;
+      toggle_editor(v[i], null, onload_open_function(v, i+1));
+      return;
+    }
+  }
+}
+
+window.onload = function() {
+  var v = window.location.hash.split("#")
+  var f = onload_open_function(v, 0);
+  f();
+};
