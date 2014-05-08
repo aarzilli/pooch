@@ -100,7 +100,7 @@ var CommonHeaderHTML ExecutableTemplate = MakeExecutableTemplate("ListHeader", `
       <div id='searchpop' class='popup' style='display: none'>
          <form id='searchform' method='get' action='{{.pageName}}'>
            <label for='q'>Query:</label>&nbsp;
-           <textarea name='q' id='q' cols='50' rows='5'>{{.query|html}}</textarea>
+           <textarea autocomplete="off" name='q' id='q' cols='50' rows='5'>{{.query|html}}</textarea>
            <input type='submit' value='search'>
            <input type='button' value='cancel' onclick='javascript:toggle_searchpop()'/>
            &nbsp;
