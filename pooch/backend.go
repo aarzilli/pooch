@@ -29,6 +29,7 @@ type Tasklist struct {
 	refs int
 	timestamp int64
 	executionLimitEnabled bool
+	curCut string
 }
 
 var enabledCaching bool = true
@@ -96,7 +97,7 @@ func internalTasklistOpenOrCreate(filename string) *Tasklist {
 	MustExec(conn, "CREATE TABLE IF NOT EXISTS private_settings(name TEXT UNIQUE, value TEXT);")
 	MustExec(conn, "INSERT OR IGNORE INTO private_settings(name, value) VALUES (\"enable_lua_execution_limit\", \"1\")")
 
-	tasklist := &Tasklist{filename, conn, MakeLuaState(), &LuaFlags{}, &sync.Mutex{}, 1, time.Now().Unix(), true}
+	tasklist := &Tasklist{filename, conn, MakeLuaState(), &LuaFlags{}, &sync.Mutex{}, 1, time.Now().Unix(), true, ""}
 
 	if tasklist.GetPrivateSetting("enable_lua_execution_limit") == "0" {
 		Logf(INFO, "Tasklist '%s' runs without lua execution limits", filename)
@@ -653,14 +654,9 @@ func (tl *Tasklist) CountCategoryItems(cat string) (r int) {
 	defer stmt.Finalize()
 	Must(stmt.Exec("sub/" + cat))
 
-	fmt.Printf("Counting category items for %s\n", cat)
-
 	if stmt.Next() {
-		fmt.Printf("\tGot\n")
 		stmt.Scan(&r)
 	}
-
-	fmt.Printf("\tReturn %d\n", r)
 
 	return
 }
@@ -873,3 +869,24 @@ func (tl *Tasklist) CategoryDepth() map[string]int {
 	return r
 }
 
+func (tl *Tasklist) GetChildren(id string) []string {
+	stmt, serr := tl.conn.Prepare("select id from columns where name = ? order by value asc")
+	Must(serr)
+	defer stmt.Finalize()
+	serr = stmt.Exec("sub/" + id)
+	Must(serr)
+
+	r := []string{}
+	for (stmt.Next()) {
+		var x string
+		Must(stmt.Scan(&x))
+		r = append(r, x)
+	}
+	return r
+}
+
+func (tl *Tasklist) UpdateChildren(pid string, childs []string) {
+	for i := range childs {
+		tl.MustExec("update columns set value = ? where id = ? and name = ?", fmt.Sprintf("%d", i), childs[i], "sub/" + pid)
+	}
+}

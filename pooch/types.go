@@ -379,20 +379,23 @@ func RepeatString(ch string, num int) string {
 
 func DecodeBase64(in string) string {
 	decbuf := make([]byte, base64.StdEncoding.DecodedLen(len(in)))
-	base64.StdEncoding.Decode(decbuf, []byte(in))
-	return string(decbuf)
+	n, err := base64.StdEncoding.Decode(decbuf, []byte(in))
+	Must(err)
+	return string(decbuf[:n])
 }
 
 func decodeStatic(name string) string {
 	content := FILES[name]
 	z := DecodeBase64(content)
+	return z
+	/*
 	var i int
 	for i = len(z)-1; i > 0; i-- {
 		if z[i] != 0 {
 			break
 		}
 	}
-	return z[0:i+1]
+	return z[0:i+1]*/
 }
 
 func (entry *Entry) Print() {

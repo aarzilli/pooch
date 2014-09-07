@@ -43,9 +43,13 @@ func ExtractColumnsFromSearch(search *ParseResult) Columns {
 		if sexpr.name[0] == '!' { continue }
 		switch sexpr.op {
 		case "=":
-			cols[sexpr.name] = sexpr.value
+			if sexpr.name[0] != ':' && sexpr.name[0] != '%' {
+				cols[sexpr.name] = sexpr.value
+			}
 		case "":
-			cols[sexpr.name] = ""
+			if sexpr.name[0] != ':' && sexpr.name[0] != '%' {
+				cols[sexpr.name] = ""
+			}
 		default:
 			return nil
 		}
@@ -92,7 +96,7 @@ func (tl *Tasklist) ExpandColumnsFromOntology(cols Columns) {
 
 func (tl *Tasklist) SortFromSubitems(subitemId string) string {
 	n := tl.CountCategoryItems(subitemId)
-	return fmt.Sprintf("%03d0", n+1)
+	return fmt.Sprintf("%03d", n+1)
 }
 
 func (tl *Tasklist) ParseNew(entryText, queryText string) *Entry {

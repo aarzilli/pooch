@@ -1,0 +1,15 @@
+<!doctype html>
+<html>
+	<head>
+		<title>Pooch 3</title>
+		<script src="nfint.js"></script>
+		<link type="text/css" rel="stylesheet" href="nfstyle.css"/>
+	</head>
+	<body>
+		<div id="menu">
+			<div id="menu_cl"></div>
+		</div>
+		<div id="main">
+		</div>
+	</body>
+</html>

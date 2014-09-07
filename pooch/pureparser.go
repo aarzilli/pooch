@@ -367,6 +367,10 @@ func ParseCols(colStr string, timezone int) (Columns, bool) {
 
 				if key == "" { continue }
 
+				if strings.HasPrefix(key, "sub/") {
+					foundcat = true
+				}
+
 				if startMultilineRE.MatchString(value) {
 					multilineKey = key
 				} else {

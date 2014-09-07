@@ -80,6 +80,10 @@ func StaticInMemoryServer(c http.ResponseWriter, req *http.Request) {
 		ct = "text/javascript; charset=utf-8"
 	case strings.HasSuffix(req.URL.Path, ".css"):
 		ct = "text/css; charset=utf-8"
+	case strings.HasSuffix(req.URL.Path, ".gif"):
+		ct = "image/gif"
+	case strings.HasSuffix(req.URL.Path, ".woff"):
+		ct = "application/font-woff"
 	default:
 		ct = "text/html; charset=utf-8"
 	}
@@ -91,6 +95,7 @@ func StaticInMemoryServer(c http.ResponseWriter, req *http.Request) {
 		io.WriteString(c, "404, Not found")
 	} else {
 		Logf(ERROR, "Serving")
+
 		if len(req.Header["If-None-Match"]) > 0 {
 			if ifNoneMatch := StripQuotes(req.Header["If-None-Match"][0]); ifNoneMatch == signature {
 				Logf(DEBUG, "Page not modified, replying")
@@ -780,6 +785,14 @@ func SetupHandleFunc(wrapperTasklistServer func(TasklistServer)http.HandlerFunc,
 
 	// Options support urls
 	http.HandleFunc("/rentag", WrapperServer(wrapperTasklistServer(RenTagServer)))
+
+	// New frontend
+	http.HandleFunc("/nf/new.json", WrapperServer(wrapperTasklistServer(nfNewHandler)))
+	http.HandleFunc("/nf/list.json", WrapperServer(wrapperTasklistServer(nfListHandler)))
+	http.HandleFunc("/nf/update.json", WrapperServer(wrapperTasklistServer(nfUpdateHandler)))
+	http.HandleFunc("/nf/move.json", WrapperServer(wrapperTasklistServer(nfMoveHandler)))
+	http.HandleFunc("/nf/remove.json", WrapperServer(wrapperTasklistServer(nfRemoveHandler)))
+	http.HandleFunc("/nf/curcut", WrapperServer(wrapperTasklistServer(nfCurcutHandler)))
 }
 
 func Serve(port string) {
