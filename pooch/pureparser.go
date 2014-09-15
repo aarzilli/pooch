@@ -348,6 +348,12 @@ func ParseCols(colStr string, timezone int) (Columns, bool) {
 				multilineValue += v + "\n"
 			}
 		} else {
+			if len(v) < 2 { continue }
+			isSpecial := false
+			if v[0] == ':' {
+				isSpecial = true
+				v = v[1:]
+			}
 			vs := strings.SplitN(v, ":", 2)
 
 			if len(vs) == 0 { continue }
@@ -357,6 +363,9 @@ func ParseCols(colStr string, timezone int) (Columns, bool) {
 				x := strings.TrimSpace(v)
 				Logf(DEBUG, "Adding [%s]\n", x)
 				if x != "" {
+					if isSpecial {
+						x = ":" + x
+					}
 					cols[x] = ""
 					foundcat = true
 				}
@@ -374,6 +383,9 @@ func ParseCols(colStr string, timezone int) (Columns, bool) {
 				if startMultilineRE.MatchString(value) {
 					multilineKey = key
 				} else {
+					if isSpecial {
+						key = ":" + key
+					}
 					// I don't really need this at the moment
 					//value = normalizeValue(value, timezone)
 					Logf(DEBUG, "Adding [%s] -> [%s]\n", key, value)
