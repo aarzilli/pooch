@@ -19,7 +19,7 @@ function loaded() {
 	var mainDiv = document.getElementById("main");
 	loadChildrenAnd(mainDiv, curRoot, "0",
 		function() {
-			toggleExpandedAnd(curRoot, function() { });
+			toggleExpandedAnd(curRoot, "1", function() { });
 		});
 }
 
@@ -127,7 +127,7 @@ function renumberRows(datable, start) {
 	for (var i = start; i < datable.rows.length; ++i) {
 		var cr = datable.rows[i];
 		var idcolx = cr.getElementsByClassName("idcol")[0].getElementsByTagName("a")[0];
-		if (idcolx.innerHTML[0] != "'") {
+		if (idcolx.innerHTML.indexOf("-") < 0) {
 			idcolx.innerHTML = "" + i;
 		}
 	}
@@ -199,7 +199,7 @@ function click_content(e) {
 
 function click_folder(e) {
 	var darow = getContainingRow(e);
-	toggleExpandedAnd(getIdFromRow(darow), function() {});
+	toggleExpandedAnd(getIdFromRow(darow), "1", function() {});
 	return false;
 }
 
@@ -336,7 +336,7 @@ function insertChildrenRowAndCell(datable, daid, i) {
 	return childscell;
 }
 
-function toggleExpandedAnd(daid, fn) {
+function toggleExpandedAnd(daid, cparam, fn) {
 	var childsrow = getChildrenRow(daid);
 	if (childsrow == null) {
 		var darow = getRowFromId(daid);
@@ -345,7 +345,7 @@ function toggleExpandedAnd(daid, fn) {
 		for (var i = 0; i < datable.rows.length; ++i) {
 			if (datable.rows.item(i).id == darow.id) {
 				var childscell = insertChildrenRowAndCell(datable, daid, i+1)
-				loadChildrenAnd(childscell, daid, "1", fn);
+				loadChildrenAnd(childscell, daid, cparam, fn);
 				break;
 			}
 		}
@@ -382,7 +382,7 @@ function keypressfn(e) {
 				return false
 			}
 			return;
-		} else if (n == "input") {
+		} else if ((n == "input") && (ae.getAttribute("type") != "button")) {
 			return;
 		}
 	}
@@ -416,20 +416,20 @@ function keypressfn(e) {
 			curRoot = curSelected.id;
 			curSelected.id = "";
 			history.pushState("/home?q=" + encodeURIComponent(curRoot));
-			toggleExpandedAnd(curRoot, function() { });
+			toggleExpandedAnd(curRoot, "1", function() { });
 			reloadEverything();
 		} else {
 			completeActionHTML = "Go To: <form onsubmit='complete_action_click()'><input id='gotobox'/>&nbsp;<input type='submit' value='Go'></form><a id='classiclink' href='#'>classic</a>";
 			completeAction = function() {
 				var gotobox = document.getElementById('gotobox');
-				curRoot = idRevertSpaces(gotobox.value);
-				history.pushState("/home?q=" + encodeURIComponent(curRoot));
-				toggleExpandedAnd(curRoot, function() { });
+				curRoot = idConvertSpaces(gotobox.value);
+				history.pushState(null, "", "/home?q=" + encodeURIComponent(curRoot));
+				//toggleExpandedAnd(curRoot, "1", function() { });
 				reloadEverything();
 			}
 			setMenu("");
 			var gotobox = document.getElementById('gotobox');
-			gotobox.value = idConvertSpaces(curRoot);
+			gotobox.value = idRevertSpaces(curRoot);
 			gotobox.focus();
 
 			var classiclink = document.getElementById('classiclink');
@@ -470,7 +470,7 @@ function keypressfn(e) {
 
 			return;
 		} else if (e.key == " ") {
-			toggleExpandedAnd(curSelected.id, function() { });
+			toggleExpandedAnd(curSelected.id, "1", function() { });
 			return;
 		}
 	}
@@ -542,7 +542,7 @@ function expandOrAddObjectRow(daid, o, n, editor) {
 		});
 	var contentrow = getChildrenRow(daid);
 	if (contentrow == null) {
-		toggleExpandedAnd(daid,
+		toggleExpandedAnd(daid, "1",
 			function() {
 				if (editor) {
 					openEditor(o.Id);
@@ -705,7 +705,7 @@ function reloadEverything() {
 		function(responseObj) {
 			curCut.id = responseObj.Objects[0].Id;
 			var allTrs = document.getElementsByTagName("tr");
-			var childs = [];
+			var childs = [ curRoot ];
 			for (var i = 0; i < allTrs.length; i++) {
 				if (allTrs[i].id.indexOf("childs_") == 0) {
 					childs.push(allTrs[i].id.substr("childs_".length))
@@ -725,7 +725,7 @@ function reloadEverything() {
 						}
 						var daid = childs[i];
 						childs[i] = null;
-						toggleExpandedAnd(daid, cont);
+						toggleExpandedAnd(daid, "2", cont);
 						return;
 					}
 				}

@@ -129,7 +129,7 @@ func MarshalEntry(entry *Entry, timezone int) *UnmarshalEntry {
 	return &UnmarshalEntry{
 		entry.Id(),
 		entry.Title(),
-		entry.Text() + "\n" + TEXT_COLS_SEPARATOR + entry.ColString(),
+		entry.Text() + "\n" + TEXT_COLS_SEPARATOR + entry.ColString(false),
 		entry.Priority(),
 		triggerAtString,
 		entry.Sort()}
@@ -183,9 +183,24 @@ func (e *Entry) Sort() string { return e.sort; }
 func (e *Entry) Columns() Columns { return e.columns; }
 func (e *Entry) ColumnOk(name string) (value string, ok bool) { value, ok = e.columns[name]; return; }
 func (e *Entry) Column(name string) string { return e.columns[name];  }
-func (e *Entry) SetColumns(cols Columns) *Entry { e.columns = cols; return e }
 func (e *Entry) SetColumn(name, value string) *Entry { e.columns[name] = value; return e }
 func (e *Entry) RemoveColumn(name string) *Entry { delete(e.columns, name); return e }
+
+func (e *Entry) SetColumns(cols Columns, tz int) *Entry {
+	e.columns = cols
+	if v, ok := e.columns[":when"]; ok {
+		if t, err := ParseDateTime(v, tz); err == nil {
+			e.triggerAt = t
+		}
+		delete(e.columns, ":when")
+	}
+	if v, ok := e.columns["sort"]; ok {
+		e.sort = v
+		delete(e.columns, "sort")
+	}
+	return e
+}
+
 
 func IsSubitem(cols Columns) (bool, string) {
 	for k, _ := range cols {
@@ -268,7 +283,7 @@ func (e *Entry) CatHash() uint32 {
 	return hasher.Sum32()
 }
 
-func (e *Entry) ColString() string {
+func (e *Entry) ColString(extra bool) string {
 	r := make([]string, 0)
 
 	for k, v := range e.Columns() {
@@ -277,6 +292,13 @@ func (e *Entry) ColString() string {
 		} else {
 			r = append(r, k + ": " + v)
 		}
+	}
+	
+	if extra {
+		if e.triggerAt != nil {
+			r = append(r, ":when: " + e.triggerAt.Format(TRIGGER_AT_FORMAT))
+		}
+		r = append(r, "sort: " + e.sort)
 	}
 
 	return strings.Join(r, "\n") + "\n"

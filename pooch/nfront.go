@@ -98,7 +98,10 @@ func nfListHandler(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 		o := singleTaskOrCatToObject(tl, id)
 		returnJson(c, "", []*Object{ o })
 	case "1":
-		os := runQueryOrChildsToObjects(tl, id)
+		os := runQueryOrChildsToObjects(tl, id, true)
+		returnJson(c, "", os)
+	case "2":
+		os := runQueryOrChildsToObjects(tl, id, false)
 		returnJson(c, "", os)
 	}
 }
@@ -120,7 +123,7 @@ func singleTaskOrCatToObject(tl *Tasklist, id string) *Object {
 	return nil
 }
 
-func runQueryOrChildsToObjects(tl *Tasklist, id string) []*Object {
+func runQueryOrChildsToObjects(tl *Tasklist, id string, autoExpand bool) []*Object {
 	if id == "" {
 		return rootOntology(tl)
 	}
@@ -131,8 +134,8 @@ func runQueryOrChildsToObjects(tl *Tasklist, id string) []*Object {
 		Logf(INFO, "NF\tchildsToObjects\t%s\n", realId)
 		return childsToObjects(tl, realId)
 	case ID_IS_CATLIST:
-		Logf(INFO, "NF\tcatChildsToObjects\t%s\n", id)
-		return catChildsToObjects(tl, id, cats)
+		Logf(INFO, "NF\tcatChildsToObjects\t%s\t%v\n", id, autoExpand)
+		return catChildsToObjects(tl, id, cats, autoExpand)
 	case ID_IS_CATLIST_AND_PRIORITY:
 		Logf(INFO, "NF\tqueryToObjects\t%s\t%s\n", id, cats[len(cats)-1])
 		return queryToObjects(tl, id, cats[len(cats)-1])
@@ -196,7 +199,7 @@ func nfUpdateHandler(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	}
 	entry.SetTitle(title)
 	entry.SetText(text)
-	entry.SetColumns(cols)
+	entry.SetColumns(cols, tl.GetTimezone())
 	tl.Update(entry, false)
 	returnJson(c, "", []*Object{ entryToObject(entry) })
 }
@@ -389,9 +392,9 @@ func childsToObjects(tl *Tasklist, id string) []*Object {
 	return queryToObjects(tl, q, "")
 }
 
-func catChildsToObjects(tl *Tasklist, q string, cats []string) []*Object {
+func catChildsToObjects(tl *Tasklist, q string, cats []string, autoExpand bool) []*Object {
 	os := searchOntology(tl, cats)
-	if len(os) > 0 {
+	if (len(os) > 0) || !autoExpand {
 		os = append(os, priorityObject(q, "#sticky"))
 		os = append(os, priorityObject(q, "#now"))
 		os = append(os, priorityObject(q, "#later"))
@@ -509,7 +512,7 @@ func formatEntry(e *Entry) (body string, formattedText string) {
 	if e.Text() != "" {
 		body += "\n\n" + e.Text()
 	}
-	body += TEXT_COLS_SEPARATOR + e.ColString()
+	body += TEXT_COLS_SEPARATOR + e.ColString(true)
 
 	formattedText = "<b>" + html.EscapeString(e.Title()) + "</b>"
 
@@ -530,6 +533,10 @@ func formatEntry(e *Entry) (body string, formattedText string) {
 			formattedText += fmt.Sprintf("%s", html.EscapeString(k))
 		}
 		formattedText += "</span>"
+	}
+
+	if e.TriggerAt() != nil {
+		formattedText += "<span class='formattedcol'>when=" + e.TriggerAt().Format(TRIGGER_AT_FORMAT) + "</span>"
 	}
 
 	formattedText += "</p>"
