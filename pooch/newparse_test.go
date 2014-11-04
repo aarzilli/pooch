@@ -1,7 +1,7 @@
 /*
  This program is distributed under the terms of GPLv3
  Copyright 2010, Alessandro Arzilli
- */
+*/
 
 package pooch
 
@@ -41,22 +41,22 @@ func mmt(z *testing.T, a string, b []string) {
 
 func TestTokSpaces(z *testing.T) {
 	fmt.Println("TestTokSpaces")
-	mmt(z, "  prova", []string{ " ", "prova" })
-	mmt(z, "prova    ", []string{ "prova", " " })
+	mmt(z, "  prova", []string{" ", "prova"})
+	mmt(z, "prova    ", []string{"prova", " "})
 }
 
 func TestTokMisc(z *testing.T) {
 	fmt.Println("TestTokMisc")
-	mmt(z, "#prova^^^bau", []string{ "#", "prova", "^^^bau" })
-	mmt(z, "#prova +#prova", []string{ "#", "prova", " ", "+", "#", "prova" })
-	mmt(z, "#blip#blop", []string{ "#", "blip", "#", "blop" })
-	mmt(z, "#prova#prova+#prova@prova", []string{ "#", "prova", "#", "prova+", "#", "prova", "#", "prova" })
+	mmt(z, "#prova^^^bau", []string{"#", "prova", "^^^bau"})
+	mmt(z, "#prova +#prova", []string{"#", "prova", " ", "+", "#", "prova"})
+	mmt(z, "#blip#blop", []string{"#", "blip", "#", "blop"})
+	mmt(z, "#prova#prova+#prova@prova", []string{"#", "prova", "#", "prova+", "#", "prova", "#", "prova"})
 }
 
 func TestTokTime(z *testing.T) {
 	fmt.Println("TestTokTime")
-	mmt(z, "#10/2", []string{ "#", "10/2" })
-	mmt(z, "#2010-01-21,10:30#l", []string{ "#", "2010-01-21,10:30", "#", "l" })
+	mmt(z, "#10/2", []string{"#", "10/2"})
+	mmt(z, "#2010-01-21,10:30#l", []string{"#", "2010-01-21,10:30", "#", "l"})
 }
 
 func TestTokOps(z *testing.T) {
@@ -125,7 +125,6 @@ func TestParseSimpleExpr(z *testing.T) {
 	tse(z, "#blip?", "blip", "", "")
 }
 
-
 func tae_ex(in string) (*Parser, *ParseResult) {
 	t := NewTokenizer(in)
 	p := NewParser(t, 0)
@@ -146,11 +145,13 @@ func check_and_expr(z *testing.T, r *BoolExpr, expected []string, expVal []strin
 			z.Error("Found a subexpression that isn't simple")
 		}
 		mms(z, sexpr.name, v, "matching name")
-		if (expVal != nil) {
+		if expVal != nil {
 			mms(z, sexpr.op, "=", "matching operator")
 			mms(z, sexpr.value, expVal[i], "matching value")
 		}
-		if (expExtra != nil) { mms(z, sexpr.extra, expExtra[i], "matching extra content") }
+		if expExtra != nil {
+			mms(z, sexpr.extra, expExtra[i], "matching extra content")
+		}
 	}
 }
 
@@ -194,11 +195,11 @@ func tae_options(z *testing.T, in string, expected []string, options []string) {
 
 func TestParseAnd(z *testing.T) {
 	fmt.Println("TestParseAnd")
-	tae(z, "#blip", []string{ "blip" })
-	tae(z, "#blip #blop", []string{ "blip", "blop" })
-	tae(z, "#blip#blop", []string{ "blip", "blop" })
-	tae(z, "#blip > 20 #blop", []string{ "blip", "blop" })
-	tae(z, "#blip>20#blop", []string{ "blip", "blop" })
+	tae(z, "#blip", []string{"blip"})
+	tae(z, "#blip #blop", []string{"blip", "blop"})
+	tae(z, "#blip#blop", []string{"blip", "blop"})
+	tae(z, "#blip > 20 #blop", []string{"blip", "blop"})
+	tae(z, "#blip>20#blop", []string{"blip", "blop"})
 }
 
 func tae2(z *testing.T, in string, includeExpected []string, excludeExpected []string, query string) {
@@ -237,33 +238,33 @@ func tae2(z *testing.T, in string, includeExpected []string, excludeExpected []s
 func TestParseFull(z *testing.T) {
 	fmt.Println("TestParseFull")
 	tae2(z, "blip #blip#blop",
-		[]string{ "blip", "blop" },
+		[]string{"blip", "blop"},
 		[]string{},
 		"blip")
 
 	tae2(z, "blip #blip#blop blap",
-		[]string{ "blip", "blop" },
+		[]string{"blip", "blop"},
 		[]string{},
 		"blip blap")
 
 	tae2(z, "blip #blip#blop blap -#balp",
-		[]string{ "blip", "blop" },
-		[]string{ "balp" },
+		[]string{"blip", "blop"},
+		[]string{"balp"},
 		"blip blap")
 }
 
 func TestParsePriority(z *testing.T) {
 	fmt.Println("TestParsePriority")
-	tae(z, "#l#prova", []string{ ":priority", "prova" })
+	tae(z, "#l#prova", []string{":priority", "prova"})
 }
 
 func TestParseTimetag(z *testing.T) {
 	fmt.Println("TestParseTimetag")
 	tentwo_dt, _ := ParseDateTime("10/2", 0)
 	tentwo := tentwo_dt.Format(TRIGGER_AT_FORMAT)
-	tae_wval(z, "#10/2 prova", []string{ ":when" }, []string{ tentwo }, []string{ "" })
-	tae_wval(z, "#10/2 #2010-09-21", []string{ ":when", ":when" }, []string{ tentwo, "2010-09-21 00:00" }, []string{ "", "" })
-	tae_wval(z, "#10/2+weekly #2010-09-21", []string{ ":when", ":when" }, []string{ tentwo, "2010-09-21 00:00" }, []string{ "weekly", "" })
+	tae_wval(z, "#10/2 prova", []string{":when"}, []string{tentwo}, []string{""})
+	tae_wval(z, "#10/2 #2010-09-21", []string{":when", ":when"}, []string{tentwo, "2010-09-21 00:00"}, []string{"", ""})
+	tae_wval(z, "#10/2+weekly #2010-09-21", []string{":when", ":when"}, []string{tentwo, "2010-09-21 00:00"}, []string{"weekly", ""})
 
 	datetime, err := ParseDateTime("13:40", 0)
 	Must(err)
@@ -281,25 +282,25 @@ func TestParseTimetag(z *testing.T) {
 
 func TestShowCols(z *testing.T) {
 	fmt.Println("TestShowCols")
-	tae_showcols(z, "#blap!>10", []string{ "blap" }, []string{ "blap" })
-	tae_showcols(z, "#blap!#blop?#blip", []string{ "blap", "blip" }, []string{ "blap", "blop" })
+	tae_showcols(z, "#blap!>10", []string{"blap"}, []string{"blap"})
+	tae_showcols(z, "#blap!#blop?#blip", []string{"blap", "blip"}, []string{"blap", "blop"})
 }
 
 func TestOptions(z *testing.T) {
 	fmt.Println("TestOptions")
-	tae_options(z, "#blap#:w/done", []string{ "blap" }, []string{ "w/done" })
+	tae_options(z, "#blap#:w/done", []string{"blap"}, []string{"w/done"})
 }
 
 func TestSavedSearch(z *testing.T) {
 	fmt.Println("TestSavedSearch")
 	_, r := tae_ex("#%salvata")
-	check_and_expr(z, &(r.include), []string{ }, nil, nil)
+	check_and_expr(z, &(r.include), []string{}, nil, nil)
 	mms(z, r.savedSearch, "salvata", "")
 }
 
 func TestEscaping(z *testing.T) {
 	fmt.Println("TestEscaping")
-	_, r  := tae_ex("blip @@ blap ## blop")
+	_, r := tae_ex("blip @@ blap ## blop")
 	mms(z, r.text, "blip @ blap # blop", "")
 }
 
@@ -322,7 +323,9 @@ func TestExtra(z *testing.T) {
 }
 
 func mme(z *testing.T, a, b *Entry) {
-	if b.id != "" { mms(z, a.id, b.id, "matching entry id") }
+	if b.id != "" {
+		mms(z, a.id, b.id, "matching entry id")
+	}
 	mms(z, a.title, b.title, "matching entry title")
 	mms(z, a.text, b.text, "matching entry text")
 	if a.priority != b.priority {
@@ -334,7 +337,9 @@ func mme(z *testing.T, a, b *Entry) {
 	if a.triggerAt != nil {
 		mms(z, a.triggerAt.Format(TRIGGER_AT_FORMAT), b.triggerAt.Format(TRIGGER_AT_FORMAT), "matching triggerAt")
 	}
-	if b.sort != "" { mms(z, a.sort, b.sort, "matching entry sort") }
+	if b.sort != "" {
+		mms(z, a.sort, b.sort, "matching entry sort")
+	}
 	if len(a.columns) != len(b.columns) {
 		z.Errorf("Different number of columns %v and %v\n", a.columns, b.columns)
 	}
@@ -365,7 +370,7 @@ func SetupSearchStuff(tl *Tasklist) {
 }
 
 func ooc() *Tasklist {
-	tl :=  OpenOrCreate("/tmp/testing.pooch")
+	tl := OpenOrCreate("/tmp/testing.pooch")
 	tl.Truncate()
 	SetupSearchStuff(tl)
 
@@ -379,11 +384,11 @@ func TestSimpleEntry(z *testing.T) {
 
 	tpn(z, tl, "prova prova @blap", "",
 		MakeEntry("", "prova prova", "", NOW, nil, "",
-		map[string]string{"blap": ""}))
+			map[string]string{"blap": ""}))
 
 	tpn(z, tl, "prova prova @blip = blop anta", "",
 		MakeEntry("", "prova prova anta", "", NOW, nil, "",
-		map[string]string{"uncat": "", "blip": "blop"}))
+			map[string]string{"uncat": "", "blip": "blop"}))
 
 }
 
@@ -394,11 +399,11 @@ func TestColEntry(z *testing.T) {
 
 	tpn(z, tl, "prova prova #+\nblip: blop\nblap:\n", "",
 		MakeEntry("", "prova prova", "", NOW, nil, "",
-		map[string]string{"blap": "", "blip": "blop"}))
+			map[string]string{"blap": "", "blip": "blop"}))
 
 	tpn(z, tl, "prova prova #+\nblip: blop\n", "",
 		MakeEntry("", "prova prova", "", NOW, nil, "",
-		map[string]string{"uncat": "", "blip": "blop"}))
+			map[string]string{"uncat": "", "blip": "blop"}))
 }
 
 func TestSpecialEntry(z *testing.T) {
@@ -408,20 +413,20 @@ func TestSpecialEntry(z *testing.T) {
 
 	tpn(z, tl, "prova prova #id=ciao", "",
 		MakeEntry("ciao", "prova prova", "", NOW, nil, "",
-		map[string]string{"uncat": ""}))
+			map[string]string{"uncat": ""}))
 
 	tpn(z, tl, "#l prova prova", "",
 		MakeEntry("", "prova prova", "", LATER, nil, "",
-		map[string]string{"uncat": ""}))
+			map[string]string{"uncat": ""}))
 
 	tpn(z, tl, "#blap#l prova prova", "",
 		MakeEntry("", "prova prova", "", LATER, nil, "",
-		map[string]string{"blap": ""}))
+			map[string]string{"blap": ""}))
 
 	t, _ := ParseDateTime("2010-10-01", 0)
 	tpn(z, tl, "#2010-10-01 #blap prova prova", "",
 		MakeEntry("", "prova prova", "", TIMED, t, "",
-		map[string]string{"blap": ""}))
+			map[string]string{"blap": ""}))
 }
 
 func TestEntryWithSearch(z *testing.T) {
@@ -431,17 +436,17 @@ func TestEntryWithSearch(z *testing.T) {
 
 	tpn(z, tl, "prova prova", "prova #blap",
 		MakeEntry("", "prova prova", "", NOW, nil, "",
-		map[string]string{"blap": ""}))
+			map[string]string{"blap": ""}))
 
 	tpn(z, tl, "prova prova", "prova #blap#blop",
 		MakeEntry("", "prova prova", "", NOW, nil, "",
-		map[string]string{"blap": "", "blop": ""}))
+			map[string]string{"blap": "", "blop": ""}))
 }
 
 func tis(z *testing.T, tl *Tasklist, input string, expectedOutput string) {
 	output, _, _, _, _, _, _, err := tl.ParseSearch(input, nil)
 	Must(err)
-	mms_large(z, output, SELECT_HEADER + expectedOutput + "\nGROUP BY tasks.id\nORDER BY priority, trigger_at_field ASC, sort DESC", "")
+	mms_large(z, output, SELECT_HEADER+expectedOutput+"\nGROUP BY tasks.id\nORDER BY priority, trigger_at_field ASC, sort DESC", "")
 	stmt, err := tl.conn.Prepare("EXPLAIN " + output)
 	Must(err)
 	defer stmt.Finalize()
@@ -503,11 +508,12 @@ func TestQuerySelect(z *testing.T) {
 	tis(z, tl, "prova prova #bla#blo", "\nWHERE\n   id IN (SELECT id FROM columns WHERE name = 'bla')\nAND\n   id IN (SELECT id FROM columns WHERE name = 'blo')\nAND\n   priority <> 5\nAND\n   id IN (\n      SELECT id FROM ridx WHERE title_field MATCH 'prova prova'\n   UNION\n      SELECT id FROM ridx WHERE text_field MATCH 'prova prova')")
 }
 
-
 func tsearch(z *testing.T, tl *Tasklist, queryText string, expectedIds []string) {
 	ids := make(map[string]string)
 
-	for _, id := range expectedIds { ids[id] = "" }
+	for _, id := range expectedIds {
+		ids[id] = ""
+	}
 
 	theselect, code, _, _, _, _, _, err := tl.ParseSearch(queryText, nil)
 	Must(err)
@@ -530,40 +536,39 @@ func TestSearch(z *testing.T) {
 	tl := ooc()
 	defer tl.Close()
 
-	tsearch(z, tl, "#bla", []string{ "10", "11", "12" })
-	tsearch(z, tl, "#bib=10", []string{ "11" })
-	tsearch(z, tl, "prova", []string{ "10", "12" })
-	tsearch(z, tl, "prova #blo", []string{ "10" })
+	tsearch(z, tl, "#bla", []string{"10", "11", "12"})
+	tsearch(z, tl, "#bib=10", []string{"11"})
+	tsearch(z, tl, "prova", []string{"10", "12"})
+	tsearch(z, tl, "prova #blo", []string{"10"})
 }
 
 func TestLuaSelect(z *testing.T) {
 	tl := ooc()
 	defer tl.Close()
 
-	tsearch(z, tl, "prova #+ idq('10')", []string{ "10" })
-	tsearch(z, tl, "borva #+ idq('10')", []string{ })
-	tsearch(z, tl, "#+ idq('10')", []string{ "10" })
-	tsearch(z, tl, "#+ titleq('=', 'ging bong un')", []string{ "11" })
+	tsearch(z, tl, "prova #+ idq('10')", []string{"10"})
+	tsearch(z, tl, "borva #+ idq('10')", []string{})
+	tsearch(z, tl, "#+ idq('10')", []string{"10"})
+	tsearch(z, tl, "#+ titleq('=', 'ging bong un')", []string{"11"})
 
-	tsearch(z, tl, "bang", []string{ "13", "14" })
-	tsearch(z, tl, "bang #+ whenq('>', 1275775200)", []string{ "14" })
-	tsearch(z, tl, "bang #+ whenq('<', 1275775200)", []string{ "13" })
+	tsearch(z, tl, "bang", []string{"13", "14"})
+	tsearch(z, tl, "bang #+ whenq('>', 1275775200)", []string{"14"})
+	tsearch(z, tl, "bang #+ whenq('<', 1275775200)", []string{"13"})
 
-	tsearch(z, tl, "#+ titleq('match', 'prova')", []string{ "10", "12" })
-	tsearch(z, tl, "#+ searchq('prova')", []string{ "10", "12" })
+	tsearch(z, tl, "#+ titleq('match', 'prova')", []string{"10", "12"})
+	tsearch(z, tl, "#+ searchq('prova')", []string{"10", "12"})
 
-	tsearch(z, tl, "#+ columnq('bla')", []string{ "10", "11", "12" })
-	tsearch(z, tl, "#+ columnq('bib', '=', '10')", []string{ "11" })
-	tsearch(z, tl, "prova #+ columnq('blo')", []string{ "10" })
+	tsearch(z, tl, "#+ columnq('bla')", []string{"10", "11", "12"})
+	tsearch(z, tl, "#+ columnq('bib', '=', '10')", []string{"11"})
+	tsearch(z, tl, "prova #+ columnq('blo')", []string{"10"})
 
-	tsearch(z, tl, "bung", []string{ "15", "16", "17" })
-	tsearch(z, tl, "bung #+ orq(columnq('bza'), columnq('bzo'))", []string{ "15", "16" })
-	tsearch(z, tl, "bung #+ orq(columnq('bza'), idq('17'))", []string{ "15", "17" })
+	tsearch(z, tl, "bung", []string{"15", "16", "17"})
+	tsearch(z, tl, "bung #+ orq(columnq('bza'), columnq('bzo'))", []string{"15", "16"})
+	tsearch(z, tl, "bung #+ orq(columnq('bza'), idq('17'))", []string{"15", "17"})
 
-	tsearch(z, tl, "bung #+ notq(orq(columnq('bza'), columnq('bzo')))", []string{ "17" })
+	tsearch(z, tl, "bung #+ notq(orq(columnq('bza'), columnq('bzo')))", []string{"17"})
 
 	theselect, _, _, _, _, _, _, err := tl.ParseSearch("prova #+ orq(columnq('blap', '>', 'burp'), whenq('>', 1275775200))", nil)
 	Must(err)
 	fmt.Printf("%s \n", theselect)
 }
-

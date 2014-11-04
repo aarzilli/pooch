@@ -1,17 +1,17 @@
 /*
  This program is distributed under the terms of GPLv3
  Copyright 2010, Alessandro Arzilli
- */
+*/
 
 package pooch
 
 import (
-	"log"
-	"io"
-	"fmt"
-	"runtime"
-	"os"
 	"flag"
+	"fmt"
+	"io"
+	"log"
+	"os"
+	"runtime"
 )
 
 type LogLevel int
@@ -25,7 +25,7 @@ const (
 )
 
 func makeLogger(w io.Writer) *log.Logger {
-	return log.New(w, "", log.Ldate + log.Ltime + log.Lmicroseconds)
+	return log.New(w, "", log.Ldate+log.Ltime+log.Lmicroseconds)
 }
 
 var Logger *log.Logger = makeLogger(os.Stderr)
@@ -54,11 +54,12 @@ func WriteStackTrace(rerr interface{}, out io.Writer) {
 	fmt.Fprintf(out, "Stack trace for: %s\n", rerr)
 	for i := 1; ; i++ {
 		_, file, line, ok := runtime.Caller(i)
-		if !ok { break }
+		if !ok {
+			break
+		}
 		fmt.Fprintf(out, "    %s:%d\n", file, line)
 	}
 }
-
 
 func CheckArgs(args []string, accepted map[string]bool, min int, max int, cmd string) (nargs []string, flags map[string]bool) {
 	nargs = []string{}
@@ -70,7 +71,7 @@ func CheckArgs(args []string, accepted map[string]bool, min int, max int, cmd st
 			if v, ok := accepted[arg]; v && ok {
 				flags[arg] = true
 			} else {
-				Complain(false, "Unknown flag " + arg + "\n")
+				Complain(false, "Unknown flag "+arg+"\n")
 			}
 		} else {
 			nargs = append(nargs, arg)
@@ -79,13 +80,13 @@ func CheckArgs(args []string, accepted map[string]bool, min int, max int, cmd st
 
 	if min > -1 {
 		if len(nargs) < min {
-			Complain(false, "Not enough arguments for " + cmd + "\n")
+			Complain(false, "Not enough arguments for "+cmd+"\n")
 		}
 	}
 
 	if max > -1 {
 		if len(nargs) > max {
-			Complain(false, "Too many arguments for " + cmd + "\n")
+			Complain(false, "Too many arguments for "+cmd+"\n")
 		}
 	}
 
@@ -99,4 +100,3 @@ func Complain(usage bool, format string, a ...interface{}) {
 	}
 	os.Exit(-1)
 }
-

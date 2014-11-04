@@ -1,24 +1,24 @@
 /*
  This program is distributed under the terms of GPLv3
  Copyright 2010, Alessandro Arzilli
- */
+*/
 
 package pooch
 
 import (
 	"unicode"
-//	"fmt"
+	//	"fmt"
 )
 
-type TokenizerFunc func(t *Tokenizer) (string, int);
+type TokenizerFunc func(t *Tokenizer) (string, int)
 
 type Tokenizer struct {
-	input []rune
-	i int
+	input        []rune
+	i            int
 	rewindBuffer []string
-	next int
-	toktable []TokenizerFunc
-	parser *Parser
+	next         int
+	toktable     []TokenizerFunc
+	parser       *Parser
 }
 
 var standardTokTable []TokenizerFunc = []TokenizerFunc{
@@ -60,7 +60,7 @@ var standardTokTable []TokenizerFunc = []TokenizerFunc{
 }
 
 func NewTokenizer(input string) *Tokenizer {
-	return &Tokenizer{ []rune(input), 0, make([]string, 0), 0, standardTokTable, nil }
+	return &Tokenizer{[]rune(input), 0, make([]string, 0), 0, standardTokTable, nil}
 }
 
 func anyChar(ch rune) bool {
@@ -68,14 +68,30 @@ func anyChar(ch rune) bool {
 }
 
 func isTagChar(ch rune) bool {
-	if unicode.IsLetter(ch) { return true }
-	if unicode.IsDigit(ch) { return true }
-	if ch == '+' { return true }
-	if ch == '-' { return true }
-	if ch == '/' { return true }
-	if ch == ',' { return true }
-	if ch == '_' { return true }
-	if ch == ':' { return true }
+	if unicode.IsLetter(ch) {
+		return true
+	}
+	if unicode.IsDigit(ch) {
+		return true
+	}
+	if ch == '+' {
+		return true
+	}
+	if ch == '-' {
+		return true
+	}
+	if ch == '/' {
+		return true
+	}
+	if ch == ',' {
+		return true
+	}
+	if ch == '_' {
+		return true
+	}
+	if ch == ':' {
+		return true
+	}
 	return false
 }
 
@@ -83,7 +99,8 @@ func StrTokenizerTo(match string, translation string) TokenizerFunc {
 	umatch := []rune(match)
 	return func(t *Tokenizer) (string, int) {
 		var j int
-		for j = 0; (j < len(match)) && (t.i+j < len(t.input)) && (t.input[t.i+j] == umatch[j]); j++ { }
+		for j = 0; (j < len(match)) && (t.i+j < len(t.input)) && (t.input[t.i+j] == umatch[j]); j++ {
+		}
 		if j >= len(match) {
 			return translation, j
 		}
@@ -97,31 +114,41 @@ func isQuickTagStart(ch rune) bool {
 
 func ConsumeRealExtra(t *Tokenizer) string {
 	var j int
-	for j = t.i+2; j < len(t.input); j++ {
-		if !isQuickTagStart(t.input[j]) { continue }
-		if j+1 >= len(t.input) { continue }
-		if t.input[j+1] != '!' { continue }
+	for j = t.i + 2; j < len(t.input); j++ {
+		if !isQuickTagStart(t.input[j]) {
+			continue
+		}
+		if j+1 >= len(t.input) {
+			continue
+		}
+		if t.input[j+1] != '!' {
+			continue
+		}
 
 		// found @! or #! decrement j to spit out the quick tag start and exit the loop
 		break
 	}
 
-	return string(t.input[t.i+2:j])
+	return string(t.input[t.i+2 : j])
 }
 
 func ExtraSeparatorTokenizer(t *Tokenizer) (string, int) {
-	if t.i+1 >= len(t.input) { return "", 0 }
-	if !isQuickTagStart(t.input[t.i]) { return "", 0 }
+	if t.i+1 >= len(t.input) {
+		return "", 0
+	}
+	if !isQuickTagStart(t.input[t.i]) {
+		return "", 0
+	}
 
 	switch t.input[t.i+1] {
 	case '+':
 		extra := ConsumeRealExtra(t)
 		t.PushExtra(extra)
-		return " ", len(extra)+2
+		return " ", len(extra) + 2
 	case '!':
 		command := string(t.input[t.i+2:])
 		t.PushCommand(command)
-		return "", len(command)+2
+		return "", len(command) + 2
 	}
 
 	return "", 0
@@ -131,18 +158,20 @@ func StrTokenizer(match string) TokenizerFunc {
 	return StrTokenizerTo(match, match)
 }
 
-func RepeatedTokenizer(fn func(rune)bool) TokenizerFunc {
+func RepeatedTokenizer(fn func(rune) bool) TokenizerFunc {
 	return func(t *Tokenizer) (string, int) {
 		var j int
-		for j = 0; (t.i+j < len(t.input)) && fn(t.input[t.i+j]); j++ { }
-		return string(t.input[t.i:t.i+j]), j
+		for j = 0; (t.i+j < len(t.input)) && fn(t.input[t.i+j]); j++ {
+		}
+		return string(t.input[t.i : t.i+j]), j
 	}
 }
 
-func RepeatedTokenizerTo(fn func(rune)bool, translation string) TokenizerFunc {
+func RepeatedTokenizerTo(fn func(rune) bool, translation string) TokenizerFunc {
 	return func(t *Tokenizer) (string, int) {
 		var j int
-		for j = 0; (t.i+j < len(t.input)) && fn(t.input[t.i+j]); j++ { }
+		for j = 0; (t.i+j < len(t.input)) && fn(t.input[t.i+j]); j++ {
+		}
 		return translation, j
 	}
 }
@@ -165,7 +194,9 @@ func (t *Tokenizer) Next() string {
 }
 
 func (t *Tokenizer) RealNext() string {
-	if t.i >= len(t.input) { return "" }
+	if t.i >= len(t.input) {
+		return ""
+	}
 
 	for _, fn := range t.toktable {
 		if r, skip := fn(t); skip > 0 {

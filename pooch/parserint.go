@@ -1,17 +1,17 @@
 /*
  This program is distributed under the terms of GPLv3
  Copyright 2010, Alessandro Arzilli
- */
+*/
 
 package pooch
 
 import (
-	"time"
 	"fmt"
-	"strings"
-	"os"
 	"io/ioutil"
+	"os"
 	"sort"
+	"strings"
+	"time"
 )
 
 // part of the parser that interfaces with the backend
@@ -39,8 +39,12 @@ func ExtractColumnsFromSearch(search *ParseResult) Columns {
 
 	for _, expr := range search.include.subExpr {
 		sexpr, ok := expr.(*SimpleExpr)
-		if !ok { continue }
-		if sexpr.name[0] == '!' { continue }
+		if !ok {
+			continue
+		}
+		if sexpr.name[0] == '!' {
+			continue
+		}
 		switch sexpr.op {
 		case "=":
 			if sexpr.name[0] != ':' && sexpr.name[0] != '%' {
@@ -115,13 +119,17 @@ func (tl *Tasklist) ParseNew(entryText, queryText string) *Entry {
 
 	for _, expr := range parsed.include.subExpr {
 		sexpr, ok := expr.(*SimpleExpr)
-		if !ok { continue }
+		if !ok {
+			continue
+		}
 		switch sexpr.name {
-		case ":when": triggerAt = sexpr.valueAsTime
+		case ":when":
+			triggerAt = sexpr.valueAsTime
 		case ":priority":
 			priority = sexpr.priority
 			prioritySet = true
-		case "id": id = sexpr.value
+		case "id":
+			id = sexpr.value
 		default:
 			if sexpr.op == "" {
 				cols[sexpr.name] = ""
@@ -150,8 +158,10 @@ func (tl *Tasklist) ParseNew(entryText, queryText string) *Entry {
 		searchCols := ExtractColumnsFromSearch(searchParsed)
 		if searchCols != nil {
 			for k, v := range searchCols {
-				cols[k] = v;
-				if v == "" { catFound = true }
+				cols[k] = v
+				if v == "" {
+					catFound = true
+				}
 			}
 		}
 
@@ -160,15 +170,24 @@ func (tl *Tasklist) ParseNew(entryText, queryText string) *Entry {
 
 	// extra field parsing
 	extraCols, extraCatFound := ParseCols(parsed.extra, parsed.timezone)
-	if extraCatFound { catFound = true }
-	for k, v := range extraCols { cols[k] = v }
+	if extraCatFound {
+		catFound = true
+	}
+	for k, v := range extraCols {
+		cols[k] = v
+	}
 
-	if id == "" { id = tl.MakeRandomId() }
-	if !catFound { cols["uncat"] = "" }
-
+	if id == "" {
+		id = tl.MakeRandomId()
+	}
+	if !catFound {
+		cols["uncat"] = ""
+	}
 
 	if !prioritySet {
-		if triggerAt != nil { priority = TIMED }
+		if triggerAt != nil {
+			priority = TIMED
+		}
 	}
 
 	return MakeEntry(id, parsed.text, "", priority, triggerAt, sort, cols)
@@ -179,28 +198,30 @@ type NotExpr struct {
 }
 
 func (ne *NotExpr) IntoClause(tl *Tasklist, depth string, negate bool) string {
-	return depth+"NOT (\n"+ne.subExpr.IntoClause(tl, depth+"   ", negate)+")"
+	return depth + "NOT (\n" + ne.subExpr.IntoClause(tl, depth+"   ", negate) + ")"
 }
 
 var OPERATOR_CHECK map[string]string = map[string]string{
-	"!=": "<>",
-	"=": "=",
-	">": ">",
-	"<": "<",
-	">=": ">=",
-	"<=": "<=",
-	"LIKE": "LIKE",
-	"like": "LIKE",
+	"!=":       "<>",
+	"=":        "=",
+	">":        ">",
+	"<":        "<",
+	">=":       ">=",
+	"<=":       "<=",
+	"LIKE":     "LIKE",
+	"like":     "LIKE",
 	"not like": "NOT LIKE",
 	"NOT LIKE": "NOT LIKE",
-	"NOTLIKE": "NOT LIKE",
-	"notlike": "NOT LIKE",
+	"NOTLIKE":  "NOT LIKE",
+	"notlike":  "NOT LIKE",
 }
 
 func (expr *SimpleExpr) IntoClauseEx(tl *Tasklist) string {
 	switch expr.name {
-	case ":id": fallthrough
-	case ":title_field": fallthrough
+	case ":id":
+		fallthrough
+	case ":title_field":
+		fallthrough
 	case ":text_field":
 		if expr.op == "match" {
 			return fmt.Sprintf("id IN (SELECT id FROM ridx WHERE %s MATCH %s)", expr.name[1:], tl.Quote(expr.value))
@@ -258,7 +279,9 @@ func (expr *SimpleExpr) IntoClause(tl *Tasklist, depth string, negate bool) stri
 	}
 
 	s := "IN"
-	if negate { s = "NOT IN" }
+	if negate {
+		s = "NOT IN"
+	}
 	return fmt.Sprintf("%sid %s (%s)", depth, s, expr.IntoClauseEx(tl))
 }
 
@@ -280,7 +303,7 @@ func (expr *BoolExpr) IntoClauses(tl *Tasklist, depth string, negate bool, addDo
 	}
 
 	if !hasPriorityClause && addDone {
-		r = append(r, nextdepth + "priority <> 5")
+		r = append(r, nextdepth+"priority <> 5")
 	}
 
 	return r
@@ -293,13 +316,15 @@ func (expr *BoolExpr) IntoClause(tl *Tasklist, depth string, negate bool) string
 }
 
 func (pr *ParseResult) GetLuaClause(tl *Tasklist) (string, error) {
-	if pr.extra == "" { return "", nil }
+	if pr.extra == "" {
+		return "", nil
+	}
 
 	tl.SetTasklistInLua()
 	tl.ResetLuaFlags()
 
 	tl.luaState.CheckStack(1)
-	if tl.luaState.LoadString("return " + pr.extra) != 0 {
+	if tl.luaState.LoadString("return "+pr.extra) != 0 {
 		errorMessage := tl.luaState.ToString(-1)
 		tl.LogError(fmt.Sprintf("Error while loading lua code: %s", errorMessage))
 		return "", MakeParseError(fmt.Sprintf("Error while loading lua code: %s", errorMessage))
@@ -346,7 +371,8 @@ func (pr *ParseResult) IntoSelect(tl *Tasklist, luaClausable Clausable) (string,
 		return r, parseResult.options, err
 	}
 
-	_, addDone := pr.options["w/done"]; addDone = !addDone
+	_, addDone := pr.options["w/done"]
+	addDone = !addDone
 	where := pr.include.IntoClauses(tl, "", false, addDone)
 	whereNot := pr.exclude.IntoClauses(tl, "", true, false)
 
@@ -354,7 +380,9 @@ func (pr *ParseResult) IntoSelect(tl *Tasklist, luaClausable Clausable) (string,
 		where = append(where, fmt.Sprintf("   id IN (\n      SELECT id FROM ridx WHERE title_field MATCH %s\n   UNION\n      SELECT id FROM ridx WHERE text_field MATCH %s)", tl.Quote(pr.text), tl.Quote(pr.text)))
 	}
 
-	for _, v := range whereNot { where = append(where, v) }
+	for _, v := range whereNot {
+		where = append(where, v)
+	}
 
 	var err error
 	if luaClausable == nil {
@@ -382,7 +410,7 @@ func (pr *ParseResult) IntoSelect(tl *Tasklist, luaClausable Clausable) (string,
 		orderBy = "ORDER BY sort ASC"
 	}
 
-	return SELECT_HEADER + whereStr + "\nGROUP BY tasks.id\n" + orderBy , nil, err
+	return SELECT_HEADER + whereStr + "\nGROUP BY tasks.id\n" + orderBy, nil, err
 }
 
 func (pr *ParseResult) IntoTrigger() string {
@@ -390,7 +418,9 @@ func (pr *ParseResult) IntoTrigger() string {
 		return "#%" + pr.savedSearch
 	}
 
-	if pr.extra != "" { return "" }
+	if pr.extra != "" {
+		return ""
+	}
 
 	out := make([]string, 0)
 
@@ -405,12 +435,24 @@ func (pr *ParseResult) IntoTrigger() string {
 }
 
 func (pr *ParseResult) IsEmpty() bool {
-	if pr.savedSearch != "" { return false }
-	if pr.command != "" { return false }
-	if pr.extra != "" { return false }
-	if pr.text != "" { return false }
-	if len(pr.exclude.subExpr) > 0 { return false }
-	if len(pr.include.subExpr) > 0 { return false }
+	if pr.savedSearch != "" {
+		return false
+	}
+	if pr.command != "" {
+		return false
+	}
+	if pr.extra != "" {
+		return false
+	}
+	if pr.text != "" {
+		return false
+	}
+	if len(pr.exclude.subExpr) > 0 {
+		return false
+	}
+	if len(pr.include.subExpr) > 0 {
+		return false
+	}
 	return true
 }
 
@@ -448,5 +490,5 @@ func (tl *Tasklist) ExtendedAddParse() *Entry {
 	e := tl.ParseNew(toParse, "")
 	e.SetText(split2[0])
 
-	return e;
+	return e
 }

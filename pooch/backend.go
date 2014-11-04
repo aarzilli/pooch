@@ -1,42 +1,42 @@
 /*
  This program is distributed under the terms of GPLv3
  Copyright 2010 - 2013, Alessandro Arzilli
- */
+*/
 
 package pooch
 
 import (
-	"fmt"
-	"time"
-	"io"
+	"code.google.com/p/gosqlite/sqlite"
 	"crypto/rand"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
+	"github.com/aarzilli/golua/lua"
+	"io"
+	"regexp"
+	"strconv"
 	"strings"
 	"sync"
-	"strconv"
-	"regexp"
-	"code.google.com/p/gosqlite/sqlite"
-	"github.com/aarzilli/golua/lua"
+	"time"
 )
 
 type Tasklist struct {
-	filename string
-	conn *sqlite.Conn
-	luaState *lua.State
-	luaFlags *LuaFlags
-	mutex *sync.Mutex
-	refs int
-	timestamp int64
+	filename              string
+	conn                  *sqlite.Conn
+	luaState              *lua.State
+	luaFlags              *LuaFlags
+	mutex                 *sync.Mutex
+	refs                  int
+	timestamp             int64
 	executionLimitEnabled bool
-	curCut string
+	curCut                string
 }
 
 var enabledCaching bool = true
 var tasklistCache map[string]*Tasklist = make(map[string]*Tasklist)
 var tasklistCacheMutex sync.Mutex
 
-func MustExec(conn *sqlite.Conn, stmt string, v...interface{}) {
+func MustExec(conn *sqlite.Conn, stmt string, v ...interface{}) {
 	Must(conn.Exec(stmt, v...))
 }
 
@@ -48,7 +48,7 @@ func HasTable(conn *sqlite.Conn, name string) bool {
 	return stmt.Next()
 }
 
-func (tasklist *Tasklist) MustExec(stmt string, v...interface{}) {
+func (tasklist *Tasklist) MustExec(stmt string, v ...interface{}) {
 	MustExec(tasklist.conn, stmt, v...)
 }
 
@@ -114,7 +114,6 @@ func internalTasklistOpenOrCreate(filename string) *Tasklist {
 		tasklist.DoString(setupCode, nil) // error is ignored, it will be logged
 	}
 
-
 	return tasklist
 }
 
@@ -159,7 +158,9 @@ func (tasklist *Tasklist) Close() {
 
 	tasklist.refs--
 
-	if time.Now().Unix() - tasklist.timestamp < 6 * 60 * 60 { return }
+	if time.Now().Unix()-tasklist.timestamp < 6*60*60 {
+		return
+	}
 	if tasklist.refs != 0 {
 		Logf(ERROR, "Couldn't close stale connection to %s, active connections %d\n", tasklist.filename, tasklist.refs)
 		return
@@ -257,7 +258,7 @@ func (tasklist *Tasklist) Add(e *Entry) {
 		priority := e.Priority()
 		tasklist.MustExec("INSERT INTO tasks(id, title_field, text_field, priority, trigger_at_field, sort) VALUES (?, ?, ?, ?, ?, ?)", e.Id(), e.Title(), e.Text(), priority.ToInteger(), triggerAtString, e.Sort())
 		tasklist.MustExec("INSERT INTO ridx(id, title_field, text_field) VALUES (?, ?, ?)", e.Id(), e.Title(), e.Text())
-		tasklist.addColumns(e);
+		tasklist.addColumns(e)
 	})
 
 	if CurrentLogLevel <= DEBUG {
@@ -293,7 +294,7 @@ func (tasklist *Tasklist) Update(e *Entry, simpleUpdate bool) {
 		if !simpleUpdate {
 			tasklist.MustExec("UPDATE ridx SET title_field = ?, text_field = ? WHERE id = ?", e.Title(), e.Text(), e.Id())
 			tasklist.MustExec("DELETE FROM columns WHERE id = ?", e.Id())
-			tasklist.addColumns(e);
+			tasklist.addColumns(e)
 		}
 	})
 
@@ -338,7 +339,7 @@ func (tl *Tasklist) Get(id string) *Entry {
 	defer stmt.Finalize()
 	Must(stmt.Exec(id))
 
-	if (!stmt.Next()) {
+	if !stmt.Next() {
 		panic(fmt.Sprintf("Couldn't find request entry at Tasklist.Get"))
 	}
 
@@ -368,12 +369,14 @@ func (tl *Tasklist) GetListEx(stmt *sqlite.Stmt, code string, incsub bool) ([]*E
 	}
 
 	v := []*Entry{}
-	for (stmt.Next()) {
+	for stmt.Next() {
 		entry, scanerr := StatementScan(stmt, true)
 		Must(scanerr)
 
 		if code != "" {
-			if cerr := tl.CallLuaFunction(SEARCHFUNCTION, entry); cerr != nil { err = cerr }
+			if cerr := tl.CallLuaFunction(SEARCHFUNCTION, entry); cerr != nil {
+				err = cerr
+			}
 
 			if tl.luaFlags.remove {
 				tl.Remove(entry.Id())
@@ -389,7 +392,9 @@ func (tl *Tasklist) GetListEx(stmt *sqlite.Stmt, code string, incsub bool) ([]*E
 				}
 			}
 
-			if tl.luaFlags.filterOut { continue }
+			if tl.luaFlags.filterOut {
+				continue
+			}
 		}
 
 		if !incsub {
@@ -438,10 +443,10 @@ func (tl *Tasklist) RetrieveErrors() []*ErrorEntry {
 }
 
 type ExplainEntry struct {
-	Addr string
-	Opcode string
+	Addr               string
+	Opcode             string
 	P1, P2, P3, P4, P5 string
-	Comment string
+	Comment            string
 }
 
 func (tl *Tasklist) ExplainRetrieve(theselect string) []*ExplainEntry {
@@ -484,7 +489,9 @@ func (tl *Tasklist) GetSavedSearch(name string) string {
 	Must(serr)
 	defer stmt.Finalize()
 	Must(stmt.Exec(name))
-	if !stmt.Next() { return "" }
+	if !stmt.Next() {
+		return ""
+	}
 	var value string
 	Must(stmt.Scan(&value))
 	return value
@@ -496,7 +503,9 @@ func (tl *Tasklist) GetSetting(name string) string {
 	defer stmt.Finalize()
 	Must(stmt.Exec(name))
 
-	if !stmt.Next() { return "" }
+	if !stmt.Next() {
+		return ""
+	}
 
 	var value string
 	Must(stmt.Scan(&value))
@@ -509,7 +518,9 @@ func (tl *Tasklist) GetPrivateSetting(name string) string {
 	defer stmt.Finalize()
 	Must(stmt.Exec(name))
 
-	if !stmt.Next() { return "" }
+	if !stmt.Next() {
+		return ""
+	}
 
 	var value string
 	Must(stmt.Scan(&value))
@@ -566,14 +577,18 @@ func (tl *Tasklist) SetPrivateSetting(name, value string) {
 
 func (tl *Tasklist) SetSettings(settings map[string]string) {
 	for k, v := range settings {
-		Logf(INFO, "Saving %s to %s\n", v, k);
+		Logf(INFO, "Saving %s to %s\n", v, k)
 		tl.MustExec("INSERT OR REPLACE INTO settings(name, value) VALUES (?, ?);", k, v)
 	}
 }
 
 func (tl *Tasklist) RenameTag(src, dst string) {
-	if isQuickTagStart(rune(src[0])) { src = src[1:len(src)] }
-	if isQuickTagStart(rune(dst[0])) { dst = dst[1:len(dst)] }
+	if isQuickTagStart(rune(src[0])) {
+		src = src[1:len(src)]
+	}
+	if isQuickTagStart(rune(dst[0])) {
+		dst = dst[1:len(dst)]
+	}
 	tl.MustExec("UPDATE columns SET name = ? WHERE name = ?", dst, src)
 }
 
@@ -588,7 +603,9 @@ func (tl *Tasklist) RunTimedTriggers() {
 		entry, scanerr := StatementScan(stmt, true)
 		Must(scanerr)
 
-		if entry.TriggerAt() == nil { continue } // why was this retrieved?
+		if entry.TriggerAt() == nil {
+			continue
+		} // why was this retrieved?
 
 		update := true
 		checkFreq := true
@@ -622,13 +639,15 @@ func (tl *Tasklist) RunTimedTriggers() {
 		if checkFreq {
 			freq := entry.Freq()
 
-			Logf(INFO, "Triggering: %v %v %v\n", entry.Id(), entry.TriggerAt(), freq);
+			Logf(INFO, "Triggering: %v %v %v\n", entry.Id(), entry.TriggerAt(), freq)
 
-			if freq > 0 { tl.Add(entry.NextEntry(tl.MakeRandomId())); }
+			if freq > 0 {
+				tl.Add(entry.NextEntry(tl.MakeRandomId()))
+			}
 		}
 
 		if update {
-			tl.MustExec("UPDATE tasks SET priority = ? WHERE id = ?", NOW, entry.Id());
+			tl.MustExec("UPDATE tasks SET priority = ? WHERE id = ?", NOW, entry.Id())
 		}
 	}
 }
@@ -641,11 +660,11 @@ func (tl *Tasklist) UpgradePriority(id string, special bool) Priority {
 }
 
 type Statistic struct {
-	Name, Link string
-	Total int
+	Name, Link       string
+	Total            int
 	Now, Later, Done int
-	Timed int
-	Notes, Sticky int
+	Timed            int
+	Notes, Sticky    int
 }
 
 func (tl *Tasklist) CountCategoryItems(cat string) (r int) {
@@ -677,7 +696,7 @@ func (tl *Tasklist) GetStatistic(tag string) *Statistic {
 		Must(stmt.Exec(tag))
 	}
 
-	name := "#"+tag
+	name := "#" + tag
 	link := name
 	if tag == "" {
 		name = "Any"
@@ -686,7 +705,7 @@ func (tl *Tasklist) GetStatistic(tag string) *Statistic {
 
 	r := &Statistic{name, link, 0, 0, 0, 0, 0, 0, 0}
 
-	for (stmt.Next()) {
+	for stmt.Next() {
 		var priority, count int
 
 		stmt.Scan(&priority, &count)
@@ -737,7 +756,7 @@ func (tl *Tasklist) GetOntology() []OntologyNodeIn {
 }
 
 type InvOntologyEntry struct {
-	cat string
+	cat     string
 	parents []string
 }
 
@@ -748,12 +767,12 @@ func (ioe *InvOntologyEntry) String() string {
 var initialHash = regexp.MustCompile("^#")
 
 func InvertOntology(p []string, ontology []OntologyNodeIn, r []InvOntologyEntry) []InvOntologyEntry {
-	for  _, on := range ontology {
+	for _, on := range ontology {
 		n := initialHash.ReplaceAllString(on.Data, "")
 
 		pp := make([]string, len(p))
 		copy(pp, p)
-		r = append(r, InvOntologyEntry{ n, pp })
+		r = append(r, InvOntologyEntry{n, pp})
 
 		ph := make([]string, len(p))
 		copy(ph, p)
@@ -767,10 +786,12 @@ func InvertOntology(p []string, ontology []OntologyNodeIn, r []InvOntologyEntry)
 }
 
 type OntoCheckResult int
+
 const (
-	DOES_NOT_APPLY = OntoCheckResult(iota);
-	MATCH_OK;
-	MATCH_FAIL )
+	DOES_NOT_APPLY = OntoCheckResult(iota)
+	MATCH_OK
+	MATCH_FAIL
+)
 
 func checkEntryOnOntology(debug bool, e *Entry, ioe InvOntologyEntry) (out OntoCheckResult, mismatchParent string) {
 	if _, ok := e.columns[ioe.cat]; !ok {
@@ -786,20 +807,26 @@ func checkEntryOnOntology(debug bool, e *Entry, ioe InvOntologyEntry) (out OntoC
 }
 
 func (tl *Tasklist) OntoCheck(debug bool) []OntoCheckError {
-	if debug { fmt.Printf("Retrieving ontology\n") }
+	if debug {
+		fmt.Printf("Retrieving ontology\n")
+	}
 
 	errors := []OntoCheckError{}
 
 	io := []InvOntologyEntry{}
 	io = InvertOntology([]string{}, tl.GetOntology(), io)
 
-	if debug { fmt.Printf("Retrieving full contents\n") }
+	if debug {
+		fmt.Printf("Retrieving full contents\n")
+	}
 	theselect, _, _, _, _, _, _, perr := tl.ParseSearch("#:w/done", nil)
 	Must(perr)
 	v, rerr := tl.Retrieve(theselect, "", false)
 	Must(rerr)
 
-	if debug { fmt.Printf("%d entries loaded\nChecking\n", len(v)) }
+	if debug {
+		fmt.Printf("%d entries loaded\nChecking\n", len(v))
+	}
 
 	unk := 0
 
@@ -861,8 +888,12 @@ func (tl *Tasklist) CategoryDepth() map[string]int {
 	}
 
 	for cat, v := range r {
-		if v != 0 { continue }
-		if _, ok := appearsAsParent[cat]; ok { continue }
+		if v != 0 {
+			continue
+		}
+		if _, ok := appearsAsParent[cat]; ok {
+			continue
+		}
 		r[cat] = 1000
 	}
 
@@ -877,7 +908,7 @@ func (tl *Tasklist) GetChildren(id string) []string {
 	Must(serr)
 
 	r := []string{}
-	for (stmt.Next()) {
+	for stmt.Next() {
 		var x string
 		Must(stmt.Scan(&x))
 		r = append(r, x)
@@ -887,6 +918,16 @@ func (tl *Tasklist) GetChildren(id string) []string {
 
 func (tl *Tasklist) UpdateChildren(pid string, childs []string) {
 	for i := range childs {
-		tl.MustExec("update columns set value = ? where id = ? and name = ?", fmt.Sprintf("%d", i), childs[i], "sub/" + pid)
+		tl.MustExec("update columns set value = ? where id = ? and name = ?", fmt.Sprintf("%d", i), childs[i], "sub/"+pid)
 	}
+}
+
+func ontologyRemove(ontology []OntologyNodeIn, d string) ([]OntologyNodeIn, bool) {
+	//TODO
+	return nil, false
+}
+
+func ontologyAdd(ontology []OntologyNodeIn, p, d string) ([]OntologyNodeIn, bool) {
+	//TODO
+	return nil, false
 }

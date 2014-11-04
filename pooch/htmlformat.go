@@ -1,15 +1,15 @@
 /*
  This program is distributed under the terms of GPLv3
  Copyright 2010-2013, Alessandro Arzilli
- */
+*/
 
 package pooch
 
 import (
-	"text/template"
 	"io"
-	"strings"
 	"net/url"
+	"strings"
+	"text/template"
 )
 
 func PriorityFormatter(input Priority) string {
@@ -18,7 +18,7 @@ func PriorityFormatter(input Priority) string {
 
 var formatters template.FuncMap = template.FuncMap{
 	"priority": PriorityFormatter,
-	"url": url.QueryEscape,
+	"url":      url.QueryEscape,
 }
 
 type ExecutableTemplate func(interface{}, io.Writer)
@@ -440,7 +440,6 @@ var LoginHTML ExecutableTemplate = MakeExecutableTemplate("Login", `
 </html>
 `)
 
-
 var RegisterOKHTML ExecutableTemplate = MakeExecutableTemplate("RegisterOK", `
 <!DOCTYPE html>
 <html>
@@ -533,4 +532,3 @@ var OptionsPageEnd ExecutableTemplate = MakeExecutableTemplate("OptionsPageEnd",
   </body>
 </html>
 `)
-

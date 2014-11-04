@@ -1,27 +1,27 @@
 /*
  This program is distributed under the terms of GPLv3
  Copyright 2010, Alessandro Arzilli
- */
+*/
 
 package pooch
 
 import (
-	"net/http"
-	"fmt"
 	"code.google.com/p/gosqlite/sqlite"
+	"crypto/sha512"
+	"fmt"
+	"net/http"
 	"path"
 	"regexp"
-	"crypto/sha512"
 )
 
 type MultiuserDb struct {
-	conn *sqlite.Conn
+	conn      *sqlite.Conn
 	directory string
 }
 
 var SecureCookies = true
 
-func OpenMultiuserDb(directory string) *MultiuserDb{
+func OpenMultiuserDb(directory string) *MultiuserDb {
 	multiuserDb, err := sqlite.Open(path.Join(directory, "users.db"))
 	Must(err)
 	MustExec(multiuserDb, "CREATE TABLE IF NOT EXISTS users (username TEXT, salt TEXT, passhash BLOB)")
@@ -35,7 +35,7 @@ func (mdb *MultiuserDb) SaveIdCookie(username, idCookie string) {
 }
 
 func (mdb *MultiuserDb) AddAPIToken(username string) {
-	token := MakeRandomString(40);
+	token := MakeRandomString(40)
 	MustExec(mdb.conn, "INSERT INTO tokens(username, token) VALUES(?,?)", username, token)
 }
 
@@ -92,7 +92,9 @@ func (mdb *MultiuserDb) Verify(username, password string) bool {
 
 	Must(stmt.Exec(username))
 
-	if !stmt.Next() { return false }
+	if !stmt.Next() {
+		return false
+	}
 
 	var salt string
 	var passhash []byte
@@ -102,10 +104,14 @@ func (mdb *MultiuserDb) Verify(username, password string) bool {
 
 	Logf(DEBUG, "Salt for %s is %s, passhash: %v, password to identify is hashed to: %v\n", username, salt, passhash, hashedPassword)
 
-	if len(hashedPassword) != len(passhash) { return false }
+	if len(hashedPassword) != len(passhash) {
+		return false
+	}
 
 	for i, _ := range passhash {
-		if hashedPassword[i] != passhash[i] { return false }
+		if hashedPassword[i] != passhash[i] {
+			return false
+		}
 	}
 
 	return true
@@ -124,7 +130,9 @@ func (mdb *MultiuserDb) usernameFromCookie(req *http.Request) string {
 
 	Must(stmt.Exec(GetIdCookie(req)))
 
-	if !stmt.Next() { return "" }
+	if !stmt.Next() {
+		return ""
+	}
 
 	var username string
 	Must(stmt.Scan(&username))
@@ -139,7 +147,9 @@ func (mdb *MultiuserDb) usernameFromAPIToken(req *http.Request) string {
 
 	Must(stmt.Exec(req.FormValue("apiToken")))
 
-	if !stmt.Next() { return "" }
+	if !stmt.Next() {
+		return ""
+	}
 
 	var username string
 	Must(stmt.Scan(&username))
@@ -160,12 +170,14 @@ func (mdb *MultiuserDb) UsernameFromReq(req *http.Request) string {
 }
 
 func (mdb *MultiuserDb) OpenOrCreateUserDb(username string) *Tasklist {
-	if username == "" { return nil }
-	file := path.Join(mdb.directory, username + ".pooch")
+	if username == "" {
+		return nil
+	}
+	file := path.Join(mdb.directory, username+".pooch")
 	return OpenOrCreate(file)
 }
 
-func (mdb *MultiuserDb) WithOpenUser(req *http.Request, fn func(tl *Tasklist)) bool{
+func (mdb *MultiuserDb) WithOpenUser(req *http.Request, fn func(tl *Tasklist)) bool {
 	username := mdb.UsernameFromReq(req)
 	if username != "" {
 		tl := mdb.OpenOrCreateUserDb(username)
@@ -180,7 +192,7 @@ func (mdb *MultiuserDb) WithOpenUser(req *http.Request, fn func(tl *Tasklist)) b
 
 func MultiWrapperTasklistServer(fn TasklistServer) http.HandlerFunc {
 	return func(c http.ResponseWriter, req *http.Request) {
-		if !multiuserDb.WithOpenUser(req, func (tl *Tasklist) {
+		if !multiuserDb.WithOpenUser(req, func(tl *Tasklist) {
 			fn(c, req, tl)
 		}) {
 			MustLogInHTML(nil, c)
@@ -190,9 +202,11 @@ func MultiWrapperTasklistServer(fn TasklistServer) http.HandlerFunc {
 
 func MultiWrapperTasklistWithIdServer(fn TasklistWithIdServer) http.HandlerFunc {
 	return func(c http.ResponseWriter, req *http.Request) {
-		if !multiuserDb.WithOpenUser(req, func (tl *Tasklist) {
+		if !multiuserDb.WithOpenUser(req, func(tl *Tasklist) {
 			id := req.FormValue("id")
-			if !tl.Exists(id) { panic(fmt.Sprintf("Non-existent id specified")) }
+			if !tl.Exists(id) {
+				panic(fmt.Sprintf("Non-existent id specified"))
+			}
 			fn(c, req, tl, id)
 		}) {
 			MustLogInHTML(nil, c)
@@ -229,8 +243,8 @@ func GetCookies(c *http.Request) map[string]string {
 
 func AddIdCookie(c http.ResponseWriter) string {
 	cookies := make(map[string]string)
-	cookies["id"] = MakeRandomString(20);
-	AddCookies(c, cookies);
+	cookies["id"] = MakeRandomString(20)
+	AddCookies(c, cookies)
 	return cookies["id"]
 }
 
@@ -242,16 +256,16 @@ func GetIdCookie(c *http.Request) string {
 func LoginServer(c http.ResponseWriter, req *http.Request) {
 	defer func() {
 		if r := recover(); r != nil {
-			LoginHTML(map[string]string{ "problem": fmt.Sprintf("Login failed with internal error: %s\n", r)}, c)
+			LoginHTML(map[string]string{"problem": fmt.Sprintf("Login failed with internal error: %s\n", r)}, c)
 			panic(r)
 		}
 	}()
 
 	if req.FormValue("user") == "" {
-		LoginHTML(map[string]string{ "problem": "" }, c)
+		LoginHTML(map[string]string{"problem": ""}, c)
 	} else {
 		if !multiuserDb.Verify(req.FormValue("user"), req.FormValue("password")) {
-			LoginHTML(map[string]string{ "problem": "No match for " + req.FormValue("user") + " and given password" }, c)
+			LoginHTML(map[string]string{"problem": "No match for " + req.FormValue("user") + " and given password"}, c)
 		} else {
 			idCookie := AddIdCookie(c)
 			multiuserDb.SaveIdCookie(req.FormValue("user"), idCookie)
@@ -263,18 +277,18 @@ func LoginServer(c http.ResponseWriter, req *http.Request) {
 func RegisterServer(c http.ResponseWriter, req *http.Request) {
 	defer func() {
 		if r := recover(); r != nil {
-			RegisterHTML(map[string]string{ "problem": fmt.Sprintf("Registration failed with internal error: %s\n", r)}, c)
+			RegisterHTML(map[string]string{"problem": fmt.Sprintf("Registration failed with internal error: %s\n", r)}, c)
 			panic(r)
 		}
 	}()
 
 	if req.FormValue("user") == "" {
-		RegisterHTML(map[string]string{ "problem": "" }, c)
+		RegisterHTML(map[string]string{"problem": ""}, c)
 	} else {
 		if multiuserDb.Exists(req.FormValue("user")) {
-			RegisterHTML(map[string]string{ "problem": "Username " + req.FormValue("user") + " already exists" }, c)
+			RegisterHTML(map[string]string{"problem": "Username " + req.FormValue("user") + " already exists"}, c)
 		} else if !ValidUserName(req.FormValue("user")) {
-			RegisterHTML(map[string]string{ "problem": "Username " + req.FormValue("user") + " contains invalid characters" }, c)
+			RegisterHTML(map[string]string{"problem": "Username " + req.FormValue("user") + " contains invalid characters"}, c)
 		} else {
 			multiuserDb.Register(req.FormValue("user"), req.FormValue("password"))
 			RegisterOKHTML(nil, c)
@@ -284,7 +298,7 @@ func RegisterServer(c http.ResponseWriter, req *http.Request) {
 
 func WhoAmIServer(c http.ResponseWriter, req *http.Request) {
 	username := multiuserDb.UsernameFromReq(req)
-	WhoAmIHTML(map[string]string{ "username": username }, c)
+	WhoAmIHTML(map[string]string{"username": username}, c)
 }
 
 func APITokensServer(c http.ResponseWriter, req *http.Request) {
@@ -307,7 +321,7 @@ func MultiServe(port string, directory string) {
 
 	SetupHandleFunc(MultiWrapperTasklistServer, MultiWrapperTasklistWithIdServer, multiuserDb)
 
-	if err := http.ListenAndServe(":" + port, nil); err != nil {
+	if err := http.ListenAndServe(":"+port, nil); err != nil {
 		Log(ERROR, "Couldn't serve: ", err)
 		return
 	}

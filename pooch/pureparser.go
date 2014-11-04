@@ -1,26 +1,25 @@
 /*
  This program is distributed under the terms of GPLv3
  Copyright 2010-2012, Alessandro Arzilli
- */
+*/
 
 package pooch
 
 import (
-	"strings"
-	"strconv"
-	"time"
-	"regexp"
 	"fmt"
+	"regexp"
+	"strconv"
+	"strings"
+	"time"
 )
-
 
 type SimpleExpr struct {
 	name string
-	op string  // if empty string this is a simple tag expression
+	op   string // if empty string this is a simple tag expression
 
-	value string
+	value       string
 	valueAsTime *time.Time
-	priority Priority
+	priority    Priority
 
 	extra string
 	// if the name starts with a ":" this old an extra value which is:
@@ -28,27 +27,27 @@ type SimpleExpr struct {
 }
 
 func (se *SimpleExpr) String() string {
-	return "#<" + se.name + ">" + "<" + se.op + se.value + ">";
+	return "#<" + se.name + ">" + "<" + se.op + se.value + ">"
 }
 
-type Clausable interface{
+type Clausable interface {
 	IntoClause(tl *Tasklist, depth string, negate bool) string
 }
 
 type BoolExpr struct {
 	operator string
-	subExpr []Clausable
+	subExpr  []Clausable
 }
 
 type ParseResult struct {
-	text string
+	text    string
 	include BoolExpr
 	exclude BoolExpr
 	options map[string]string
 
 	savedSearch string
-	extra string // text after the #+ separator
-	command string // text after the #! separator
+	extra       string // text after the #+ separator
+	command     string // text after the #! separator
 
 	showCols []string
 
@@ -69,9 +68,9 @@ func MakeParseResult() *ParseResult {
 }
 
 type Parser struct {
-	tkzer *Tokenizer
+	tkzer    *Tokenizer
 	timezone int
-	result *ParseResult
+	result   *ParseResult
 }
 
 func NewParser(tkzer *Tokenizer, timezone int) *Parser {
@@ -81,11 +80,13 @@ func NewParser(tkzer *Tokenizer, timezone int) *Parser {
 	return p
 }
 
-func (p *Parser) ParseSpeculative(fn func()bool) bool {
+func (p *Parser) ParseSpeculative(fn func() bool) bool {
 	pos := p.tkzer.next
 	r := false
 	defer func() {
-		if !r { p.tkzer.next = pos }
+		if !r {
+			p.tkzer.next = pos
+		}
 	}()
 
 	r = fn()
@@ -93,7 +94,7 @@ func (p *Parser) ParseSpeculative(fn func()bool) bool {
 }
 
 func (p *Parser) ParseToken(token string) bool {
-	return p.ParseSpeculative(func()bool {
+	return p.ParseSpeculative(func() bool {
 		return p.tkzer.Next() == token
 	})
 }
@@ -106,23 +107,25 @@ func (p *Parser) LookaheadToken(token string) bool {
 }
 
 var OPERATORS map[string]bool = map[string]bool{
-	"<": true,
-	">": true,
-	"=": true,
+	"<":  true,
+	">":  true,
+	"=":  true,
 	"<=": true,
 	">=": true,
 	"!=": true,
 }
 
 func (p *Parser) ParseOperationSubexpression(r *SimpleExpr) bool {
-	return p.ParseSpeculative(func()bool {
+	return p.ParseSpeculative(func() bool {
 		op := p.tkzer.Next()
 		Logf(TRACE, "Parsed operator: [%s]\n", op)
 		if _, ok := OPERATORS[op]; ok {
 			Logf(TRACE, "I am looking for value\n")
 			p.ParseToken(" ")
 			value := p.tkzer.Next()
-			if value == "" { return false }
+			if value == "" {
+				return false
+			}
 			(*r).op = op
 			(*r).value = value
 			return true
@@ -133,14 +136,21 @@ func (p *Parser) ParseOperationSubexpression(r *SimpleExpr) bool {
 
 func ParseFreqToken(text string) bool {
 	switch text {
-	case "daily": return true
-	case "weekly": return true
-	case "biweekly": return true
-	case "monthly": return true
-	case "yearly": return true
+	case "daily":
+		return true
+	case "weekly":
+		return true
+	case "biweekly":
+		return true
+	case "monthly":
+		return true
+	case "yearly":
+		return true
 	}
 	_, err := strconv.Atoi(text)
-	if err == nil { return true }
+	if err == nil {
+		return true
+	}
 	return false
 }
 
@@ -148,41 +158,57 @@ func ParsePriority(prstr string) Priority {
 	priority := INVALID
 
 	switch prstr {
-	case "later", "l": priority = LATER
-	case "n", "now": priority = NOW
-	case "d", "done": priority = DONE
-	case "$", "N", "Notes", "notes": priority = NOTES
-	case "$$", "StickyNotes", "sticky": priority = STICKY
-	case "timed": priority = TIMED
+	case "later", "l":
+		priority = LATER
+	case "n", "now":
+		priority = NOW
+	case "d", "done":
+		priority = DONE
+	case "$", "N", "Notes", "notes":
+		priority = NOTES
+	case "$$", "StickyNotes", "sticky":
+		priority = STICKY
+	case "timed":
+		priority = TIMED
 	}
 
 	return priority
 }
 
 func (p *Parser) ParseOption(r *SimpleExpr) bool {
-	return p.ParseSpeculative(func()bool {
-		if p.tkzer.Next() != "#:" { return false }
+	return p.ParseSpeculative(func() bool {
+		if p.tkzer.Next() != "#:" {
+			return false
+		}
 		r.name = p.tkzer.Next()
 		return true
 	})
 }
 
 func (p *Parser) ParseSavedSearch(r *SimpleExpr) bool {
-	return p.ParseSpeculative(func()bool {
-		if p.tkzer.Next() != "#%" { return false }
+	return p.ParseSpeculative(func() bool {
+		if p.tkzer.Next() != "#%" {
+			return false
+		}
 		r.name = p.tkzer.Next()
 		return true
 	})
 }
 
 func (p *Parser) ParseColumnRequest() bool {
-	return p.ParseSpeculative(func()bool {
-		if p.tkzer.Next() != "#" { return false }
+	return p.ParseSpeculative(func() bool {
+		if p.tkzer.Next() != "#" {
+			return false
+		}
 
 		colName := p.tkzer.Next()
-		if !isTagChar(([]rune(colName))[0]) { return false }
+		if !isTagChar(([]rune(colName))[0]) {
+			return false
+		}
 
-		if p.tkzer.Next() != "?" { return false }
+		if p.tkzer.Next() != "?" {
+			return false
+		}
 		p.result.showCols = append(p.result.showCols, colName)
 
 		return true
@@ -190,13 +216,17 @@ func (p *Parser) ParseColumnRequest() bool {
 }
 
 func (p *Parser) ParsePriorityExpression(r *SimpleExpr) bool {
-	return p.ParseSpeculative(func()bool {
-		if p.tkzer.Next() != "#" { return false }
+	return p.ParseSpeculative(func() bool {
+		if p.tkzer.Next() != "#" {
+			return false
+		}
 		tag := p.tkzer.Next()
 
 		priority := ParsePriority(tag)
 
-		if priority == INVALID { return false }
+		if priority == INVALID {
+			return false
+		}
 
 		r.name = ":priority"
 		r.priority = priority
@@ -208,15 +238,19 @@ func (p *Parser) ParsePriorityExpression(r *SimpleExpr) bool {
 }
 
 func (p *Parser) ParseTimeExpression(r *SimpleExpr) bool {
-	return p.ParseSpeculative(func()bool {
-		if p.tkzer.Next() != "#" { return false }
+	return p.ParseSpeculative(func() bool {
+		if p.tkzer.Next() != "#" {
+			return false
+		}
 
 		timeExpr := p.tkzer.Next()
 
 		split := strings.SplitN(timeExpr, "+", 2)
 
 		parsed, err := ParseDateTime(split[0], p.timezone)
-		if err != nil { return false }
+		if err != nil {
+			return false
+		}
 
 		freq := ""
 		if len(split) > 1 {
@@ -237,11 +271,15 @@ func (p *Parser) ParseTimeExpression(r *SimpleExpr) bool {
 }
 
 func (p *Parser) ParseSimpleExpression(r *SimpleExpr) bool {
-	return p.ParseSpeculative(func()bool {
-		if p.tkzer.Next() != "#" { return false }
+	return p.ParseSpeculative(func() bool {
+		if p.tkzer.Next() != "#" {
+			return false
+		}
 
 		tagName := p.tkzer.Next()
-		if !isTagChar(([]rune(tagName))[0]) { return false }
+		if !isTagChar(([]rune(tagName))[0]) {
+			return false
+		}
 
 		isShowCols := false
 		if p.ParseToken("!") {
@@ -263,8 +301,12 @@ func (p *Parser) ParseSimpleExpression(r *SimpleExpr) bool {
 
 func (p *Parser) ParseExclusion(r *SimpleExpr) bool {
 	return p.ParseSpeculative(func() bool {
-		if !p.ParseToken("-") { return false }
-		if !p.ParseSimpleExpression(r) { return false }
+		if !p.ParseToken("-") {
+			return false
+		}
+		if !p.ParseSimpleExpression(r) {
+			return false
+		}
 		return true
 	})
 }
@@ -272,14 +314,15 @@ func (p *Parser) ParseExclusion(r *SimpleExpr) bool {
 func (p *Parser) ParseEx() *ParseResult {
 	query := make([]string, 0)
 
-LOOP: for {
+LOOP:
+	for {
 		simple := &SimpleExpr{}
 		switch {
 		case p.ParseToken(""):
 			break LOOP
 		case p.ParseToken(" "):
-			if len(query) - 1 >= 0 {
-				if query[len(query) - 1] != " " {
+			if len(query)-1 >= 0 {
+				if query[len(query)-1] != " " {
 					query = append(query, " ")
 				}
 			}
@@ -299,8 +342,12 @@ LOOP: for {
 			p.result.include.subExpr = append(p.result.include.subExpr, simple)
 		default:
 			next := p.tkzer.Next()
-			if next == "@@" { next = "@" }
-			if next == "##" { next = "#" }
+			if next == "@@" {
+				next = "@"
+			}
+			if next == "##" {
+				next = "#"
+			}
 			query = append(query, next)
 		}
 	}
@@ -314,9 +361,13 @@ var startMultilineRE *regexp.Regexp = regexp.MustCompile("^[ \t\n\r]*{$")
 var numberRE *regexp.Regexp = regexp.MustCompile("^[0-9.]+$")
 
 func isNumber(tk string) (n float64, ok bool) {
-	if !numberRE.MatchString(tk) { return -1, false }
+	if !numberRE.MatchString(tk) {
+		return -1, false
+	}
 	n, err := strconv.ParseFloat(tk, 64)
-	if err != nil { return -1, false }
+	if err != nil {
+		return -1, false
+	}
 	return n, true
 }
 
@@ -343,12 +394,14 @@ func ParseCols(colStr string, timezone int) (Columns, bool) {
 			if v == "}" {
 				cols[multilineKey] = multilineValue
 				Logf(DEBUG, "Adding [%s] -> multiline\n", multilineKey)
-				multilineKey, multilineValue  = "", ""
+				multilineKey, multilineValue = "", ""
 			} else {
 				multilineValue += v + "\n"
 			}
 		} else {
-			if len(v) < 2 { continue }
+			if len(v) < 2 {
+				continue
+			}
 			isSpecial := false
 			if v[0] == ':' {
 				isSpecial = true
@@ -356,7 +409,9 @@ func ParseCols(colStr string, timezone int) (Columns, bool) {
 			}
 			vs := strings.SplitN(v, ":", 2)
 
-			if len(vs) == 0 { continue }
+			if len(vs) == 0 {
+				continue
+			}
 
 			if len(vs) == 1 {
 				// it's a category
@@ -374,7 +429,9 @@ func ParseCols(colStr string, timezone int) (Columns, bool) {
 				key := strings.TrimSpace(vs[0])
 				value := strings.TrimSpace(vs[1])
 
-				if key == "" { continue }
+				if key == "" {
+					continue
+				}
 
 				if strings.HasPrefix(key, "sub/") {
 					foundcat = true
@@ -390,7 +447,9 @@ func ParseCols(colStr string, timezone int) (Columns, bool) {
 					//value = normalizeValue(value, timezone)
 					Logf(DEBUG, "Adding [%s] -> [%s]\n", key, value)
 					cols[key] = value
-					if value == "" { foundcat = true }
+					if value == "" {
+						foundcat = true
+					}
 				}
 			}
 		}
@@ -422,4 +481,3 @@ func ParseTsvFormat(in string, tl *Tasklist, timezone int) *Entry {
 
 	return entry
 }
-

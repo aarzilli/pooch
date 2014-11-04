@@ -1,18 +1,18 @@
 /*
  This program is distributed under the terms of GPLv3
  Copyright 2010, Alessandro Arzilli
- */
+*/
 
 package pooch
 
 import (
-	"github.com/aarzilli/golua/lua"
-	"unsafe"
+	"errors"
 	"fmt"
-	"time"
+	"github.com/aarzilli/golua/lua"
 	"strconv"
 	"strings"
-	"errors"
+	"time"
+	"unsafe"
 )
 
 var CURSOR string = "cursor"
@@ -32,11 +32,11 @@ func (le *LuaIntError) Error() string {
 type LuaFlags struct {
 	cursorEdited bool // the original, introduced cursor, was modified
 	cursorCloned bool // the cursor was cloned, creating a new entry
-	persist bool // changes are persisted
-	filterOut bool // during search filters out the current result
-	remove bool // removes the current entry
+	persist      bool // changes are persisted
+	filterOut    bool // during search filters out the current result
+	remove       bool // removes the current entry
 
-	freeCursor bool // function is free of moving the cursor around
+	freeCursor      bool // function is free of moving the cursor around
 	showReturnValue bool // show return value of this function
 
 	objects []interface{}
@@ -81,12 +81,14 @@ func GetEntryFromLua(L *lua.State, name string, fname string) *Entry {
 	rawptr := L.ToUserdata(-1)
 	var ptr **Entry = (**Entry)(rawptr)
 	L.Pop(1)
-	if ptr == nil { panic(errors.New("No cursor set, can not use " + fname)) }
+	if ptr == nil {
+		panic(errors.New("No cursor set, can not use " + fname))
+	}
 	return *ptr
 
 }
 
-func LuaIntGetterSetterFunction(fname string, L *lua.State, getter func(tl *Tasklist, entry *Entry)string, setter func(tl *Tasklist, entry *Entry, value string)) int {
+func LuaIntGetterSetterFunction(fname string, L *lua.State, getter func(tl *Tasklist, entry *Entry) string, setter func(tl *Tasklist, entry *Entry, value string)) int {
 	argNum := L.GetTop()
 
 	if argNum == 0 {
@@ -99,7 +101,9 @@ func LuaIntGetterSetterFunction(fname string, L *lua.State, getter func(tl *Task
 		entry := GetEntryFromLua(L, CURSOR, fname)
 		tl := GetTasklistFromLua(L)
 		setter(tl, entry, value)
-		if !tl.luaFlags.cursorCloned { tl.luaFlags.cursorEdited = true }
+		if !tl.luaFlags.cursorCloned {
+			tl.luaFlags.cursorEdited = true
+		}
 		return 0
 	}
 
@@ -120,7 +124,9 @@ func LuaIntGetterSetterFunctionInt(fname string, L *lua.State, getter func(tl *T
 		entry := GetEntryFromLua(L, CURSOR, fname)
 		tl := GetTasklistFromLua(L)
 		setter(tl, entry, value)
-		if !tl.luaFlags.cursorCloned { tl.luaFlags.cursorEdited = true }
+		if !tl.luaFlags.cursorCloned {
+			tl.luaFlags.cursorEdited = true
+		}
 		return 0
 	}
 
@@ -131,7 +137,11 @@ func LuaIntGetterSetterFunctionInt(fname string, L *lua.State, getter func(tl *T
 func LuaIntId(L *lua.State) int {
 	return LuaIntGetterSetterFunction("id", L,
 		func(tl *Tasklist, entry *Entry) string { return entry.Id() },
-		func(tl *Tasklist, entry *Entry, value string) { if tl.luaFlags.cursorCloned { entry.SetId(value) } })
+		func(tl *Tasklist, entry *Entry, value string) {
+			if tl.luaFlags.cursorCloned {
+				entry.SetId(value)
+			}
+		})
 }
 
 func LuaIntTitle(L *lua.State) int {
@@ -160,7 +170,13 @@ func LuaIntPriority(L *lua.State) int {
 
 func LuaIntWhen(L *lua.State) int {
 	return LuaIntGetterSetterFunctionInt("triggerat", L,
-		func(tl *Tasklist, entry *Entry) int64 { t := entry.TriggerAt(); if t != nil { return int64(t.Unix()) }; return 0 },
+		func(tl *Tasklist, entry *Entry) int64 {
+			t := entry.TriggerAt()
+			if t != nil {
+				return int64(t.Unix())
+			}
+			return 0
+		},
 		func(tl *Tasklist, entry *Entry, value int) {
 			r := time.Unix(int64(value), 0)
 			entry.SetTriggerAt(&r)
@@ -181,11 +197,13 @@ func LuaIntColumn(L *lua.State) int {
 		entry := GetEntryFromLua(L, CURSOR, "column()")
 		entry.SetColumn(name, value)
 		tl := GetTasklistFromLua(L)
-		if !tl.luaFlags.cursorCloned { tl.luaFlags.cursorEdited = true }
+		if !tl.luaFlags.cursorCloned {
+			tl.luaFlags.cursorEdited = true
+		}
 		return 0
 	}
 
-	panic(errors.New( "Incorrect number of arguments to column (only 1 or 2 accepted)"))
+	panic(errors.New("Incorrect number of arguments to column (only 1 or 2 accepted)"))
 	return 0
 }
 
@@ -207,7 +225,9 @@ func LuaIntRmColumn(L *lua.State) int {
 	entry := GetEntryFromLua(L, CURSOR, "rmcolumn()")
 	entry.RemoveColumn(name)
 	tl := GetTasklistFromLua(L)
-	if !tl.luaFlags.cursorCloned { tl.luaFlags.cursorEdited = true }
+	if !tl.luaFlags.cursorCloned {
+		tl.luaFlags.cursorEdited = true
+	}
 	return 0
 }
 
@@ -272,11 +292,11 @@ func LuaIntVisit(L *lua.State) int {
 			}
 		}()
 		cursor := tl.Get(id)
-		tl.SetEntryInLua(CURSOR, cursor);
+		tl.SetEntryInLua(CURSOR, cursor)
 	}
 
 	if error != nil {
-		tl.SetEntryInLua(CURSOR, nil);
+		tl.SetEntryInLua(CURSOR, nil)
 	}
 
 	return 0
@@ -340,7 +360,7 @@ func LuaIntLocalTime(L *lua.State) int {
 	timezone := tl.GetTimezone()
 	timestamp := L.ToInteger(1)
 
-	t := time.Unix(int64(timestamp) + (int64(timezone) * 60 * 60), 0)
+	t := time.Unix(int64(timestamp)+(int64(timezone)*60*60), 0)
 
 	PushTime(L, t)
 
@@ -351,7 +371,7 @@ func LuaIntTimestamp(L *lua.State) int {
 	luaAssertArgnum(L, 1, "timestamp()")
 
 	if !L.IsTable(-1) {
-		panic(errors.New( "Argoment of timestamp is not a table"))
+		panic(errors.New("Argoment of timestamp is not a table"))
 		return 0
 	}
 
@@ -407,7 +427,7 @@ func LuaIntSplit(L *lua.State) int {
 	return 1
 }
 
-func LuaIntStringFunction(L *lua.State, name string, n int, fn func(tl *Tasklist, argv []string)int) int {
+func LuaIntStringFunction(L *lua.State, name string, n int, fn func(tl *Tasklist, argv []string) int) int {
 	luaAssertArgnum(L, n, name)
 
 	argv := make([]string, 0)
@@ -423,21 +443,21 @@ func LuaIntStringFunction(L *lua.State, name string, n int, fn func(tl *Tasklist
 
 func LuaIntIdQuery(L *lua.State) int {
 	return LuaIntStringFunction(L, "idq", 1, func(tl *Tasklist, argv []string) int {
-		tl.luaState.PushGoStruct(&SimpleExpr{ ":id", "=", argv[0], nil, 0, "" })
+		tl.luaState.PushGoStruct(&SimpleExpr{":id", "=", argv[0], nil, 0, ""})
 		return 1
 	})
 }
 
 func LuaIntTitleQuery(L *lua.State) int {
 	return LuaIntStringFunction(L, "titleq", 2, func(tl *Tasklist, argv []string) int {
-		tl.luaState.PushGoStruct(&SimpleExpr{ ":title_field", argv[0], argv[1], nil, 0, "" })
+		tl.luaState.PushGoStruct(&SimpleExpr{":title_field", argv[0], argv[1], nil, 0, ""})
 		return 1
 	})
 }
 
 func LuaIntTextQuery(L *lua.State) int {
 	return LuaIntStringFunction(L, "textq", 2, func(tl *Tasklist, argv []string) int {
-		tl.luaState.PushGoStruct(&SimpleExpr{ ":text_field", argv[0], argv[1], nil, 0, "" })
+		tl.luaState.PushGoStruct(&SimpleExpr{":text_field", argv[0], argv[1], nil, 0, ""})
 		return 1
 	})
 }
@@ -446,14 +466,14 @@ func LuaIntWhenQuery(L *lua.State) int {
 	return LuaIntStringFunction(L, "whenq", 2, func(tl *Tasklist, argv []string) int {
 		n, _ := strconv.ParseInt(argv[1], 10, 64)
 		t := time.Unix(n, 0)
-		tl.luaState.PushGoStruct(&SimpleExpr{ ":when", argv[0], "", &t, 0, "" })
+		tl.luaState.PushGoStruct(&SimpleExpr{":when", argv[0], "", &t, 0, ""})
 		return 1
 	})
 }
 
 func LuaIntSearchQuery(L *lua.State) int {
 	return LuaIntStringFunction(L, "searchq", 1, func(tl *Tasklist, argv []string) int {
-		tl.luaState.PushGoStruct(&SimpleExpr{ ":search", "match", argv[0], nil, 0, "" })
+		tl.luaState.PushGoStruct(&SimpleExpr{":search", "match", argv[0], nil, 0, ""})
 		return 1
 	})
 }
@@ -483,7 +503,7 @@ func LuaIntColumnQuery(L *lua.State) int {
 	L.CheckStack(1)
 	tl := GetTasklistFromLua(L)
 
-	tl.luaState.PushGoStruct(&SimpleExpr{ name, op, value, nil, 0, "" })
+	tl.luaState.PushGoStruct(&SimpleExpr{name, op, value, nil, 0, ""})
 	return 1
 }
 
@@ -495,7 +515,7 @@ func LuaIntPriorityQuery(L *lua.State) int {
 	L.CheckStack(1)
 	tl := GetTasklistFromLua(L)
 
-	tl.luaState.PushGoStruct(&SimpleExpr{ ":priority", "=", priority, nil, ParsePriority(priority), "" })
+	tl.luaState.PushGoStruct(&SimpleExpr{":priority", "=", priority, nil, ParsePriority(priority), ""})
 
 	return 1
 }
@@ -513,7 +533,9 @@ func GetQueryObject(tl *Tasklist, i int) Clausable {
 	}
 
 	ud := tl.luaState.ToGoStruct(i)
-	if ud == nil { return nil }
+	if ud == nil {
+		return nil
+	}
 
 	if clausable, ok := ud.(Clausable); ok {
 		return clausable
@@ -548,12 +570,12 @@ func LuaIntBoolQuery(L *lua.State, operator, name string) int {
 	L.CheckStack(1)
 	tl := GetTasklistFromLua(L)
 
-	r := &BoolExpr{ operator, make([]Clausable, 0) }
+	r := &BoolExpr{operator, make([]Clausable, 0)}
 
 	for i := 1; i <= L.GetTop(); i++ {
 		clausable := GetQueryObject(tl, i)
 		if clausable == nil {
-			panic(errors.New( "Wrong argument type to " + name + " only query objects accepted as arguments"))
+			panic(errors.New("Wrong argument type to " + name + " only query objects accepted as arguments"))
 			return 0
 		}
 		r.subExpr = append(r.subExpr, clausable)
@@ -581,7 +603,7 @@ func LuaIntSearch(L *lua.State) int {
 	tl := GetTasklistFromLua(L)
 
 	if !tl.luaFlags.freeCursor {
-		panic(errors.New( "search() function only available on a free cursor"))
+		panic(errors.New("search() function only available on a free cursor"))
 		return 0
 	}
 
@@ -620,7 +642,7 @@ func LuaIntShowRet(L *lua.State) int {
 func LuaIntDebulog(L *lua.State) int {
 	luaAssertArgnum(L, 1, "Wrong number of arguments to debulog")
 	Logf(INFO, "Log from lua: <%s>", L.ToString(1))
-	return 0;
+	return 0
 }
 
 func LuaTableGetString(L *lua.State, key string) string {
@@ -639,7 +661,7 @@ func (tl *Tasklist) LuaResultToEntries() ([]*Entry, []string) {
 	cols := []string{}
 
 	if !tl.luaState.IsTable(-1) {
-		panic("Lua function requested to show result but didn't return anything");
+		panic("Lua function requested to show result but didn't return anything")
 	}
 
 	tl.luaState.CheckStack(5)
@@ -701,7 +723,9 @@ func (tl *Tasklist) LuaResultToEntries() ([]*Entry, []string) {
 }
 
 func (tl *Tasklist) DoStringNoLock(code string, cursor *Entry, freeCursor bool) error {
-	if cursor != nil { tl.SetEntryInLua(CURSOR, cursor) }
+	if cursor != nil {
+		tl.SetEntryInLua(CURSOR, cursor)
+	}
 	tl.SetTasklistInLua()
 	tl.ResetLuaFlags()
 	tl.luaFlags.freeCursor = freeCursor

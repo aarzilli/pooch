@@ -1,14 +1,14 @@
 /*
  This program is distributed under the terms of GPLv3
  Copyright 2010, Alessandro Arzilli
- */
+*/
 
 package pooch
 
 import (
+	"bufio"
 	"os"
 	"text/tabwriter"
-	"bufio"
 )
 
 func CompatHelp() {

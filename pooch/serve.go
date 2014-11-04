@@ -1,37 +1,38 @@
 /*
  This program is distributed under the terms of GPLv3
  Copyright 2010-2013, Alessandro Arzilli
- */
+*/
 
 package pooch
 
 import (
-	"net/http"
-	"io"
-	"fmt"
-	"strings"
 	"encoding/json"
-	"time"
+	"fmt"
+	"io"
+	"net/http"
 	"strconv"
+	"strings"
+	"time"
 )
 
 type TasklistWithIdServer func(c http.ResponseWriter, req *http.Request, tl *Tasklist, id string)
 type TasklistServer func(c http.ResponseWriter, req *http.Request, tl *Tasklist)
 
-
 func SingleWrapperTasklistWithIdServer(fn TasklistWithIdServer) http.HandlerFunc {
-	return func (c http.ResponseWriter, req *http.Request) {
+	return func(c http.ResponseWriter, req *http.Request) {
 		WithOpenDefault(func(tl *Tasklist) {
 			id := req.FormValue("id")
-			if !tl.Exists(id) { panic(fmt.Sprintf("Non-existent id specified")) }
+			if !tl.Exists(id) {
+				panic(fmt.Sprintf("Non-existent id specified"))
+			}
 			fn(c, req, tl, id)
 		})
 	}
 }
 
 func SingleWrapperTasklistServer(fn TasklistServer) http.HandlerFunc {
-	return func (c http.ResponseWriter, req *http.Request) {
-		WithOpenDefault(func (tl *Tasklist) {
+	return func(c http.ResponseWriter, req *http.Request) {
+		WithOpenDefault(func(tl *Tasklist) {
 			fn(c, req, tl)
 		})
 	}
@@ -47,7 +48,10 @@ func WrapperServer(sub http.HandlerFunc) http.HandlerFunc {
 			}
 		}()
 
-		if !strings.HasPrefix(req.RemoteAddr, "127.0.0.1") { Log(ERROR, "Rejected request from:", req.RemoteAddr); return }
+		if !strings.HasPrefix(req.RemoteAddr, "127.0.0.1") {
+			Log(ERROR, "Rejected request from:", req.RemoteAddr)
+			return
+		}
 
 		Logf(INFO, "REQ\t%s\t%s\n", req.RemoteAddr, req)
 
@@ -65,7 +69,7 @@ func WrapperServer(sub http.HandlerFunc) http.HandlerFunc {
  * Minimal test server
  */
 func HelloServer(c http.ResponseWriter, req *http.Request) {
-	io.WriteString(c, "hello, world!\n");
+	io.WriteString(c, "hello, world!\n")
 }
 
 /*
@@ -104,10 +108,10 @@ func StaticInMemoryServer(c http.ResponseWriter, req *http.Request) {
 			}
 		}
 
-		c.Header().Set("ETag", "\"" + signature + "\"")
+		c.Header().Set("ETag", "\""+signature+"\"")
 		c.Header().Set("Content-Type", ct)
 
-		io.WriteString(c, decodeStatic(req.URL.Path[1:]));
+		io.WriteString(c, decodeStatic(req.URL.Path[1:]))
 	}
 }
 
@@ -131,7 +135,6 @@ func CheckBool(in string, name string) bool {
 	return false
 }
 
-
 func ChangePriorityServer(c http.ResponseWriter, req *http.Request, tl *Tasklist, id string) {
 	special := CheckBool(CheckFormValue(req, "special"), "special")
 
@@ -142,7 +145,7 @@ func ChangePriorityServer(c http.ResponseWriter, req *http.Request, tl *Tasklist
 
 func GetServer(c http.ResponseWriter, req *http.Request, tl *Tasklist, id string) {
 	entry := tl.Get(id)
-	io.WriteString(c, time.Now().UTC().Format("2006-01-02 15:04:05") + "\n")
+	io.WriteString(c, time.Now().UTC().Format("2006-01-02 15:04:05")+"\n")
 	json.NewEncoder(c).Encode(MarshalEntry(entry, tl.GetTimezone()))
 }
 
@@ -158,18 +161,22 @@ func QaddServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 
 	isi, parent := IsSubitem(entry.Columns())
 	if isi {
-		io.WriteString(c, "added: " + entry.Id() + " " + parent)
+		io.WriteString(c, "added: "+entry.Id()+" "+parent)
 	} else {
-		io.WriteString(c, "added: " + entry.Id())
+		io.WriteString(c, "added: "+entry.Id())
 	}
 }
 
 func SaveServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	umentry := &UnmarshalEntry{}
 
-	if err := json.NewDecoder(req.Body).Decode(umentry); err != nil { panic(err) }
+	if err := json.NewDecoder(req.Body).Decode(umentry); err != nil {
+		panic(err)
+	}
 
-	if !tl.Exists(umentry.Id) { panic("Specified id does not exists") }
+	if !tl.Exists(umentry.Id) {
+		panic("Specified id does not exists")
+	}
 
 	entry := DemarshalEntry(umentry, tl.GetTimezone())
 
@@ -178,27 +185,27 @@ func SaveServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 		entry.Print()
 	}
 
-	tl.Update(entry, false);
+	tl.Update(entry, false)
 
-	io.WriteString(c, "saved-at-timestamp: " + time.Now().UTC().Format("2006-01-02 15:04:05"))
+	io.WriteString(c, "saved-at-timestamp: "+time.Now().UTC().Format("2006-01-02 15:04:05"))
 }
 
 func ErrorLogServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	css := tl.GetSetting("theme")
 	errors := tl.RetrieveErrors()
 
-	ErrorLogHeaderHTML(map[string]string{ "name": "error log", "theme": css, "code": "" }, c)
+	ErrorLogHeaderHTML(map[string]string{"name": "error log", "theme": css, "code": ""}, c)
 
 	for idx, error := range errors {
 		htmlClass := "entry"
-		if idx % 2 != 0 {
+		if idx%2 != 0 {
 			htmlClass += " oddentry"
 		}
 
 		ErrorLogEntryHTML(map[string]string{
 			"htmlClass": htmlClass,
-			"time": error.TimeString(),
-			"message": error.Message }, c)
+			"time":      error.TimeString(),
+			"message":   error.Message}, c)
 	}
 
 	ErrorLogEnderHTML(nil, c)
@@ -213,7 +220,7 @@ func ExplainServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 
 	myexplain += fmt.Sprintf("Errors: %s\nSaved Search: %v\n\nEmpty: %v\n\nShow Cols: %v\n\nOptions: %v\n\nSQL:\n%s\n\nCODE:\n%s\n\nSQLITE OPCODES:\n", err, isSavedSearch, isEmpty, showCols, options, theselect, code)
 
-	ErrorLogHeaderHTML(map[string]string{ "name": "explanation", "theme": css, "code": myexplain }, c)
+	ErrorLogHeaderHTML(map[string]string{"name": "explanation", "theme": css, "code": myexplain}, c)
 	ExplainEntryHeaderHTML(nil, c)
 
 	theselect = "EXPLAIN " + theselect
@@ -222,13 +229,13 @@ func ExplainServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 
 	for idx, expl := range expls {
 		htmlClass := "entry"
-		if idx % 2 != 0 {
+		if idx%2 != 0 {
 			htmlClass += " oddentry"
 		}
 
 		ExplainEntryHTML(map[string]interface{}{
 			"htmlClass": htmlClass,
-			"explain": expl }, c)
+			"explain":   expl}, c)
 	}
 
 	ErrorLogEnderHTML(nil, c)
@@ -251,7 +258,10 @@ func queryForTitle(query string) string {
 func headerInfo(tl *Tasklist, pageName string, query string, trigger string, isSavedSearch bool, showOtherLink bool, parseError, retrieveError error, options map[string]string) map[string]interface{} {
 	css := tl.GetSetting("theme")
 	timezone := tl.GetTimezone()
-	removeSearch := ""; if isSavedSearch { removeSearch = "remove-search" }
+	removeSearch := ""
+	if isSavedSearch {
+		removeSearch = "remove-search"
+	}
 	var otherPageName, otherPageLink string
 	if showOtherLink {
 		if pageName == "/list" {
@@ -264,17 +274,17 @@ func headerInfo(tl *Tasklist, pageName string, query string, trigger string, isS
 	}
 
 	r := map[string]interface{}{
-		"pageName": pageName,
-		"query": query,
+		"pageName":      pageName,
+		"query":         query,
 		"queryForTitle": queryForTitle(query),
-		"theme": css,
-		"timezone": fmt.Sprintf("%d", timezone),
-		"removeSearch": removeSearch,
+		"theme":         css,
+		"timezone":      fmt.Sprintf("%d", timezone),
+		"removeSearch":  removeSearch,
 		"retrieveError": retrieveError,
-		"parseError": parseError,
+		"parseError":    parseError,
 		"otherPageName": otherPageName,
 		"otherPageLink": otherPageLink,
-	};
+	}
 
 	if options != nil {
 		if _, ok := options["hidetimecol"]; ok {
@@ -306,10 +316,10 @@ func StatServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 
 	for i, stat := range tl.GetStatistics() {
 		htmlClass := "entry"
-		if i % 2 == 0 {
+		if i%2 == 0 {
 			htmlClass += " oddentry"
 		}
-		StatEntryHTML(map[string]interface{}{ "htmlClass": htmlClass, "entry": stat }, c)
+		StatEntryHTML(map[string]interface{}{"htmlClass": htmlClass, "entry": stat}, c)
 	}
 
 	ListEnderHTML(nil, c)
@@ -319,12 +329,12 @@ func RunServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	commandstr := strings.Replace(req.FormValue("text"), "\r", "", -1)
 	command := strings.SplitN(commandstr, " ", -1)
 
-	Logf(INFO, "Running command: " + command[0])
+	Logf(INFO, "Running command: "+command[0])
 
 	fentry := tl.Get(command[0])
 	tl.DoRunString(fentry.Text(), command[1:len(command)])
 
-	headerInfo := headerInfo(tl, "/list", commandstr, "", false, false, nil, nil, map[string]string{ "hideprioritycol": "", "showidcol": "", "hidecatscol": "" })
+	headerInfo := headerInfo(tl, "/list", commandstr, "", false, false, nil, nil, map[string]string{"hideprioritycol": "", "showidcol": "", "hidecatscol": ""})
 
 	CommonHeaderHTML(headerInfo, c)
 	EntryListHeaderHTML(nil, c)
@@ -334,27 +344,27 @@ func RunServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 		timezone := tl.GetTimezone()
 
 		if len(v) > 0 {
-			EntryListPriorityChangeHTML(map[string]interface{}{ "entry": v[0], "colNames": showCols, "PrioritySize": 4 }, c)
+			EntryListPriorityChangeHTML(map[string]interface{}{"entry": v[0], "colNames": showCols, "PrioritySize": 4}, c)
 		}
 
 		for idx, entry := range v {
 			htmlClass := "entry"
-			if idx % 2 != 0 {
+			if idx%2 != 0 {
 				htmlClass += " oddentry"
 			}
 
 			cols := []string{}
-			for _,  colName := range showCols {
+			for _, colName := range showCols {
 				cols = append(cols, entry.Columns()[colName])
 			}
 
 			entryEntry := map[string](interface{}){
-				"heading": entry.Id(),
-				"entry": entry,
-				"etime": TimeString(entry.TriggerAt(), entry.Sort(), timezone),
-				"ecats": "",
+				"heading":   entry.Id(),
+				"entry":     entry,
+				"etime":     TimeString(entry.TriggerAt(), entry.Sort(), timezone),
+				"ecats":     "",
 				"htmlClass": htmlClass,
-				"cols": cols,
+				"cols":      cols,
 			}
 
 			EntryListEntryHTML(entryEntry, c)
@@ -431,10 +441,18 @@ func ListServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 
 	prioritySize := 5
 
-	if _, ok := options["hidetimecol"]; ok { prioritySize-- }
-	if _, ok := options["hideprioritycol"]; ok { prioritySize-- }
-	if _, ok := options["hidecatscol"]; ok { prioritySize-- }
-	if _, ok := options["showidcol"]; ok { prioritySize++ }
+	if _, ok := options["hidetimecol"]; ok {
+		prioritySize--
+	}
+	if _, ok := options["hideprioritycol"]; ok {
+		prioritySize--
+	}
+	if _, ok := options["hidecatscol"]; ok {
+		prioritySize--
+	}
+	if _, ok := options["showidcol"]; ok {
+		prioritySize++
+	}
 
 	catordering := tl.CategoryDepth()
 
@@ -448,27 +466,27 @@ func ListServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	var curp Priority = INVALID
 	for idx, entry := range v {
 		if (curp != entry.Priority()) && !subsort {
-			EntryListPriorityChangeHTML(map[string]interface{}{ "entry": entry, "colNames": showCols, "PrioritySize": prioritySize }, c)
+			EntryListPriorityChangeHTML(map[string]interface{}{"entry": entry, "colNames": showCols, "PrioritySize": prioritySize}, c)
 			curp = entry.Priority()
 		}
 
 		htmlClass := "entry"
-		if idx % 2 != 0 {
+		if idx%2 != 0 {
 			htmlClass += " oddentry"
 		}
 
 		cols := []string{}
-		for _,  colName := range showCols {
+		for _, colName := range showCols {
 			cols = append(cols, entry.Columns()[colName])
 		}
 
 		entryEntry := map[string](interface{}){
-			"heading": entry.Id(),
-			"entry": entry,
-			"etime": TimeString(entry.TriggerAt(), entry.Sort(), timezone),
-			"ecats": entry.CatString(catordering),
+			"heading":   entry.Id(),
+			"entry":     entry,
+			"etime":     TimeString(entry.TriggerAt(), entry.Sort(), timezone),
+			"ecats":     entry.CatString(catordering),
 			"htmlClass": htmlClass,
-			"cols": cols,
+			"cols":      cols,
 		}
 
 		EntryListEntryHTML(entryEntry, c)
@@ -484,16 +502,16 @@ func CalendarServerInner(c http.ResponseWriter, req *http.Request, tl *Tasklist,
 	query := req.FormValue("q")
 
 	CommonHeaderHTML(headerInfo(tl, "/cal", query, trigger, isSavedSearch, true, perr, nil, nil), c)
-	CalendarHTML(map[string]string{ "query": query }, c)
+	CalendarHTML(map[string]string{"query": query}, c)
 }
 
 func GetCalendarEvents(tl *Tasklist, query string, start, end string, endSecs int64) []EventForJSON {
 	pr := tl.ParseEx(query)
 	pr = pr.ResolveSavedSearch(tl) // necessary, to modify the result
 
-	pr.AddIncludeClause(&SimpleExpr{ ":when", "notnull", "", nil, 0, "" })
-	pr.AddIncludeClause(&SimpleExpr{ ":when", ">", start, nil, 0, ""  })
-	pr.AddIncludeClause(&SimpleExpr{ ":when", "<", end, nil, 0, "" })
+	pr.AddIncludeClause(&SimpleExpr{":when", "notnull", "", nil, 0, ""})
+	pr.AddIncludeClause(&SimpleExpr{":when", ">", start, nil, 0, ""})
+	pr.AddIncludeClause(&SimpleExpr{":when", "<", end, nil, 0, ""})
 	pr.options["w/done"] = "w/done"
 	theselect, _, _ := pr.IntoSelect(tl, nil)
 	v, _ := tl.Retrieve(theselect, pr.command, false)
@@ -503,11 +521,13 @@ func GetCalendarEvents(tl *Tasklist, query string, start, end string, endSecs in
 	r := make([]EventForJSON, 0)
 
 	for _, entry := range v {
-		className := fmt.Sprintf("alt%d", entry.CatHash() % 6)
+		className := fmt.Sprintf("alt%d", entry.CatHash()%6)
 
 		r = append(r, ToCalendarEvent(entry, className, timezone))
 
-		if entry.Priority() != TIMED { continue }
+		if entry.Priority() != TIMED {
+			continue
+		}
 		if freq := entry.Freq(); freq > 0 {
 			for newEntry := entry.NextEntry(""); newEntry.Before(endSecs); newEntry = newEntry.NextEntry("") {
 				r = append(r, ToCalendarEvent(newEntry, className, timezone))
@@ -547,10 +567,10 @@ func HtmlGetServer(c http.ResponseWriter, req *http.Request, tl *Tasklist, id st
 
 	entryEntry := map[string](interface{}){
 		"heading": nil,
-		"entry": entry,
-		"etime": TimeString(entry.TriggerAt(), entry.Sort(), tl.GetTimezone()),
-		"ecats": entry.CatString(nil),
-		"cols": []string{},
+		"entry":   entry,
+		"etime":   TimeString(entry.TriggerAt(), entry.Sort(), tl.GetTimezone()),
+		"ecats":   entry.CatString(nil),
+		"cols":    []string{},
 	}
 
 	EntryListEntryHTML(entryEntry, c)
@@ -574,7 +594,7 @@ func SaveSearchServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 		query = tl.GetSavedSearch(name)
 	}
 	Logf(INFO, "Query: [%s] [%s]", name, query)
-	io.WriteString(c, "query-saved: " + query)
+	io.WriteString(c, "query-saved: "+query)
 }
 
 func RemoveSearchServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
@@ -600,7 +620,9 @@ func OptionServer(c http.ResponseWriter, req *http.Request, multiuserDb *Multius
 		Must(req.ParseForm())
 		settings := tl.GetSettings()
 		for k, v := range req.Form {
-			if k != "save" { settings[k] = v[0] }
+			if k != "save" {
+				settings[k] = v[0]
+			}
 		}
 		tl.SetSettings(settings)
 
@@ -615,9 +637,9 @@ func OptionServer(c http.ResponseWriter, req *http.Request, multiuserDb *Multius
 
 	for k, v := range settings {
 		if LONG_OPTION[k] {
-			OptionsLongPageLine(map[string]string{ "name": k, "value": v }, c)
+			OptionsLongPageLine(map[string]string{"name": k, "value": v}, c)
 		} else {
-			OptionsPageLine(map[string]string{ "name": k, "value": v }, c)
+			OptionsPageLine(map[string]string{"name": k, "value": v}, c)
 		}
 	}
 
@@ -642,7 +664,7 @@ func convertOntologyNodeInToOut(on OntologyNodeIn) interface{} {
 	if (on.Children == nil) || (len(on.Children) == 0) {
 		return on.Data
 	}
-	return OntologyNodeOut{ on.Data, "open", convertOntologyInToOut(on.Children) }
+	return OntologyNodeOut{on.Data, "open", convertOntologyInToOut(on.Children)}
 }
 
 func convertOntologyInToOut(ontology []OntologyNodeIn) []interface{} {
@@ -663,16 +685,16 @@ func ontologyServerGet(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	tags := tl.GetTags()
 
 	for _, ss := range savedSearches {
-		n :=  "#%" + ss
+		n := "#%" + ss
 		if _, ok := knownTags[n]; !ok {
-			ontology = append(ontology, OntologyNodeIn{ n, "open", nil})
+			ontology = append(ontology, OntologyNodeIn{n, "open", nil})
 		}
 	}
 
 	for _, t := range tags {
-		n :=  "#" + t
+		n := "#" + t
 		if _, ok := knownTags[n]; !ok {
-			ontology = append(ontology, OntologyNodeIn{ n, "open", nil})
+			ontology = append(ontology, OntologyNodeIn{n, "open", nil})
 		}
 	}
 
@@ -692,20 +714,19 @@ func ontologyServerCheck(c http.ResponseWriter, req *http.Request, tl *Tasklist)
 
 	first := true
 
-	colNames := []string{ "problem", "hint" }
+	colNames := []string{"problem", "hint"}
 
 	catordering := tl.CategoryDepth()
 
 	for idx, oee := range errors {
 		entry := oee.Entry
 		if first {
-			EntryListPriorityChangeHTML(map[string]interface{}{ "entry": entry, "colNames": colNames, "PrioritySize": 5 }, c)
+			EntryListPriorityChangeHTML(map[string]interface{}{"entry": entry, "colNames": colNames, "PrioritySize": 5}, c)
 			first = false
 		}
 
-
 		htmlClass := "entry"
-		if idx % 2 != 0 {
+		if idx%2 != 0 {
 			htmlClass += " oddentry"
 		}
 
@@ -713,13 +734,13 @@ func ontologyServerCheck(c http.ResponseWriter, req *http.Request, tl *Tasklist)
 		cols = append(cols, oee.ProblemCategory)
 		cols = append(cols, oee.ProblemDetail)
 
-		entryEntry := map[string]interface{} {
-			"heading": entry.Id(),
-			"entry": entry,
-			"etime": TimeString(entry.TriggerAt(), entry.Sort(), timezone),
-			"ecats": entry.CatString(catordering),
+		entryEntry := map[string]interface{}{
+			"heading":   entry.Id(),
+			"entry":     entry,
+			"etime":     TimeString(entry.TriggerAt(), entry.Sort(), timezone),
+			"ecats":     entry.CatString(catordering),
 			"htmlClass": htmlClass,
-			"cols": cols,
+			"cols":      cols,
 		}
 
 		EntryListEntryHTML(entryEntry, c)
@@ -750,7 +771,7 @@ func OntologySaveServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) 
 	c.Write([]byte("ok"))
 }
 
-func SetupHandleFunc(wrapperTasklistServer func(TasklistServer)http.HandlerFunc, wrapperTasklistWithIdServer func(TasklistWithIdServer)http.HandlerFunc, multiuserDb *MultiuserDb) {
+func SetupHandleFunc(wrapperTasklistServer func(TasklistServer) http.HandlerFunc, wrapperTasklistWithIdServer func(TasklistWithIdServer) http.HandlerFunc, multiuserDb *MultiuserDb) {
 	http.HandleFunc("/", WrapperServer(StaticInMemoryServer))
 	http.HandleFunc("/static-hello.html", WrapperServer(HelloServer))
 
@@ -759,7 +780,7 @@ func SetupHandleFunc(wrapperTasklistServer func(TasklistServer)http.HandlerFunc,
 	http.HandleFunc("/run", WrapperServer(wrapperTasklistServer(RunServer)))
 	http.HandleFunc("/stat", WrapperServer(wrapperTasklistServer(StatServer)))
 	http.HandleFunc("/opts", WrapperServer(wrapperTasklistServer(
-		func (res http.ResponseWriter, req *http.Request, tl *Tasklist) {
+		func(res http.ResponseWriter, req *http.Request, tl *Tasklist) {
 			OptionServer(res, req, multiuserDb, tl)
 		})))
 	http.HandleFunc("/errorlog", WrapperServer(wrapperTasklistServer(ErrorLogServer)))
@@ -797,9 +818,9 @@ func SetupHandleFunc(wrapperTasklistServer func(TasklistServer)http.HandlerFunc,
 
 func Serve(port string) {
 	SetupHandleFunc(SingleWrapperTasklistServer, SingleWrapperTasklistWithIdServer, nil)
-	err := http.ListenAndServe(":" + port, nil)
+	err := http.ListenAndServe(":"+port, nil)
 	if err != nil {
- 		Log(ERROR, "Couldn't serve:", err)
+		Log(ERROR, "Couldn't serve:", err)
 		return
 	}
 	fmt.Printf("Done serving\n")
@@ -809,12 +830,11 @@ type EventForJSON map[string]interface{}
 
 func ToCalendarEvent(entry *Entry, className string, timezone int) EventForJSON {
 	return map[string]interface{}{
-		"id": entry.Id(),
-		"title": entry.Title(),
-		"allDay": true,
-		"start": TimeFormatTimezone(entry.TriggerAt(), time.RFC3339, timezone),
-		"className": className,
+		"id":             entry.Id(),
+		"title":          entry.Title(),
+		"allDay":         true,
+		"start":          TimeFormatTimezone(entry.TriggerAt(), time.RFC3339, timezone),
+		"className":      className,
 		"ignoreTimezone": true,
 	}
 }
-

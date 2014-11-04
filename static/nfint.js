@@ -283,8 +283,6 @@ function getRowFromId(daid) {
 function toggleSelected(daid) {
 	if (curSelected.id != daid) {
 		switchSelected(daid);
-	} else {
-		switchSelected("");
 	}
 
 	setMenu("");

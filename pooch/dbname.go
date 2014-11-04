@@ -1,7 +1,7 @@
 /*
  This program is distributed under the terms of GPLv3
  Copyright 2010, Alessandro Arzilli
- */
+*/
 
 package pooch
 
@@ -21,7 +21,9 @@ func FixExtension(name string) string {
 
 func WithOpenDefault(rest func(tl *Tasklist)) {
 	dbname := os.Getenv("POOCHDB")
-	if dbname == "" { panic("POOCHDB Not Set") }
+	if dbname == "" {
+		panic("POOCHDB Not Set")
+	}
 	tl := OpenOrCreate(dbname)
 	defer tl.Close()
 	tl.mutex.Lock()
@@ -55,7 +57,5 @@ func Resolve(name string) (outname string, found bool) {
 
 func Base(dbpath string) string {
 	name := path.Base(dbpath)
-	return name[0:(len(name)-len(".pooch"))]
+	return name[0:(len(name) - len(".pooch"))]
 }
-
-
