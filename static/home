@@ -3,11 +3,15 @@
 	<head>
 		<title>Pooch 3</title>
 		<script src="nfint.js"></script>
-		<link type="text/css" rel="stylesheet" href="nfstyle.css"/>
+		<link type="text/css" rel="stylesheet" href="nfstyle.css" title="nfstyle"/>
 	</head>
 	<body>
 		<div id="menu">
 			<div id="menu_cl"></div>
+			<div id="menu_config" style='display: none'>
+				<p><input name="config_expanded" id="config_expanded" type="checkbox">&nbsp;<label for="config_expanded">Content always expanded</label>
+				<p><input name="config_done" type="button" value="Done" onclick='close_config()'/>
+			</div>
 		</div>
 		<div id="main">
 		</div>

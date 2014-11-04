@@ -66,6 +66,7 @@ body {
 	width: 100%;
 }
 
+/* ALSO SET BY nfint.js */
 .objlist tr.objectrow > td.contentcol div.formattedtext {
 	width: 100%;
 	height: 1.2em;
@@ -119,6 +120,7 @@ body {
 	font-size: small;
 }
 
+/* ALSO SET BY nfint.js */
 div#menu {
 	position: fixed;
 	width: 100%;

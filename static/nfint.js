@@ -56,7 +56,7 @@ function setMenu(errStr) {
 		return
 	}
 
-	menuDiv.innerHTML = "READY: (r) refresh, (g) goto";
+	menuDiv.innerHTML = "READY: (r) refresh, (g) goto (c) view configuration";
 }
 
 function complete_action_click() {
@@ -208,10 +208,13 @@ function saveobject_click(e, close) {
 	var darow = getContainingRow(dacell);
 	var daid = getIdFromRow(darow);
 	var ta = dacell.getElementsByTagName("textarea")[0];
-	makeHTTPRequest("POST", "/nf/update.json", "id=" + encodeURIComponent(daid) + "&body=" + encodeURIComponent(ta.value),
+	var f = close ? 
 		function(returnObj) {
 			fillObjectRow(darow, returnObj.Objects[0], !close);
-		});
+		} :
+		function(returnObj) {
+		};
+	makeHTTPRequest("POST", "/nf/update.json", "id=" + encodeURIComponent(daid) + "&body=" + encodeURIComponent(ta.value), f);
 }
 
 function renameobject_click(e) {
@@ -396,6 +399,10 @@ function keypressfn(e) {
 	if (e.key == "r") {
 		reloadEverything()
 		return;
+	}
+	
+	if ((curSelected.id == "") && (e.key == "c")) {
+		open_config();
 	}
 
 	if ((curCut.id != "") && (curSelected.id != "")) {
@@ -746,6 +753,40 @@ function idConvertSpaces(a) {
 
 function idRevertSpaces(a) {
 	return a.replace("·", " ");
+}
+
+function styleProp(selectorText) {
+	for (var i  = 0; i < document.styleSheets.length; i++) {
+		if (document.styleSheets[i].title == "nfstyle") {
+			for (var j = 0; j < document.styleSheets[i].cssRules.length; j++) {
+				if (document.styleSheets[i].cssRules[j].selectorText == selectorText) {
+					return document.styleSheets[i].cssRules[j];
+				}
+			}
+		}
+	}
+	return null;
+}
+
+function open_config() {
+	document.getElementById("menu").style["height"] = "auto";
+	document.getElementById("menu_cl").style["display"] = "none";
+	document.getElementById("menu_config").style["display"] = "block";
+}
+
+function close_config() {
+	document.getElementById("menu").style["height"] = "40px";
+	var config_expanded = document.getElementById("config_expanded").checked;
+	var s = styleProp(".objlist tr.objectrow > td.contentcol div.formattedtext");
+	if (config_expanded) {
+		s.style["overflow"] = "visible";
+		s.style["height"] = "auto";
+	} else {
+		s.style["overflow"] = "hidden";
+		s.style["height"] = "1.2em";
+	}
+	document.getElementById("menu_cl").style["display"] = "block";
+	document.getElementById("menu_config").style["display"] = "none";
 }
 
 document.addEventListener('DOMContentLoaded', loaded, false);
