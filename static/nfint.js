@@ -474,7 +474,7 @@ function keypressfn(e) {
 			setMenu("");
 
 			return;
-		} else if (e.key == " ") {
+		} else if ((e.key == " ") || (e.key == "Right") || (e.key == "ArrowRight") || (e.key == "z")) {
 			toggleExpandedAnd(curSelected.id, "1", function() { });
 			return;
 		}
