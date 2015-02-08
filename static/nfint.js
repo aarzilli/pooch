@@ -785,6 +785,8 @@ function close_config() {
 		s.style["overflow"] = "hidden";
 		s.style["height"] = "1.2em";
 	}
+	s = styleProp("div#main");
+	s.style["width"] = document.getElementById("config_width").value;
 	document.getElementById("menu_cl").style["display"] = "block";
 	document.getElementById("menu_config").style["display"] = "none";
 }

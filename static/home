@@ -10,6 +10,7 @@
 			<div id="menu_cl"></div>
 			<div id="menu_config" style='display: none'>
 				<p><input name="config_expanded" id="config_expanded" type="checkbox">&nbsp;<label for="config_expanded">Content always expanded</label>
+				<p><label for="config_width">Width:</label>&nbsp;<input name="config_width" id="config_width" type="text" value="100%">
 				<p><input name="config_done" type="button" value="Done" onclick='close_config()'/>
 			</div>
 		</div>
