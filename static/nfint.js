@@ -170,20 +170,25 @@ function fillObjectRow(r, o, editor) {
 		z += "<td class='contentcol'><textarea id='contentform_" + o.Id + "'></textarea><input type='hidden' name='objname' value='" + o.Name + "'><br><input onclick='saveobject_click(this, false)' type='button' value='Save (C-s)'>&nbsp;<input type='button' value='Save and Close (escape)' onclick='saveobject_click(this, true)'>&nbsp;<input type='button' value='Rename' onclick='renameobject_click(this)'></td>";
 	} else {
 		if (o.Editable) {
-			z += "<td class='contentcol'"
+			z += "<td class='contentcol'";
 		} else {
-			z += "<td class='contentcol uneditable'"
+			z += "<td class='contentcol uneditable'";
 		}
 		z += "onclick='click_content(this)'><div class='formattedtext'>" + o.FormattedText + "</div></td>";
 	}
 
 	if (o.Priority != "unknown") {
-		z += "<td class='prioritycol'><input type='button' value='" + o.Priority.toUpperCase() + "' onclick='change_priority_click(this, event)'></div>";
+		z += "<td class='prioritycol'><input type='button' value='" + o.Priority.toUpperCase() + "' onclick='change_priority_click(this, event)'></td>";
 	} else {
-		z += "<td class='prioritycol'></div>";
+		z += "<td class='prioritycol'></td>";
 	}
 
 	r.innerHTML = z;
+	if (o.Priority == "done") {
+		r.classList.add("striked");
+	} else {
+		r.classList.remove("striked");
+	}
 
 	if (editor) {
 		var ta = document.getElementById("contentform_" + o.Id);
@@ -703,6 +708,12 @@ function guess_next_priority(daid, e, special) {
 
 function change_priority_to(daid, e, priorityNum, priority) {
 	e.value = priority;
+	var tr = getRowFromId(daid);
+	if (priority == "DONE") {
+		tr.classList.add("striked");
+	} else {
+		tr.classList.remove("striked");
+	}
 }
 
 function reloadEverything() {

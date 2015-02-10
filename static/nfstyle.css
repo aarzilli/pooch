@@ -146,3 +146,6 @@ div#main {
 	width: 100%;
 }
 
+tr.striked td.contentcol div.formattedtext {
+	text-decoration: line-through;
+}
