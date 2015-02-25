@@ -457,8 +457,92 @@ function onload_open_function(v, start) {
   }
 }
 
+function ontonav_click_folder(ev) {
+	var thea = ev.target;
+
+	if (ev.target.innerHTML == '\uf096') {
+		return;
+	}
+
+	var childul = $(ev.target).parents('li').children('ul').get(0);
+
+	if (ev.target.innerHTML == '\uf147') {
+		childul.style['display'] = 'none';
+		ev.target.innerHTML = '\uf196';
+	} else {
+		childul.style['display'] = 'block';
+		ev.target.innerHTML = '\uf147'
+	}
+}
+
+function ontonav_drop(ev) {
+	console.debug(ev);
+
+	var dsttype = ($(ev.target).parents('span').get(0).classList.contains('tree_folder')) ? 'chlidren' : 'sibling';
+	var dst = $(ev.target).parents('li').children('.tree_content').children('a').get(0).innerHTML;
+	var src = ev.dataTransfer.getData('text/text');
+
+	console.debug(dsttype, dst, src);
+
+	$.ajax({ type: "GET", url: "/ontology?move=1&src=" + encodeURIComponent(src) + "&dst=" + encodeURIComponent(dst) + "&mty=" + dsttype, success: function(data, textStatus, req) {
+		load_ontonav();
+	}})
+}
+
+function cancel_shit(ev) {
+	ev.preventDefault();
+	return false;
+}
+
+function ontonav_start_drag(ev, source) {
+	ev.dataTransfer.setData("text/text", source);
+}
+
+function load_ontonav_rec(onl, t) {
+	for (var i = 0; i < t.length; i++) {
+		var li = document.createElement("li");
+		onl.appendChild(li);
+
+		function add_d(ftype, content) {
+			var d = document.createElement("span");
+			d.classList.add("tree_folder");
+			d.innerHTML = "<a href='javascript:void(0)' onclick='ontonav_click_folder(event)' draggable='true' ondrop='ontonav_drop(event)' ondragenter='cancel_shit(event)' ondragover='cancel_shit(event)' ondragleave='cancel_shit(event)' ondragstart='ontonav_start_drag(event, \"" + content + "\")'>" + ftype + "</a>";
+			li.appendChild(d);
+
+			d = document.createElement("span");
+			d.classList.add("tree_content");
+
+			d.innerHTML = "<a href='list?q=" + encodeURIComponent(content) + "' ondrop='ontonav_drop(event)' ondragenter='cancel_shit(event)' ondragover='cancel_shit(event)' ondragleave='cancel_shit(event)' ondragstart='ontonav_start_drag(event, \"" + content + "\")'>" + content + "</a>";
+			li.appendChild(d);
+		}
+
+
+		if (typeof(t[i]) == "string") {
+			add_d('\uf096', t[i]);
+		} else {
+			add_d('\uf147', t[i]['data'])
+
+			d = document.createElement('ul');
+			li.appendChild(d);
+			load_ontonav_rec(d, t[i]['children']);
+		}
+	}
+}
+
+function load_ontonav() {
+	$.ajax({ url: "ontology", success: function(data, textStatus, req) {
+  		var t = JSON.parse(data);
+  		var on = $("#ontonav").first().get(0);
+  		on.innerHTML = "";
+  		var onl = document.createElement("ul");
+  		on.appendChild(onl);
+  		load_ontonav_rec(onl, t);
+	}})
+}
+
 window.onload = function() {
   var v = window.location.hash.split("#")
   var f = onload_open_function(v, 0);
   f();
+  load_ontonav();
 };

@@ -676,27 +676,7 @@ func convertOntologyInToOut(ontology []OntologyNodeIn) []interface{} {
 }
 
 func ontologyServerGet(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
-	ontology := tl.GetOntology()
-	knownTags := map[string]bool{}
-
-	getTagsInOntology(knownTags, ontology)
-
-	savedSearches := tl.GetSavedSearches()
-	tags := tl.GetTags()
-
-	for _, ss := range savedSearches {
-		n := "#%" + ss
-		if _, ok := knownTags[n]; !ok {
-			ontology = append(ontology, OntologyNodeIn{n, "open", nil})
-		}
-	}
-
-	for _, t := range tags {
-		n := "#" + t
-		if _, ok := knownTags[n]; !ok {
-			ontology = append(ontology, OntologyNodeIn{n, "open", nil})
-		}
-	}
+	ontology := ontologyServerGetIn(tl)
 
 	r := convertOntologyInToOut(ontology)
 
@@ -753,6 +733,22 @@ func ontologyServerCheck(c http.ResponseWriter, req *http.Request, tl *Tasklist)
 func OntologyServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	if req.FormValue("check") == "1" {
 		ontologyServerCheck(c, req, tl)
+	} else if req.FormValue("move") == "1" {
+		src := req.FormValue("src")
+		dst := req.FormValue("dst")
+		mty := req.FormValue("mty")
+		ontology := ontologyServerGetIn(tl)
+		if mty == "sibling" {
+			ontology = ontologyMoveSibling(src, dst, ontology)
+		} else {
+			ontology = ontologyMoveChildren(src, dst, ontology)
+		}
+		
+		mor, err := json.Marshal(ontology)
+		Must(err)
+		tl.SetSetting("ontology", string(mor))
+		
+		c.Write([]byte("ok"))
 	} else {
 		ontologyServerGet(c, req, tl)
 	}

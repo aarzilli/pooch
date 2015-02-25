@@ -8,7 +8,7 @@ GOFILES=\
 	pooch/parsetime.go pooch/tokenizer.go pooch/pureparser.go pooch/parserint.go\
 	pooch/luaint.go pooch/backend.go\
 	pooch/staticserve.go pooch/htmlformat.go pooch/serve.go pooch/multiserve.go\
-	pooch/nfront.go\
+	pooch/nfront.go pooch/ontology.go\
 	pooch.go
 
 staticservedeps = static/* static/dot-luv/* static/dot-luv/images/* static/jstree_default/*

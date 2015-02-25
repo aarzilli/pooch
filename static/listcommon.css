@@ -1,3 +1,8 @@
+@font-face {
+	font-family: FontAwesome;
+	src: url('/fontawesome.woff');
+}
+
 .advmenu {
   float: right;
   font-size: x-small;
@@ -72,4 +77,23 @@
 
 #ontonav_td {
   width: 15%;
+}
+
+#ontonav_td ul {
+	padding-left: 20px;
+}
+
+.tree_folder {
+	font-family: FontAwesome;
+	white-space: nowrap;
+	margin-right: 5px;
+}
+
+.tree_folder a {
+	font-family: inherit;
+	text-decoration: none;
+}
+
+[draggable] {
+	user-select: none;
 }

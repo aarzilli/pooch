@@ -159,51 +159,7 @@ var CommonHeaderHTML ExecutableTemplate = MakeExecutableTemplate("ListHeader", `
   <table width='100%'><tr>
     <td valign='top' id='ontonav_td'>
       <img id='ontosaving' style='visibility: hidden' src='loading.gif'/>
-      <div id='ontonav'>
-      </div>
-      <br/>
-      <input type='button' value='Save' onclick='save_ontology()'/>
-      <script>
-      	$("#ontonav").jstree({
-      	  "plugins": [ "json_data", "themes", "ui", "dnd", "crrm", "contextmenu" ],
-      	  "themes": { "theme": "default", "dots": true, "icons": false },
-      	  "json_data": {
-      	    "ajax": { "url": "ontology" },
-      	  },
-      	  "crrm": {
-      	    "move": {
-      	      check_move: function() {
-      	      	var m = this._get_move();
-      	      	return m.r.children("a").get(0).text.match(/#%/) == null;
-      	      }
-      	    },
-      	  },
-      	  "contextmenu": {
-      	    "items": function($node) { return {
-      	      "create": {
-      	        "label": "Create",
-      	        "action": function (obj) { this.create(obj); }
-      	      },
-      	      "remove": {
-      	        "label": "Remove",
-      	        "action": function (obj) { this.remove(obj); }
-      	      },
-      	      "cut": {
-      	        "label": "Cut",
-      	        "action": function (obj) { this.cut(obj); }
-      	      },
-      	      "copy": {
-      	        "label": "Copy",
-      	        "action": function (obj) { this.copy(obj); }
-      	      },
-      	      "paste": {
-      	        "label": "Paste",
-      	        "action": function (obj) { this.paste(obj); }
-      	      }
-      	    } }
-      	  },
-        }).bind("dblclick.jstree", click_ontology);
-      </script>
+      <div id='ontonav'/>
     </td>
     <td valign='top' id='maintable_td'>
 `)
