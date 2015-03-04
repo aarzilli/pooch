@@ -181,6 +181,12 @@ func (p *Parser) ParseOption(r *SimpleExpr) bool {
 			return false
 		}
 		r.name = p.tkzer.Next()
+		if p.ParseToken("=") {
+			r.op = "="
+			r.value = p.tkzer.Next()
+		} else {
+			r.value = ""
+		}
 		return true
 	})
 }
@@ -329,7 +335,12 @@ LOOP:
 		case p.ParseSavedSearch(simple):
 			p.result.savedSearch = simple.name
 		case p.ParseOption(simple):
-			p.result.options[simple.name] = ""
+			if simple.value == "" {
+				p.result.options[simple.name] = ""
+			} else {
+				simple.name = ":" + simple.name
+				p.result.include.subExpr = append(p.result.include.subExpr, simple)
+			}
 		case p.ParseColumnRequest():
 			// nothing to do
 		case p.ParseExclusion(simple):

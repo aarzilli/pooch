@@ -51,6 +51,7 @@ func TestTokMisc(z *testing.T) {
 	mmt(z, "#prova +#prova", []string{"#", "prova", " ", "+", "#", "prova"})
 	mmt(z, "#blip#blop", []string{"#", "blip", "#", "blop"})
 	mmt(z, "#prova#prova+#prova@prova", []string{"#", "prova", "#", "prova+", "#", "prova", "#", "prova"})
+	mmt(z, "#:id=blah", []string{ "#:", "id", "=", "blah" })
 }
 
 func TestTokTime(z *testing.T) {
@@ -115,16 +116,6 @@ func tse(z *testing.T, in string, name string, op string, value string) {
 	mms(z, expr.value, value, " matching value")
 }
 
-func TestParseSimpleExpr(z *testing.T) {
-	tse(z, "#blip", "blip", "", "")
-	tse(z, "#blip!", "blip", "", "")
-	tse(z, "#blip! > 0", "blip", ">", "0")
-	tse(z, "#blip > 0", "blip", ">", "0")
-	tse(z, "#blip>0", "blip", ">", "0")
-	tse(z, "#blip!>0", "blip", ">", "0")
-	tse(z, "#blip?", "blip", "", "")
-}
-
 func tae_ex(in string) (*Parser, *ParseResult) {
 	t := NewTokenizer(in)
 	p := NewParser(t, 0)
@@ -178,7 +169,7 @@ func tae_showcols(z *testing.T, in string, expected []string, showCols []string)
 	}
 }
 
-func tae_options(z *testing.T, in string, expected []string, options []string) {
+func tae_options(z *testing.T, in string, expected []string, options []string, optvals []string) {
 	_, r := tae_ex(in)
 	check_and_expr(z, &(r.include), expected, nil, nil)
 
@@ -186,20 +177,15 @@ func tae_options(z *testing.T, in string, expected []string, options []string) {
 		z.Errorf("Different number of options returned [%v] expected [%v]", r.options, options)
 	}
 
-	for _, option := range options {
-		if _, ok := r.options[option]; !ok {
+	for i, option := range options {
+		v, ok := r.options[option]
+		if !ok {
 			z.Errorf("Expected option [%v] not found in [%v]\n", option, r.options)
 		}
+		if v != optvals[i] {
+			z.Errorf("Expected value [%s] but found [%s] for option [%s]\n", optvals[i], v, option)
+		}
 	}
-}
-
-func TestParseAnd(z *testing.T) {
-	fmt.Println("TestParseAnd")
-	tae(z, "#blip", []string{"blip"})
-	tae(z, "#blip #blop", []string{"blip", "blop"})
-	tae(z, "#blip#blop", []string{"blip", "blop"})
-	tae(z, "#blip > 20 #blop", []string{"blip", "blop"})
-	tae(z, "#blip>20#blop", []string{"blip", "blop"})
 }
 
 func tae2(z *testing.T, in string, includeExpected []string, excludeExpected []string, query string) {
@@ -209,7 +195,7 @@ func tae2(z *testing.T, in string, includeExpected []string, excludeExpected []s
 	r := p.ParseEx()
 
 	if len(r.include.subExpr) != len(includeExpected) {
-		z.Errorf("Different number of ored terms [%v] expected [%v]", r.include, includeExpected)
+		z.Fatalf("Different number of ored terms [%v] expected [%v]", r.include, includeExpected)
 	}
 
 	for i, v := range includeExpected {
@@ -233,6 +219,30 @@ func tae2(z *testing.T, in string, includeExpected []string, excludeExpected []s
 	}
 
 	mms(z, strings.Trim(r.text, " "), strings.Trim(query, " "), "matching query")
+}
+
+func TestParseIdBug(z *testing.T) {
+	fmt.Println("TestParseIdBug")
+	tae_wval(z, "#:id=jE3VsS8i", []string{ ":id" }, []string{ "jE3VsS8i"}, nil)
+}
+
+func TestParseSimpleExpr(z *testing.T) {
+	tse(z, "#blip", "blip", "", "")
+	tse(z, "#blip!", "blip", "", "")
+	tse(z, "#blip! > 0", "blip", ">", "0")
+	tse(z, "#blip > 0", "blip", ">", "0")
+	tse(z, "#blip>0", "blip", ">", "0")
+	tse(z, "#blip!>0", "blip", ">", "0")
+	tse(z, "#blip?", "blip", "", "")
+}
+
+func TestParseAnd(z *testing.T) {
+	fmt.Println("TestParseAnd")
+	tae(z, "#blip", []string{"blip"})
+	tae(z, "#blip #blop", []string{"blip", "blop"})
+	tae(z, "#blip#blop", []string{"blip", "blop"})
+	tae(z, "#blip > 20 #blop", []string{"blip", "blop"})
+	tae(z, "#blip>20#blop", []string{"blip", "blop"})
 }
 
 func TestParseFull(z *testing.T) {
@@ -288,7 +298,7 @@ func TestShowCols(z *testing.T) {
 
 func TestOptions(z *testing.T) {
 	fmt.Println("TestOptions")
-	tae_options(z, "#blap#:w/done", []string{"blap"}, []string{"w/done"})
+	tae_options(z, "#blap#:w/done", []string{"blap"}, []string{"w/done"}, []string{""})
 }
 
 func TestSavedSearch(z *testing.T) {
@@ -501,7 +511,7 @@ func TestSavedSearchSelect(z *testing.T) {
 }
 
 func TestQuerySelect(z *testing.T) {
-	fmt.Printf("TestQuerySelect")
+	fmt.Println("TestQuerySelect")
 	tl := ooc()
 	defer tl.Close()
 
@@ -517,7 +527,7 @@ func tsearch(z *testing.T, tl *Tasklist, queryText string, expectedIds []string)
 
 	theselect, code, _, _, _, _, _, err := tl.ParseSearch(queryText, nil)
 	Must(err)
-	entries, err := tl.Retrieve(theselect, code)
+	entries, err := tl.Retrieve(theselect, code, false)
 	Must(err)
 
 	if len(entries) != len(ids) {
@@ -532,7 +542,7 @@ func tsearch(z *testing.T, tl *Tasklist, queryText string, expectedIds []string)
 }
 
 func TestSearch(z *testing.T) {
-	fmt.Printf("TestSearch")
+	fmt.Println("TestSearch")
 	tl := ooc()
 	defer tl.Close()
 

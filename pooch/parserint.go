@@ -219,7 +219,7 @@ var OPERATOR_CHECK map[string]string = map[string]string{
 func (expr *SimpleExpr) IntoClauseEx(tl *Tasklist) string {
 	switch expr.name {
 	case ":id":
-		fallthrough
+		return fmt.Sprintf("id = %s", tl.Quote(expr.value))
 	case ":title_field":
 		fallthrough
 	case ":text_field":
