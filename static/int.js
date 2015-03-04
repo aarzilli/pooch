@@ -541,8 +541,8 @@ function load_ontonav() {
 }
 
 window.onload = function() {
+  load_ontonav();
   var v = window.location.hash.split("#")
   var f = onload_open_function(v, 0);
   f();
-  load_ontonav();
 };
