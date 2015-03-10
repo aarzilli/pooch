@@ -51,7 +51,7 @@ func TestTokMisc(z *testing.T) {
 	mmt(z, "#prova +#prova", []string{"#", "prova", " ", "+", "#", "prova"})
 	mmt(z, "#blip#blop", []string{"#", "blip", "#", "blop"})
 	mmt(z, "#prova#prova+#prova@prova", []string{"#", "prova", "#", "prova+", "#", "prova", "#", "prova"})
-	mmt(z, "#:id=blah", []string{ "#:", "id", "=", "blah" })
+	mmt(z, "#:id=blah", []string{"#:", "id", "=", "blah"})
 }
 
 func TestTokTime(z *testing.T) {
@@ -223,7 +223,7 @@ func tae2(z *testing.T, in string, includeExpected []string, excludeExpected []s
 
 func TestParseIdBug(z *testing.T) {
 	fmt.Println("TestParseIdBug")
-	tae_wval(z, "#:id=jE3VsS8i", []string{ ":id" }, []string{ "jE3VsS8i"}, nil)
+	tae_wval(z, "#:id=jE3VsS8i", []string{":id"}, []string{"jE3VsS8i"}, nil)
 }
 
 func TestParseSimpleExpr(z *testing.T) {

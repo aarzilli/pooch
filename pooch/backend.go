@@ -901,7 +901,7 @@ func (tl *Tasklist) CategoryDepth() map[string]int {
 }
 
 func (tl *Tasklist) GetChildren(id string) []string {
-	stmt, serr := tl.conn.Prepare("select id from columns where name = ? order by value asc")
+	stmt, serr := tl.conn.Prepare("select id from columns where name = ? order by cast(value as int) asc")
 	Must(serr)
 	defer stmt.Finalize()
 	serr = stmt.Exec("sub/" + id)

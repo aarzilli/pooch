@@ -2,6 +2,8 @@
  This program is distributed under the terms of GPLv3
  Copyright 2010, Alessandro Arzilli
  */
+ 
+var children_tree = {};
 
 function toggle(query) {
     var div = $(query).get(0);
@@ -37,14 +39,7 @@ function toggle_runpop() {
     toggle("#runpop");
 }
 
-var cancelNextKeypress = false;
-
 function keypress(e) {
-	if (cancelNextKeypress) {
-		cancelNextKeypress = false;
-		e.preventDefault();
-		return false;
-	}
 	return true;
 }
 
@@ -63,19 +58,44 @@ function perform_toggle_on_keyevent(e) {
     }
 }
 
+function subtree_save(name) {
+	var text = $("#subsrow_"+name).find("textarea").get(0).value;
+	var content = "id=" + encodeURIComponent("#id=" + name) + "&body=" + encodeURIComponent(text);
+	$.ajax({type: "POST", url : "nf/update.json", data: content, success: function(data, textStatus, req) {
+		data = JSON.parse(data);
+		$("#subsrow_" + name).find(".substable_content").find("div").get(0).innerHTML = "<b>" + data.Objects[0].Title + "</b>" + data.Objects[0].FormattedText;
+	}})
+}
+
+function subtree_remove(name, pid) {
+	$.ajax({ url: "remove?id=" + encodeURIComponent(name), success: function(data, textStatus, req) {
+		if (data.match(/^removed/)) {
+			reload_childrens(pid, null);
+		}
+	}});
+}
+
+function get_after_underscore(t) {
+	v = t.split("_", 1)[0]
+	return t.substring(v.length+1)
+}
+
 function keytable(e) {
     switch (e.keyCode) {
     case 27:
+        if (document.activeElement.classList.contains("substable_textarea")) {
+            var row = $(document.activeElement).parents("tr").get(0);
+            var name = get_after_underscore(row.id);
+            subtree_save(name);
+        }
         $("#searchpop").get(0).style['display'] = 'none';
         $("#addpop").get(0).style['display'] = 'none';
-        cancelNextKeypress = true;
         e.preventDefault();
         return false;
     case 13:
         if (e.altKey) {
             if ($("#searchpop").get(0).style['display'] != 'none') {
                 $("#searchform").get(0).submit();
-                cancelNextKeypress = true;
                 e.preventDefault();
                 return false;
             }
@@ -85,7 +105,6 @@ function keytable(e) {
 
     if (document.activeElement.type == null) {
         var r = perform_toggle_on_keyevent(e);
-        cancelNextKeypress = !r;
         return r;
     }
     nothing_enabled = ($("#searchpop").get(0).style['display'] == 'none') && ($("#addpop").get(0).style['display'] == 'none');
@@ -96,7 +115,6 @@ function keytable(e) {
 
     if ((document.activeElement.id == "q") || (document.activeElement.id == "newentry")) {
         var r = perform_toggle_on_keyevent(e);
-        cancelNextKeypress = !r;
         return r;
     }
 }
@@ -197,6 +215,17 @@ function change_editor_disabled(ed, disabledStatus) {
     ed.elements['savebtn'].disabled = disabledStatus;
 }
 
+function count_lines(data) {
+	if (data == null) {
+		return 0;
+	}
+	var n = data.length;
+	for (var i = 0; i < data.length; i++) {
+		n += count_lines(data[i].Children);
+	}
+	return n;
+}
+
 function fill_editor(name, contfn) {
     $("#loading_"+name).get(0).style.display = "inline";
     $.ajax({url: "get?id=" + encodeURIComponent(name), success: function(data, textStatus, req) {
@@ -214,11 +243,18 @@ function fill_editor(name, contfn) {
         $("#ts_" + v.Id).html(timestamp);
         change_editor_disabled(ed, "");
         $("#loading_"+name).get(0).style.display = "none";
-        $.ajax({url: "list?guts=1&q=" + encodeURIComponent("#:sub #:w/done #:ssort #sub/" + v.Id), success: function(data, textStatus, req) {
+        $.ajax({url: "childs.json?id=" + encodeURIComponent(v.Id), success: function(data, textStatus, req) {
             var tbl = $("#subs_" + v.Id).first().get(0);
-            tbl.innerHTML = data
-            if (data != "") {
+            data = JSON.parse(data);
+            children_tree[v.Id] = data;
+            fill_childrens(tbl, v.Id, data);
+            if (data.length > 0) {
                 show_subs(v.Id);
+                if (count_lines(data) > 10) {
+                    for (var i = 0; i < data.length; i++) {
+                        subs_click_folder(data[i].Id, { "target": $("#subsrow_" + data[i].Id).find(".substable_folder").find("a").get(0) });
+                    }
+                }
                 if (contfn != null) {
                     contfn();
                 }
@@ -308,12 +344,18 @@ function change_priority_to(name, priorityNum, priority) {
 
     // changes the value saved inside the editor div so that saving the editor contents doesn't revert a changed priority
     var ed = $("#ediv_"+name).get(0);
-    ed.elements["edprio"].value = priorityNum;
+    if (ed != null) {
+        ed.elements["edprio"].value = priorityNum;
+    }
 }
 
 function guess_next_priority(name, special) {
     var current = $('#epr_'+name).val();
-    var etime_initial_char = $('#etime_'+name).get(0).innerHTML[0];
+    var etime = $('#etime_'+name).get(0)
+    var etime_initial_char = '-';
+    if (etime != null) {
+        etime.innerHTML[0];
+    }
 
     if (etime_initial_char == "@") {
         if (current == "NOW") {
@@ -355,7 +397,10 @@ function guess_next_priority(name, special) {
 }
 
 function change_priority(name, event) {
-    $("#ploading_"+name).get(0).style['visibility'] = 'visible';
+    var loadidc = $("#ploading_"+name).get(0);
+    if (loadidc != null) {
+        loadidc.style['visibility'] = 'visible';
+    }
 
     guess_next_priority(name, event.shiftKey);
 
@@ -366,7 +411,9 @@ function change_priority(name, event) {
                     priorityNum = priority[0];
                     priority = priority.substr(2);
                     change_priority_to(name, priorityNum, priority);
-                    $("#ploading_"+name).get(0).style['visibility'] = 'hidden';
+                    if (loadidc != null) {
+                        loadidc.style['visibility'] = 'hidden';
+                    }
                 } else {
                     alert(data);
                 }
@@ -476,13 +523,9 @@ function ontonav_click_folder(ev) {
 }
 
 function ontonav_drop(ev) {
-	console.debug(ev);
-
 	var dsttype = ($(ev.target).parents('span').get(0).classList.contains('tree_folder')) ? 'chlidren' : 'sibling';
 	var dst = $(ev.target).parents('li').children('.tree_content').children('a').get(0).innerHTML;
 	var src = ev.dataTransfer.getData('text/text');
-
-	console.debug(dsttype, dst, src);
 
 	$.ajax({ type: "GET", url: "/ontology?move=1&src=" + encodeURIComponent(src) + "&dst=" + encodeURIComponent(dst) + "&mty=" + dsttype, success: function(data, textStatus, req) {
 		load_ontonav();
@@ -538,6 +581,152 @@ function load_ontonav() {
   		on.appendChild(onl);
   		load_ontonav_rec(onl, t);
 	}})
+}
+
+function subs_click_folder(name, event) {
+	var bodypara = $("#subsrow_" + name).find(".substable_content").find("p").get(0);
+	var subs = $("#subs_" + name).get(0);
+	if (event.target.innerHTML == '\uf147') {
+		bodypara.style['display'] = 'none';
+		if (subs != null) {
+			subs.style['display'] = 'none';
+		}
+		event.target.innerHTML = '\uf196';
+	} else {
+		bodypara.style['display'] = 'block';
+		if (subs != null) {
+			subs.style['display'] = 'block';
+		}
+		event.target.innerHTML = '\uf147';
+	}
+}
+
+function edit_row(name, pid) {
+	var thediv = $("#subsrow_" + name).find(".substable_content").find("div").get(0);
+	if (thediv == null) {
+		return;
+	}
+	$.ajax({ url: "get?nocols=1&id=" + encodeURIComponent(name), success: function(data, textStatus, req) {
+		data = JSON.parse(data.split("\n", 2)[1]);
+		var ta = document.createElement("textarea");
+		ta.classList.add("substable_textarea");
+		ta.rows = 5;
+		ta.value = data.Title + "\n\n" + data.Text;
+		thediv.innerHTML = "";
+		thediv.appendChild(ta);
+		
+		var buttons = document.createElement("div");
+		buttons.innerHTML = "<input type='button' value='Save' onclick='subtree_save(\"" + name + "\")'>&nbsp;<input type='button' value='Delete' onclick='subtree_remove(\"" + name + "\", \"" + pid + "\")'> (" + name + ")";
+		thediv.appendChild(buttons);
+		
+		ta.focus();
+		
+	}});
+}
+
+function add_subitem(event, name, pid, child) {
+	if ((event != null) && (event.buttons != 4)) {
+		return false;
+	}
+	if (child != 0) {
+		var folder = $("#subsrow_" + name).find(".substable_folder").find("a").get(0);
+		if (folder == null) {
+			show_subs(name);
+		} else {
+			if (folder.innerHTML != '\uf147') {
+				subs_click_folder(name, { "target":  folder });
+			}
+		}
+	}
+	$.ajax({ url: "newsubitem?id=" + encodeURIComponent(name) + "&child=" + child, success: function(data, textStatus, req) {
+		reload_childrens(pid, data);
+	}})
+	if (event != null) {
+		event.preventDefault();
+	}
+	return false;
+}
+
+function subs_drop(ev, dest, pid, child) {
+	var src = ev.dataTransfer.getData('text/text');
+	$.ajax({ url: "movechild?src=" + src + "&dst=" + dest + "&child=" + child, success: function(data, textStatus, req) {
+		reload_childrens(pid, null);
+	}})
+}
+
+function fill_childrens(tbl, pid, data) {
+	tbl.innerHTML = "";
+	for (var i = 0; i < data.length; i++) {
+		var row = document.createElement("tr");
+		row.id = "subsrow_" + data[i].Id;
+		
+		// Folder icon
+		var td = document.createElement("td");
+		td.classList.add("substable_folder");
+		td.innerHTML = "<a href='javascript:void(0)' onclick='subs_click_folder(\"" + data[i].Id + "\", event)' draggable='true' ondrop='subs_drop(event, \"" + data[i].Id + "\", \"" + pid + "\", 1)' ondragenter='cancel_shit(event)' ondragover='cancel_shit(event)' ondragleave='cancel_shit(event)' ondragstart='ontonav_start_drag(event, \"" + data[i].Id + "\")'>\uf147</a>";
+		row.appendChild(td);
+		
+		// Name
+		td = document.createElement("td");
+		td.classList.add("substable_name");
+		td.innerHTML = "<a href='javascript:void(0)' ondrop='subs_drop(event, \"" + data[i].Id + "\", \"" + pid + "\", 0)' ondragenter='cancel_shit(event)' ondragover='cancel_shit(event)' ondragleave='cancel_shit(event)' ondragstart='ontonav_start_drag(event, \"" + data[i].Id + "\")'>" + data[i].Name + "</a>";
+		row.appendChild(td)
+		
+		// Priority
+		td = document.createElement("td");
+		td.innerHTML = "<input type='button' class='prioritybutton priorityclass_" + data[i].Priority.toUpperCase() + "' id='epr_" + data[i].Id + "' value='" + data[i].Priority.toUpperCase() + "' onclick='javascript:change_priority(\"" + data[i].Id + "\", event)'/>";
+		row.appendChild(td);
+		
+		// New child button
+		td = document.createElement("td");
+		td.innerHTML = "<input type='button' class='newchildbutton' value='N' onclick='add_subitem(null, \"" + data[i].Id + "\", \"" + pid + "\", 1)'>";
+		row.appendChild(td);
+		
+		// Contents
+		td = document.createElement("td");
+		td.classList.add("substable_content");
+		var title = "(empty)";
+		if (data[i].Title != "") {
+			title = data[i].Title;
+		}
+		td.innerHTML = "<div ondblclick='edit_row(\"" + data[i].Id + "\", \"" + pid + "\")' onmouseup='add_subitem(event, \"" + data[i].Id + "\", \"" + pid + "\", 0)' ondragenter='cancel_shit(event)' ondragover='cancel_shit(event)' ondragleave='cancel_shit(event)' ondrop='subs_drop(event, \"" + data[i].Id + "\", \"" + pid + "\", 0)'><b>" + title + "</b>" + data[i].FormattedText + "</div>";
+		
+		if (data[i].Children.length > 0) {
+			var stbl = document.createElement("table");
+			stbl.id = "subs_" + data[i].Id;
+			stbl.classList.add("substable");
+			fill_childrens(stbl, pid, data[i].Children);
+			td.appendChild(stbl);
+			stbl.display = "block";
+		}
+		
+		row.appendChild(td);
+		
+		tbl.appendChild(row);
+	}
+}
+
+function reload_childrens(pid, editName) {
+	var tbl = $("#subs_" + pid);
+	var tohide = [];
+	$(tbl).find("tr").each(function() { 
+		var p = $(this).find(".substable_content").find("p").get(0);
+		if ((p != null) && (p.style["display"] == "none")) {
+			tohide.push(get_after_underscore(this.id));
+		}
+	});
+	$.ajax({url: "childs.json?id=" + encodeURIComponent(pid), success: function(data, textStatus, req) {
+	    var tbl = $("#subs_" + pid).first().get(0);
+	    data = JSON.parse(data);
+	    children_tree[pid] = data;
+	    fill_childrens(tbl, pid, data);
+	    for (var i = 0; i < tohide.length; i++) {
+	    	subs_click_folder(tohide[i], { "target": $("#subsrow_" + tohide[i]).find(".substable_folder").find("a").get(0) });
+	    }
+	    if (editName != null) {
+	        edit_row(editName, pid);
+	    }
+	}});
 }
 
 window.onload = function() {

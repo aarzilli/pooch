@@ -1,43 +1,43 @@
 /*
  This program is distributed under the terms of GPLv3
  Copyright 2010, Alessandro Arzilli
- */
+*/
 
 package main
 
 import (
+	. "./pooch"
+	"bufio"
+	"encoding/json"
 	"flag"
 	"fmt"
-	"os"
-	"text/tabwriter"
-	"bufio"
-	"strings"
-	"strconv"
-	"encoding/json"
 	"io/ioutil"
-	. "./pooch"
+	"os"
+	"strconv"
+	"strings"
+	"text/tabwriter"
 	//"runtime"
 )
 
 //import _ "http/pprof"
 
-var commands map[string](func (args []string)) = map[string](func (args []string)){
-	"help": CmdHelp,
-	"create": CmdCreate,
-	"get": CmdGet,
-	"remove": CmdRemove,
-	"serve": CmdServe,
-	"add": CmdQuickAdd,
-	"update": CmdQuickUpdate,
-	"search": CmdSearch,
+var commands map[string](func(args []string)) = map[string](func(args []string)){
+	"help":       CmdHelp,
+	"create":     CmdCreate,
+	"get":        CmdGet,
+	"remove":     CmdRemove,
+	"serve":      CmdServe,
+	"add":        CmdQuickAdd,
+	"update":     CmdQuickUpdate,
+	"search":     CmdSearch,
 	"savesearch": CmdSaveSearch,
-	"tsvup": CmdTsvUpdate,
-	"rename": CmdRename,
-	"rentag": CmdRenTag,
-	"errlog": CmdErrorLog,
-	"ontocheck": CmdOntoCheck,
+	"tsvup":      CmdTsvUpdate,
+	"rename":     CmdRename,
+	"rentag":     CmdRenTag,
+	"errlog":     CmdErrorLog,
+	"ontocheck":  CmdOntoCheck,
 
-	"multiserve": CmdMultiServe,
+	"multiserve":      CmdMultiServe,
 	"multiserveplain": CmdMultiServePlain,
 
 	"setopt": CmdSetOption,
@@ -46,27 +46,27 @@ var commands map[string](func (args []string)) = map[string](func (args []string
 	"run": CmdRun,
 }
 
-var help_commands map[string](func ()) = map[string](func ()){
-	"help": HelpHelp,
-	"create": HelpCreate,
-	"get": HelpGet,
-	"remove": HelpRemove,
-	"serve": HelpServe,
-	"add": HelpQuickAdd,
-	"update": HelpQuickUpdate,
-	"search": HelpSearch,
-	"savesearch": HelpSaveSearch,
-	"tsvup": HelpTsvUpdate,
-	"rename": HelpRename,
-	"rentag": HelpRenTag,
-	"errlog": HelpErrorLog,
-	"compat": CompatHelp,
-	"ontocheck": HelpOntoCheck,
-	"multiserve": HelpMultiServe,
+var help_commands map[string](func()) = map[string](func()){
+	"help":            HelpHelp,
+	"create":          HelpCreate,
+	"get":             HelpGet,
+	"remove":          HelpRemove,
+	"serve":           HelpServe,
+	"add":             HelpQuickAdd,
+	"update":          HelpQuickUpdate,
+	"search":          HelpSearch,
+	"savesearch":      HelpSaveSearch,
+	"tsvup":           HelpTsvUpdate,
+	"rename":          HelpRename,
+	"rentag":          HelpRenTag,
+	"errlog":          HelpErrorLog,
+	"compat":          CompatHelp,
+	"ontocheck":       HelpOntoCheck,
+	"multiserve":      HelpMultiServe,
 	"multiserveplain": HelpMultiServePlain,
-	"setopt": HelpSetOption,
-	"getopt": HelpGetOption,
-	"run": HelpRun,
+	"setopt":          HelpSetOption,
+	"getopt":          HelpGetOption,
+	"run":             HelpRun,
 }
 
 func CheckCondition(cond bool, format string, a ...interface{}) {
@@ -110,7 +110,7 @@ func CmdQuickAdd(args []string) {
 		if (len(args) == 1) && (args[0] == "-") {
 			entry = tl.ExtendedAddParse()
 		} else {
-			entry  = tl.ParseNew(strings.Join(args[0:], " "), "")
+			entry = tl.ParseNew(strings.Join(args[0:], " "), "")
 		}
 		tl.Add(entry)
 		Logf(INFO, "Added entry: %s\n", entry.Id())
@@ -123,7 +123,7 @@ func HelpQuickAdd() {
 }
 
 func CmdQuickUpdate(args []string) {
-	CheckArgsOpenDb(args, map[string]bool{}, 1, 1000, "update", func (tl *Tasklist, args []string, flags map[string]bool) {
+	CheckArgsOpenDb(args, map[string]bool{}, 1, 1000, "update", func(tl *Tasklist, args []string, flags map[string]bool) {
 		CheckId(tl, args[0], "update")
 
 		entry := tl.ParseNew(strings.Join(args[1:], " "), "")
@@ -139,7 +139,7 @@ func HelpQuickUpdate() {
 }
 
 func CmdSearch(args []string) {
-	CheckArgsOpenDb(args, map[string]bool{ "t": true, "d": true, "j": true }, 0, 1000, "search", func(tl *Tasklist, args []string, flags map[string]bool) {
+	CheckArgsOpenDb(args, map[string]bool{"t": true, "d": true, "j": true}, 0, 1000, "search", func(tl *Tasklist, args []string, flags map[string]bool) {
 		var input string
 		if (len(args) == 1) && (args[0] == "-") {
 			buf, err := ioutil.ReadAll(os.Stdin)
@@ -150,7 +150,8 @@ func CmdSearch(args []string) {
 		}
 
 		timezone := tl.GetTimezone()
-		tsv := flags["t"]; js := flags["j"]
+		tsv := flags["t"]
+		js := flags["j"]
 
 		theselect, command, _, _, _, showCols, _, perr := tl.ParseSearch(input, nil)
 		Must(perr)
@@ -163,9 +164,12 @@ func CmdSearch(args []string) {
 		catordering := tl.CategoryDepth()
 
 		switch {
-		case tsv: CmdListExTsv(entries, showCols, timezone)
-		case js: CmdListExJS(entries, timezone)
-		default: CmdListEx(entries, showCols, timezone, catordering)
+		case tsv:
+			CmdListExTsv(entries, showCols, timezone)
+		case js:
+			CmdListExJS(entries, timezone)
+		default:
+			CmdListEx(entries, showCols, timezone, catordering)
 		}
 	})
 }
@@ -190,7 +194,7 @@ func HelpSaveSearch() {
 }
 
 func CmdRemove(args []string) {
-	CheckArgsOpenDb(args, map[string]bool{}, 1, 1, "remove", func (tl *Tasklist, args []string, flags map[string]bool) {
+	CheckArgsOpenDb(args, map[string]bool{}, 1, 1, "remove", func(tl *Tasklist, args []string, flags map[string]bool) {
 		CheckId(tl, args[0], "remove")
 		tl.Remove(args[0])
 	})
@@ -208,12 +212,20 @@ func GetSizesForList(v []*Entry, showCols []string) (id_size, title_size, cat_si
 		colSizes[showCol] = len(showCol)
 	}
 	for _, e := range v {
-		if len(e.Title())+1 > title_size { title_size = len(e.Title())+1 }
-		if len(e.Id())+1 > id_size { id_size = len(e.Id())+1 }
-		if len(e.CatString(nil))+1 > cat_size { cat_size = len(e.CatString(nil))+1 }
+		if len(e.Title())+1 > title_size {
+			title_size = len(e.Title()) + 1
+		}
+		if len(e.Id())+1 > id_size {
+			id_size = len(e.Id()) + 1
+		}
+		if len(e.CatString(nil))+1 > cat_size {
+			cat_size = len(e.CatString(nil)) + 1
+		}
 
 		for _, showCol := range showCols {
-			if len(e.Columns()[showCol])+1 > colSizes[showCol] { colSizes[showCol] = len(e.Columns()[showCol])+1 }
+			if len(e.Columns()[showCol])+1 > colSizes[showCol] {
+				colSizes[showCol] = len(e.Columns()[showCol]) + 1
+			}
 		}
 	}
 
@@ -246,7 +258,7 @@ func CmdListEx(v []*Entry, showCols []string, timezone int, catordering map[stri
 
 	fmt.Printf("%s %s %s %s", RepeatString(" ", id_size), RepeatString(" ", title_size), RepeatString(" ", 19), RepeatString(" ", cat_size))
 	for _, colName := range showCols {
-		fmt.Printf(" %s%s", colName, RepeatString(" ", col_sizes[colName] - len(colName)))
+		fmt.Printf(" %s%s", colName, RepeatString(" ", col_sizes[colName]-len(colName)))
 	}
 	fmt.Printf("\n")
 
@@ -259,13 +271,13 @@ func CmdListEx(v []*Entry, showCols []string, timezone int, catordering map[stri
 		timeString := TimeString(entry.TriggerAt(), entry.Sort(), timezone)
 
 		fmt.Printf("%s%s %s%s %s%s %s%s",
-			entry.Id(), RepeatString(" ", id_size - len(entry.Id())),
-			entry.Title(), RepeatString(" ", title_size - len(entry.Title())),
-			timeString, RepeatString(" ", 19 - len(timeString)),
-			entry.CatString(catordering), RepeatString(" ", cat_size - len(entry.CatString(catordering))))
+			entry.Id(), RepeatString(" ", id_size-len(entry.Id())),
+			entry.Title(), RepeatString(" ", title_size-len(entry.Title())),
+			timeString, RepeatString(" ", 19-len(timeString)),
+			entry.CatString(catordering), RepeatString(" ", cat_size-len(entry.CatString(catordering))))
 
 		for _, colName := range showCols {
-			fmt.Printf(" %s%s", entry.Columns()[colName], RepeatString(" ", col_sizes[colName] - len(entry.Columns()[colName])))
+			fmt.Printf(" %s%s", entry.Columns()[colName], RepeatString(" ", col_sizes[colName]-len(entry.Columns()[colName])))
 		}
 
 		fmt.Printf("\n")
@@ -274,7 +286,7 @@ func CmdListEx(v []*Entry, showCols []string, timezone int, catordering map[stri
 
 func CmdListExJS(v []*Entry, timezone int) {
 	for _, entry := range v {
-		json.NewEncoder(os.Stdout).Encode(MarshalEntry(entry, timezone))
+		json.NewEncoder(os.Stdout).Encode(MarshalEntry(entry, timezone, true))
 	}
 }
 
@@ -304,7 +316,6 @@ func CmdMultiServe(args []string) {
 	MultiServe(args[0], args[1])
 }
 
-
 func HelpMultiServe() {
 	fmt.Fprintf(os.Stderr, "usage: multiserve <port> <directory> <logfile>\n\n")
 	fmt.Fprintf(os.Stderr, "\tStarts a multi-user http server, information will be stored in <directory>. Writes logs to <logfile>\n\n")
@@ -321,14 +332,16 @@ func HelpMultiServePlain() {
 }
 
 func CmdTsvUpdate(argv []string) {
-	CheckArgsOpenDb(argv, map[string]bool{}, 0, 0, "tsvup", func (tl *Tasklist, args []string, flags map[string]bool) {
+	CheckArgsOpenDb(argv, map[string]bool{}, 0, 0, "tsvup", func(tl *Tasklist, args []string, flags map[string]bool) {
 		in := bufio.NewReader(os.Stdin)
 
 		for line, err := in.ReadString('\n'); err == nil; line, err = in.ReadString('\n') {
 			line = strings.Trim(line, "\t\n ")
-			if line == "" { continue }
+			if line == "" {
+				continue
+			}
 
-			entry := ParseTsvFormat(line, tl, tl.GetTimezone());
+			entry := ParseTsvFormat(line, tl, tl.GetTimezone())
 			if tl.Exists(entry.Id()) {
 				//fmt.Printf("UPDATING\t%s\t%s\n", entry.Id(), entry.TriggerAt().Format("2006-01-02"))
 				tl.Update(entry, false)
@@ -349,10 +362,12 @@ func HelpTsvUpdate() {
 }
 
 func CmdRename(argv []string) {
-	CheckArgsOpenDb(argv, map[string]bool{}, 1, 2, "rename", func (tl *Tasklist, args []string, flags map[string]bool) {
+	CheckArgsOpenDb(argv, map[string]bool{}, 1, 2, "rename", func(tl *Tasklist, args []string, flags map[string]bool) {
 		src_id := argv[0]
 		dst_id := tl.MakeRandomId()
-		if len(argv) > 1 { dst_id = argv[1] }
+		if len(argv) > 1 {
+			dst_id = argv[1]
+		}
 
 		entry := tl.Get(src_id)
 		tl.Remove(entry.Id())
@@ -367,7 +382,7 @@ func HelpRename() {
 }
 
 func CmdRenTag(argv []string) {
-	CheckArgsOpenDb(argv, map[string]bool{}, 2, 2, "rentag", func (tl *Tasklist, args []string, flags map[string]bool) {
+	CheckArgsOpenDb(argv, map[string]bool{}, 2, 2, "rentag", func(tl *Tasklist, args []string, flags map[string]bool) {
 		src_tag := argv[0]
 		dst_tag := argv[1]
 		tl.RenameTag(src_tag, dst_tag)
@@ -375,7 +390,7 @@ func CmdRenTag(argv []string) {
 }
 
 func CmdErrorLog(argv []string) {
-	CheckArgsOpenDb(argv, map[string]bool{}, 0, 0, "errlog", func (tl *Tasklist, args []string, flags map[string]bool) {
+	CheckArgsOpenDb(argv, map[string]bool{}, 0, 0, "errlog", func(tl *Tasklist, args []string, flags map[string]bool) {
 		errors := tl.RetrieveErrors()
 		for _, error := range errors {
 			fmt.Printf("%s\t%s\n", error.TimeString(), error.Message)
@@ -458,7 +473,6 @@ func CmdGetOption(args []string) {
 		}
 	})
 }
-
 
 func HelpGetOption() {
 	fmt.Fprintf(os.Stderr, "Usage: getopt <name>\n\n")

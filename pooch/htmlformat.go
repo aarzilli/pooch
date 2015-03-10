@@ -185,7 +185,13 @@ var EntryListEntryHTML ExecutableTemplate = MakeExecutableTemplate("EntryListEnt
     {{with .entry}}
       <td class='eid'>{{.Id|html}}</td>
 
-      <td class='etitle' onclick='javascript:toggle_editor("{{.Id|html}}", event, null)'><a href='javascript:toggle_editor("{{.Id|html}}", event, null)'>{{.Title|html}}</a></td>
+      <td class='etitle' onclick='javascript:toggle_editor("{{.Id|html}}", event, null)'><a href='javascript:toggle_editor("{{.Id|html}}", event, null)'>{{.Title|html}}</a>
+      
+      {{if .Text}}
+      <pre>{{.Text|html}}</pre>
+      {{end}}
+      
+      </td>
 
       <td class='epr'>
         <input type='button' class='prioritybutton priorityclass_{{.Priority|priority}}' id='epr_{{.Id|html}}' value='{{.Priority|priority}}' onclick='javascript:change_priority("{{.Id|html}}", event)'/>
@@ -215,7 +221,7 @@ var EntryListEntryEditorHTML ExecutableTemplate = MakeExecutableTemplate("EntryL
         &nbsp;
         <input type='button' onclick='show_subs("{{.Id|html}}")' value='Show sub-items'/>
         &nbsp;
-        <input type='button' onclick='toggle_addpop_sub("{{.Id|html}}")' value="Add subitem"/>
+        <input type='button' onclick='add_subitem(null, "{{.Id|html}}", "{{.Id|html}}", 1)' value="Add subitem"/>
         <form id='ediv_{{.Id|html}}'>
           <input name='edtitle' type='text' disabled='disabled'/><br>
           <textarea name='edtext' disabled='disabled' rows=5>
@@ -230,14 +236,14 @@ var EntryListEntryEditorHTML ExecutableTemplate = MakeExecutableTemplate("EntryL
              $("#edat_{{.Id|html}}").datepicker("option", "dateFormat", "yy-mm-dd");
           </script>
 		  &nbsp; Sort by: <input type='text' name='edsort' size=10 disabled='disabled'/>
-          &nbsp; ID: {{.Id|html}}
+          &nbsp; ID: <a href='list?q=%23:id={{.Id}}'>{{.Id|html}}</a>
           &nbsp; Timestamp: <img id='loading_{{.Id|html}}' style='display: none' src='loading.gif'/> <span id='ts_{{.Id|html}}'> </span></p>
 
           <p><input type='button' style='float: right' value='remove' onclick='javascript:remove_entry("{{.Id|html}}", event)'/>
           <input type='button' name='savebtn' value='save' onclick='javascript:save_editor_by_id("{{.Id|html}}", event)' disabled='disabled'/>
           <input type='button' value='reload' onclick='javascript:fill_editor("{{.Id|html}}", null)'/></p>
         </form>
-        <table id='subs_{{.Id|html}}' style='margin-left: 30px; border-collapse: collapse; display: none;'>
+        <table id='subs_{{.Id|html}}' class='substable' style='display: none;'>
           <tr><td>ciao</td></tr>
         </table>
       </td>
@@ -488,3 +494,5 @@ var OptionsPageEnd ExecutableTemplate = MakeExecutableTemplate("OptionsPageEnd",
   </body>
 </html>
 `)
+
+var ListGutsEnderHTML ExecutableTemplate = MakeExecutableTemplate("ListGutsEnderHTML", `<p>ID: <a href='list?q=%23:id={{.guts}}'>{{.guts|html}}</a></p>`)

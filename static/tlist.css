@@ -67,6 +67,10 @@ table {
     font-weight: bold;
 }
 
+.etitle > pre {
+    font-weight: normal;
+}
+
 .etitle > a {
     text-decoration: none;
     color: silver;
@@ -77,6 +81,18 @@ table {
     font-size: xx-small;
     width: 60px;
     background-color: black;
+}
+
+.newchildbutton {
+	font-weight: bolder;
+	font-size: xx-small;
+	width: 20px;
+	background-color: black;
+	color: white;
+}
+
+.substable .prioritybutton {
+    width: 40px;
 }
 
 .priorityclass_NOW {

@@ -124,13 +124,19 @@ func Must(err error) {
 	}
 }
 
-func MarshalEntry(entry *Entry, timezone int) *UnmarshalEntry {
+func MarshalEntry(entry *Entry, timezone int, addCols bool) *UnmarshalEntry {
 	triggerAtString := entry.TriggerAtString(timezone)
+
+	text := entry.Text()
+
+	if addCols {
+		text += "\n" + TEXT_COLS_SEPARATOR + entry.ColString(false)
+	}
 
 	return &UnmarshalEntry{
 		entry.Id(),
 		entry.Title(),
-		entry.Text() + "\n" + TEXT_COLS_SEPARATOR + entry.ColString(false),
+		text,
 		entry.Priority(),
 		triggerAtString,
 		entry.Sort()}

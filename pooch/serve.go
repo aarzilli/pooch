@@ -53,15 +53,11 @@ func WrapperServer(sub http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		Logf(INFO, "REQ\t%s\t%s\n", req.RemoteAddr, req)
-
 		if req.Method == "HEAD" {
 			//do nothing
 		} else {
 			sub(c, req)
 		}
-
-		Logf(INFO, "QER\t%s\t%s\n", req.RemoteAddr, req)
 	}
 }
 
@@ -98,8 +94,6 @@ func StaticInMemoryServer(c http.ResponseWriter, req *http.Request) {
 		Logf(ERROR, "404 Not found\n")
 		io.WriteString(c, "404, Not found")
 	} else {
-		Logf(ERROR, "Serving")
-
 		if len(req.Header["If-None-Match"]) > 0 {
 			if ifNoneMatch := StripQuotes(req.Header["If-None-Match"][0]); ifNoneMatch == signature {
 				Logf(DEBUG, "Page not modified, replying")
@@ -145,8 +139,9 @@ func ChangePriorityServer(c http.ResponseWriter, req *http.Request, tl *Tasklist
 
 func GetServer(c http.ResponseWriter, req *http.Request, tl *Tasklist, id string) {
 	entry := tl.Get(id)
+	addCols := !(req.FormValue("nocols") == "1")
 	io.WriteString(c, time.Now().UTC().Format("2006-01-02 15:04:05")+"\n")
-	json.NewEncoder(c).Encode(MarshalEntry(entry, tl.GetTimezone()))
+	json.NewEncoder(c).Encode(MarshalEntry(entry, tl.GetTimezone(), addCols))
 }
 
 func RemoveServer(c http.ResponseWriter, req *http.Request, tl *Tasklist, id string) {
@@ -405,7 +400,7 @@ func ListJsonServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	answ.Results = make([]UnmarshalEntry, 0)
 
 	for _, entry := range v {
-		answ.Results = append(answ.Results, *MarshalEntry(entry, timezone))
+		answ.Results = append(answ.Results, *MarshalEntry(entry, timezone, true))
 	}
 
 	serializeAnswer()
@@ -465,7 +460,7 @@ func ListServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 
 	var curp Priority = INVALID
 	for idx, entry := range v {
-		if (curp != entry.Priority()) && !subsort {
+		if (curp != entry.Priority()) && !subsort && (len(v) > 1) {
 			EntryListPriorityChangeHTML(map[string]interface{}{"entry": entry, "colNames": showCols, "PrioritySize": prioritySize}, c)
 			curp = entry.Priority()
 		}
@@ -489,13 +484,123 @@ func ListServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 			"cols":      cols,
 		}
 
+		text := entry.text
+		if len(v) > 1 {
+			entry.text = ""
+		}
+
 		EntryListEntryHTML(entryEntry, c)
+
+		entry.text = text
+
 		EntryListEntryEditorHTML(entryEntry, c)
 	}
 
 	if !gutsOnly {
 		ListEnderHTML(nil, c)
+	} else {
+		ListGutsEnderHTML(map[string]string{"guts": req.FormValue("guts")}, c)
 	}
+}
+
+func ChildsServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
+	id := req.FormValue("id")
+
+	objs := childsServerRec(tl, id)
+
+	Must(json.NewEncoder(c).Encode(objs))
+}
+
+func NewServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
+	id := req.FormValue("id")
+	asChild := req.FormValue("child")
+
+	var pid string
+	if asChild != "0" {
+		pid = id
+	} else {
+		entry := tl.Get(id)
+		var ok bool
+		ok, pid = IsSubitem(entry.Columns())
+		if !ok {
+			fmt.Fprintf(c, "error")
+			return
+		}
+	}
+
+	subcol := "sub/" + pid
+	childs := tl.GetChildren(pid)
+	nentry := tl.ParseNew("#"+subcol, "")
+	nentry.SetColumn(subcol, strconv.Itoa(len(childs)))
+	tl.Add(nentry)
+
+	if asChild == "0" {
+		newchilds := addAfter(nentry.Id(), id, childs)
+		tl.UpdateChildren(pid, newchilds)
+	}
+
+	io.WriteString(c, nentry.Id())
+}
+
+func addAfter(newEl string, after string, items []string) []string {
+	newitems := make([]string, len(items)+1)
+	d := 0
+	added := false
+	for i := range items {
+		if items[i] == after {
+			newitems[d] = items[i]
+			d++
+			newitems[d] = newEl
+			d++
+			added = true
+		} else if items[i] == newEl {
+			// skipped
+		} else {
+			newitems[d] = items[i]
+			d++
+		}
+	}
+	if !added {
+		newitems[d] = newEl
+		d++
+	}
+	return newitems[:d]
+}
+
+func MoveChildServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
+	src := req.FormValue("src")
+	dst := req.FormValue("dst")
+	asChild := req.FormValue("child")
+
+	sentry := tl.Get(src)
+
+	if ok, spid := IsSubitem(sentry.Columns()); ok {
+		sentry.RemoveColumn("sub/" + spid)
+	}
+
+	pid := dst
+	if asChild == "0" {
+		dentry := tl.Get(dst)
+		_, pid = IsSubitem(dentry.Columns())
+	}
+
+	siblings := tl.GetChildren(pid)
+	sentry.SetColumn("sub/"+pid, strconv.Itoa(len(siblings)))
+	tl.Update(sentry, false)
+
+	if asChild == "0" {
+		newsiblings := addAfter(src, dst, siblings)
+		tl.UpdateChildren(pid, newsiblings)
+	}
+
+}
+
+func childsServerRec(tl *Tasklist, id string) []*Object {
+	objs := childsToObjects(tl, id)
+	for i := range objs {
+		objs[i].Children = childsServerRec(tl, objs[i].Id)
+	}
+	return objs
 }
 
 func CalendarServerInner(c http.ResponseWriter, req *http.Request, tl *Tasklist, trigger string, isSavedSearch bool, perr error) {
@@ -743,11 +848,11 @@ func OntologyServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 		} else {
 			ontology = ontologyMoveChildren(src, dst, ontology)
 		}
-		
+
 		mor, err := json.Marshal(ontology)
 		Must(err)
 		tl.SetSetting("ontology", string(mor))
-		
+
 		c.Write([]byte("ok"))
 	} else {
 		ontologyServerGet(c, req, tl)
@@ -810,6 +915,10 @@ func SetupHandleFunc(wrapperTasklistServer func(TasklistServer) http.HandlerFunc
 	http.HandleFunc("/nf/move.json", WrapperServer(wrapperTasklistServer(nfMoveHandler)))
 	http.HandleFunc("/nf/remove.json", WrapperServer(wrapperTasklistServer(nfRemoveHandler)))
 	http.HandleFunc("/nf/curcut", WrapperServer(wrapperTasklistServer(nfCurcutHandler)))
+
+	http.HandleFunc("/childs.json", WrapperServer(wrapperTasklistServer(ChildsServer)))
+	http.HandleFunc("/newsubitem", WrapperServer(wrapperTasklistServer(NewServer)))
+	http.HandleFunc("/movechild", WrapperServer(wrapperTasklistServer(MoveChildServer)))
 }
 
 func Serve(port string) {

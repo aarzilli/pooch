@@ -35,6 +35,10 @@ table {
     font-weight: bold;
 }
 
+.etitle > pre {
+    font-weight: normal;
+}
+
 .etitle > a {
     text-decoration: none;
     color: black;

@@ -20,6 +20,7 @@ type JsonResult struct {
 type Object struct {
 	Id            string
 	Name          string
+	Title         string
 	Body          string
 	ChildrenCount int
 	FormattedText string
@@ -193,14 +194,9 @@ func nfUpdateHandler(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 		return
 	}
 	entry := tl.Get(realId)
-	title, text, colstr := parseUpdateBody(body)
-	cols, foundcat := ParseCols(colstr, tl.GetTimezone())
-	if !foundcat {
-		cols["uncat"] = ""
-	}
+	title, text, _ := parseUpdateBody(body)
 	entry.SetTitle(title)
 	entry.SetText(text)
-	entry.SetColumns(cols, tl.GetTimezone())
 	tl.Update(entry, false)
 	returnJson(c, "", []*Object{entryToObject(entry)})
 }
@@ -311,7 +307,6 @@ func getForm(r *http.Request, name string) string {
 
 func returnJson(w http.ResponseWriter, errstr string, r []*Object) {
 	b, err := json.Marshal(&JsonResult{Error: errstr, Objects: r})
-	fmt.Printf("Returning: <%s> %v\n", errstr, r)
 	Must(err)
 	w.Write(b)
 }
@@ -537,32 +532,37 @@ func formatEntry(e *Entry) (body string, formattedText string) {
 	}
 	body += TEXT_COLS_SEPARATOR + e.ColString(true)
 
-	formattedText = "<b>" + html.EscapeString(e.Title()) + "</b>"
-
-	if e.Text() != "" {
-		formattedText += "<p>" + strings.Replace(html.EscapeString(e.Text()), "\n", "<br>", -1) + "</p>"
-	}
+	//formattedText = "<b>" + html.EscapeString(e.Title()) + "</b>"
 
 	formattedText += "<p>"
 
-	for k, v := range e.Columns() {
-		if strings.HasPrefix(k, "sub/") {
-			continue
-		}
-		formattedText += "<span class='formattedcol'>"
-		if v != "" {
-			formattedText += fmt.Sprintf("%s=%s", html.EscapeString(k), html.EscapeString(v))
-		} else {
-			formattedText += fmt.Sprintf("%s", html.EscapeString(k))
-		}
-		formattedText += "</span>"
-	}
-
-	if e.TriggerAt() != nil {
-		formattedText += "<span class='formattedcol'>when=" + e.TriggerAt().Format(TRIGGER_AT_FORMAT) + "</span>"
+	if e.Text() != "" {
+		formattedText += strings.Replace(html.EscapeString(e.Text()), "\n", "<br>", -1)
 	}
 
 	formattedText += "</p>"
+
+	/*
+		formattedText += "<p>"
+
+		for k, v := range e.Columns() {
+			if strings.HasPrefix(k, "sub/") {
+				continue
+			}
+			formattedText += "<span class='formattedcol'>"
+			if v != "" {
+				formattedText += fmt.Sprintf("%s=%s", html.EscapeString(k), html.EscapeString(v))
+			} else {
+				formattedText += fmt.Sprintf("%s", html.EscapeString(k))
+			}
+			formattedText += "</span>"
+		}
+
+		if e.TriggerAt() != nil {
+			formattedText += "<span class='formattedcol'>when=" + e.TriggerAt().Format(TRIGGER_AT_FORMAT) + "</span>"
+		}
+
+		formattedText += "</p>"*/
 
 	return
 }
@@ -577,7 +577,8 @@ func entryToObject(e *Entry) *Object {
 	}
 	p := e.Priority()
 	return &Object{
-		Id:            "#id=" + e.Id(),
+		Id:            e.Id(),
+		Title:         e.Title(),
 		Name:          sort,
 		Body:          body,
 		ChildrenCount: 1,

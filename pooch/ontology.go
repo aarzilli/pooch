@@ -1,8 +1,5 @@
 package pooch
 
-import (
-)
-
 func ontologyServerGetIn(tl *Tasklist) []OntologyNodeIn {
 	ontology := tl.GetOntology()
 	knownTags := map[string]bool{}
@@ -46,17 +43,17 @@ func ontologyMoveSibling(src, dst string, ontology []OntologyNodeIn) []OntologyN
 	if src == dst {
 		return ontology
 	}
-	
+
 	p, i := ontologyFindParent(&ontology, src)
 	srcNode := (*p)[i]
 	copy((*p)[i:], (*p)[i+1:])
 	*p = (*p)[:len(*p)-1]
-	
+
 	p, i = ontologyFindParent(&ontology, dst)
 	*p = append(*p, srcNode)
 	copy((*p)[i+2:], (*p)[i+1:len(*p)-1])
 	(*p)[i+1] = srcNode
-	
+
 	return ontology
 }
 
@@ -64,7 +61,7 @@ func ontologyMoveChildren(src, dst string, ontology []OntologyNodeIn) []Ontology
 	if src == dst {
 		return ontology
 	}
-	
+
 	p, i := ontologyFindParent(&ontology, src)
 	srcNode := (*p)[i]
 	copy((*p)[i:], (*p)[i+1:])
@@ -72,6 +69,6 @@ func ontologyMoveChildren(src, dst string, ontology []OntologyNodeIn) []Ontology
 
 	p, i = ontologyFindParent(&ontology, dst)
 	(*p)[i].Children = append((*p)[i].Children, srcNode)
-	
+
 	return ontology
 }

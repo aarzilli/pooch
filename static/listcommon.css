@@ -97,3 +97,38 @@
 [draggable] {
 	user-select: none;
 }
+
+table.substable {
+	margin-left: 30px;
+	border-collapse: collapse;
+}
+
+td.substable_folder a {
+	font-family: FontAwesome;
+}
+
+table.substable td {
+	vertical-align: top;
+}
+
+td.substable_name {
+	padding-left: 15px;
+	padding-right: 10px;
+}
+
+td.substable_content {
+	padding-left: 15px;
+}
+
+td.substable_content > p {
+	margin-top: 5px
+}
+
+td.substable_content > table.substable {
+	margin-left: -80px;
+}
+
+.substable_textarea {
+	width: 100%;
+	font-size: 10pt;
+}
