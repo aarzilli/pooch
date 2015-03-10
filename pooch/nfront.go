@@ -41,119 +41,6 @@ const (
 	ID_IS_COMPLEX_AND_PRIORITY
 )
 
-func nfNewHandler(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
-	defer panicToErrors(c)
-	Must(req.ParseForm())
-	id := idRevertSpaces(getForm(req, "id"))
-	n, err := strconv.ParseInt(getForm(req, "n"), 10, 32)
-	Must(err)
-
-	idtype, realId, _ := identifyId(id)
-
-	switch idtype {
-	case ID_IS_ID:
-		entry := tl.ParseNew("#sub/"+realId, "")
-		tl.Add(entry)
-		nfMove(tl, realId, entry.Id(), int(n), entry)
-		returnJson(c, "", []*Object{entryToObject(tl.Get(entry.Id()))})
-	default:
-		entry := tl.ParseNew("", id)
-		tl.Add(entry)
-		returnJson(c, "", []*Object{entryToObject(entry)})
-	}
-}
-
-func nfMove(tl *Tasklist, pid string, id string, n int, entry *Entry) {
-	childs := tl.GetChildren(pid)
-	newchilds := make([]string, len(childs))
-	s := 0
-	d := 0
-	added := false
-	for s < len(childs) {
-		if d == n {
-			added = true
-			newchilds[d] = id
-			entry.SetColumn("sub/"+pid, strconv.Itoa(d))
-			d++
-		} else if childs[s] == id {
-			s++
-		} else {
-			newchilds[d] = childs[s]
-			s++
-			d++
-		}
-	}
-	if !added {
-		newchilds[d] = id
-		entry.SetColumn("sub/"+pid, strconv.Itoa(d))
-	}
-	tl.UpdateChildren(pid, newchilds)
-}
-
-func nfListHandler(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
-	defer panicToErrors(c)
-	Must(req.ParseForm())
-	id := idRevertSpaces(getForm(req, "id"))
-	dochilds := getForm(req, "c")
-	switch dochilds {
-	case "0":
-		o := singleTaskOrCatToObject(tl, id)
-		returnJson(c, "", []*Object{o})
-	case "1":
-		os := runQueryOrChildsToObjects(tl, id, true)
-		returnJson(c, "", os)
-	case "2":
-		os := runQueryOrChildsToObjects(tl, id, false)
-		returnJson(c, "", os)
-	}
-}
-
-func singleTaskOrCatToObject(tl *Tasklist, id string) *Object {
-	if id == "" {
-		return &Object{Id: "", Name: "root", Body: "root", ChildrenCount: 1, FormattedText: "<b>root</b>", Priority: "unknown", Editable: false}
-	}
-
-	idtype, realId, cats := identifyId(id)
-	switch idtype {
-	case ID_IS_ID:
-		return singleTaskToObject(tl, realId)
-	case ID_IS_CATLIST, ID_IS_CATLIST_AND_PRIORITY, ID_IS_SAVEDQUERY_AND_PRIORITY, ID_IS_COMPLEX_AND_PRIORITY:
-		return &Object{Id: idConvertSpaces(id), Name: id, Body: cats[len(cats)-1], ChildrenCount: 1, FormattedText: "<b>" + html.EscapeString("#"+cats[len(cats)-1]) + "</b>", Priority: "unknown", Editable: false}
-	case ID_IS_COMPLEX, ID_IS_SAVEDQUERY:
-		return &Object{Id: idConvertSpaces(id), Name: id, Body: id, ChildrenCount: 1, FormattedText: "<b>" + html.EscapeString(id) + "</b>", Priority: "unknown", Editable: false}
-	}
-	return nil
-}
-
-func runQueryOrChildsToObjects(tl *Tasklist, id string, autoExpand bool) []*Object {
-	if id == "" {
-		return rootOntology(tl)
-	}
-
-	idtype, realId, cats := identifyId(id)
-	switch idtype {
-	case ID_IS_ID:
-		Logf(INFO, "NF\tchildsToObjects\t%s\n", realId)
-		return childsToObjects(tl, realId)
-	case ID_IS_CATLIST:
-		Logf(INFO, "NF\tcatChildsToObjects\t%s\t%v\n", id, autoExpand)
-		return catChildsToObjects(tl, id, cats, autoExpand)
-	case ID_IS_CATLIST_AND_PRIORITY:
-		Logf(INFO, "NF\tqueryToObjects\t%s\t%s\n", id, cats[len(cats)-1])
-		return queryToObjects(tl, id, cats[len(cats)-1])
-	case ID_IS_SAVEDQUERY_AND_PRIORITY:
-		Logf(INFO, "NF\tqueryToObjects\t%s\t%s\n", id, cats[1])
-		return queryToObjects(tl, id, cats[1])
-	case ID_IS_COMPLEX_AND_PRIORITY:
-		Logf(INFO, "NF\tqueryToObjects\t%s\t%s\n", id, cats[0])
-		return queryToObjects(tl, id, cats[0])
-	case ID_IS_COMPLEX, ID_IS_SAVEDQUERY:
-		Logf(INFO, "NF\tqueryToObjects\t%s\n", id)
-		return queryToObjects(tl, id, "")
-	}
-	return nil
-}
-
 func parseUpdateBody(body string) (title, text, colstr string) {
 	body = strings.TrimLeft(body, "\n")
 	v := strings.SplitN(body, "\n", 2)
@@ -201,98 +88,6 @@ func nfUpdateHandler(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	returnJson(c, "", []*Object{entryToObject(entry)})
 }
 
-/*
- n == -1: at the end
- n == <a number>: at that position
-*/
-func nfMoveHandler(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
-	defer panicToErrors(c)
-	Must(req.ParseForm())
-	id := getForm(req, "id")
-	p := getForm(req, "p")
-	n, err := strconv.ParseInt(getForm(req, "n"), 10, 32)
-	Must(err)
-
-	idtype, realId, cats := identifyId(id)
-	pidtype, realPid, pcats := identifyId(p)
-	if idtype == ID_IS_ID && pidtype == ID_IS_ID {
-		nfMoveHandlerObjects(c, tl, n, realId, realPid)
-		return
-	}
-
-	_ = cats
-	_ = pcats
-	/*
-		if idtype == ID_IS_CATLIST && (pidtype == ID_IS_CATLIST || p == "") {
-			nfMoveHandlerOntology(c, tl, n, cats, pcats)
-			return
-		}
-	*/
-
-	returnJson(c, "Operation only implemented between categories or between objects", nil)
-}
-
-func nfMoveHandlerObjects(c http.ResponseWriter, tl *Tasklist, n int64, realId, realPid string) {
-	entry := tl.Get(realId)
-
-	if ok, curPid := IsSubitem(entry.Columns()); ok {
-		if curPid != realPid {
-			entry.SetColumn("sub/"+realPid, "-1")
-			entry.RemoveColumn("sub/" + curPid)
-			tl.Update(entry, false)
-		}
-	} else {
-		entry.SetColumn("sub/"+realPid, "-1")
-		tl.Update(entry, false)
-	}
-	if m := subitemSort(entry); m >= 0 && m < int(n) {
-		n--
-	}
-	nfMove(tl, realPid, realId, int(n), entry)
-	returnJson(c, "", []*Object{entryToObject(entry)})
-}
-
-func nfMoveHandlerOntology(c http.ResponseWriter, tl *Tasklist, n int64, cats []string, pcats []string) {
-	fmt.Printf("cats: %v pcats: %v\n", cats, pcats)
-	ontology := tl.GetOntology()
-	ontology, ok := ontologyRemove(ontology, cats[len(cats)-1])
-	if !ok {
-		returnJson(c, "Could not complete operation (1)", nil)
-	}
-	ontology, ok = ontologyAdd(ontology, pcats[len(pcats)-1], cats[len(cats)-1])
-	if !ok {
-		returnJson(c, "Could not complete operation (2)", nil)
-	}
-	mor, err := json.Marshal(ontology)
-	Must(err)
-	tl.SetSetting("ontology", string(mor))
-	returnJson(c, "", []*Object{ontologyNodeToObject(cats[len(cats)-1])})
-}
-
-func nfRemoveHandler(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
-	defer panicToErrors(c)
-	Must(req.ParseForm())
-	id := getForm(req, "id")
-	idtype, realId, _ := identifyId(id)
-
-	if idtype == ID_IS_ID {
-		tl.Remove(realId)
-		returnJson(c, "", nil)
-	} else {
-		returnJson(c, "Can not be deleted", nil)
-	}
-}
-
-func nfCurcutHandler(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
-	defer panicToErrors(c)
-	Must(req.ParseForm())
-	if req.Method == "PUT" {
-		tl.curCut = getForm(req, "id")
-		returnJson(c, "", []*Object{&Object{Id: tl.curCut}})
-	} else {
-		returnJson(c, "", []*Object{&Object{Id: tl.curCut}})
-	}
-}
 
 func getForm(r *http.Request, name string) string {
 	vs, ok := r.Form[name]
@@ -400,29 +195,9 @@ func identifyId(id string) (idtype IdType, realId string, cats []string) {
 	return ID_IS_CATLIST, "", cats
 }
 
-func singleTaskToObject(tl *Tasklist, id string) *Object {
-	entry := tl.Get(id)
-	return entryToObject(entry)
-}
-
 func childsToObjects(tl *Tasklist, id string) []*Object {
 	q := "#:sub #:w/done #:ssort #sub/" + id
 	return queryToObjects(tl, q, "")
-}
-
-func catChildsToObjects(tl *Tasklist, q string, cats []string, autoExpand bool) []*Object {
-	os := searchOntology(tl, cats)
-	if (len(os) > 0) || !autoExpand {
-		os = append(os, priorityObject(q, "#sticky"))
-		os = append(os, priorityObject(q, "#now"))
-		os = append(os, priorityObject(q, "#later"))
-		os = append(os, priorityObject(q, "#notes"))
-		os = append(os, priorityObject(q, "#timed"))
-		os = append(os, priorityObject(q, "#done"))
-	} else {
-		os = queryToObjects(tl, q, "")
-	}
-	return os
 }
 
 type SubitemSort []*Entry
@@ -470,8 +245,6 @@ func queryToObjects(tl *Tasklist, q string, priority string) []*Object {
 	query := strings.Replace(q, "\r", "", -1)
 	theselect, code, _, _, _, _, options, perr := tl.ParseSearch(query, nil)
 	Must(perr)
-
-	//TODO: switching to calview, how?
 
 	_, incsub := options["sub"]
 	v, rerr := tl.Retrieve(theselect, code, incsub)
@@ -532,8 +305,6 @@ func formatEntry(e *Entry) (body string, formattedText string) {
 	}
 	body += TEXT_COLS_SEPARATOR + e.ColString(true)
 
-	//formattedText = "<b>" + html.EscapeString(e.Title()) + "</b>"
-
 	formattedText += "<p>"
 
 	if e.Text() != "" {
@@ -541,28 +312,6 @@ func formatEntry(e *Entry) (body string, formattedText string) {
 	}
 
 	formattedText += "</p>"
-
-	/*
-		formattedText += "<p>"
-
-		for k, v := range e.Columns() {
-			if strings.HasPrefix(k, "sub/") {
-				continue
-			}
-			formattedText += "<span class='formattedcol'>"
-			if v != "" {
-				formattedText += fmt.Sprintf("%s=%s", html.EscapeString(k), html.EscapeString(v))
-			} else {
-				formattedText += fmt.Sprintf("%s", html.EscapeString(k))
-			}
-			formattedText += "</span>"
-		}
-
-		if e.TriggerAt() != nil {
-			formattedText += "<span class='formattedcol'>when=" + e.TriggerAt().Format(TRIGGER_AT_FORMAT) + "</span>"
-		}
-
-		formattedText += "</p>"*/
 
 	return
 }
@@ -588,78 +337,6 @@ func entryToObject(e *Entry) *Object {
 	}
 }
 
-func rootOntology(tl *Tasklist) []*Object {
-	ontology := tl.GetOntology()
-	knownTags := map[string]bool{}
-
-	getTagsInOntology(knownTags, ontology)
-
-	savedSearches := tl.GetSavedSearches()
-	tags := tl.GetTags()
-
-	for _, ss := range savedSearches {
-		n := "#%" + ss
-		if _, ok := knownTags[n]; !ok {
-			ontology = append(ontology, OntologyNodeIn{n, "open", []OntologyNodeIn{OntologyNodeIn{}}})
-		}
-	}
-
-	for _, t := range tags {
-		n := "#" + t
-		if _, ok := knownTags[n]; !ok {
-			ontology = append(ontology, OntologyNodeIn{n, "open", []OntologyNodeIn{OntologyNodeIn{}}})
-		}
-	}
-
-	return ontologyToObjects(ontology)
-}
-
-func ontologyNodeToObject(ondata string) *Object {
-	return &Object{
-		Id:            ondata,
-		Name:          ondata,
-		Body:          ondata,
-		ChildrenCount: 1,
-		FormattedText: "<b>" + html.EscapeString(ondata) + "</b>",
-		Priority:      "unknown",
-		Editable:      false,
-	}
-}
-
-func ontologyToObjects(ontology []OntologyNodeIn) []*Object {
-	r := make([]*Object, len(ontology))
-	for i := range ontology {
-		r[i] = ontologyNodeToObject(ontology[i].Data)
-	}
-	return r
-}
-
-func searchOntology(tl *Tasklist, cats []string) []*Object {
-	if cats == nil || len(cats) == 0 {
-		return []*Object{}
-	}
-
-	ontology := tl.GetOntology()
-	var searchOntologyEx func(node []OntologyNodeIn, cats []string) []OntologyNodeIn
-	searchOntologyEx = func(node []OntologyNodeIn, cats []string) []OntologyNodeIn {
-		if len(cats) == 0 {
-			return node
-		}
-		for i := 0; i < len(node); i++ {
-			if node[i].Data == "#"+cats[0] {
-				return searchOntologyEx(node[i].Children, cats[1:])
-			}
-		}
-		return []OntologyNodeIn{}
-	}
-
-	return ontologyToObjects(searchOntologyEx(ontology, cats))
-}
-
 func idConvertSpaces(id string) string {
 	return strings.Replace(id, " ", "·", -1)
-}
-
-func idRevertSpaces(id string) string {
-	return strings.Replace(id, "·", " ", -1)
 }

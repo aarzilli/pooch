@@ -909,13 +909,7 @@ func SetupHandleFunc(wrapperTasklistServer func(TasklistServer) http.HandlerFunc
 	http.HandleFunc("/rentag", WrapperServer(wrapperTasklistServer(RenTagServer)))
 
 	// New frontend
-	http.HandleFunc("/nf/new.json", WrapperServer(wrapperTasklistServer(nfNewHandler)))
-	http.HandleFunc("/nf/list.json", WrapperServer(wrapperTasklistServer(nfListHandler)))
 	http.HandleFunc("/nf/update.json", WrapperServer(wrapperTasklistServer(nfUpdateHandler)))
-	http.HandleFunc("/nf/move.json", WrapperServer(wrapperTasklistServer(nfMoveHandler)))
-	http.HandleFunc("/nf/remove.json", WrapperServer(wrapperTasklistServer(nfRemoveHandler)))
-	http.HandleFunc("/nf/curcut", WrapperServer(wrapperTasklistServer(nfCurcutHandler)))
-
 	http.HandleFunc("/childs.json", WrapperServer(wrapperTasklistServer(ChildsServer)))
 	http.HandleFunc("/newsubitem", WrapperServer(wrapperTasklistServer(NewServer)))
 	http.HandleFunc("/movechild", WrapperServer(wrapperTasklistServer(MoveChildServer)))
