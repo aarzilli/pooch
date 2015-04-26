@@ -574,7 +574,9 @@ func MoveChildServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 
 	sentry := tl.Get(src)
 
-	if ok, spid := IsSubitem(sentry.Columns()); ok {
+	wasChild, spid := IsSubitem(sentry.Columns())
+
+	if wasChild {
 		sentry.RemoveColumn("sub/" + spid)
 	}
 
@@ -593,6 +595,10 @@ func MoveChildServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 		tl.UpdateChildren(pid, newsiblings)
 	}
 
+	if wasChild {
+		oldsiblings := tl.GetChildren(spid)
+		tl.UpdateChildren(spid, oldsiblings)
+	}
 }
 
 func childsServerRec(tl *Tasklist, id string) []*Object {

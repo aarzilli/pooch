@@ -88,7 +88,6 @@ func nfUpdateHandler(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	returnJson(c, "", []*Object{entryToObject(entry)})
 }
 
-
 func getForm(r *http.Request, name string) string {
 	vs, ok := r.Form[name]
 	if !ok {
