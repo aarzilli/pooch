@@ -63,7 +63,7 @@ function subtree_save(name) {
 	var content = "id=" + encodeURIComponent("#id=" + name) + "&body=" + encodeURIComponent(text);
 	$.ajax({type: "POST", url : "nf/update.json", data: content, success: function(data, textStatus, req) {
 		data = JSON.parse(data);
-		$("#subsrow_" + name).find(".substable_content").find("div").get(0).innerHTML = "<b>" + data.Objects[0].Title + "</b>" + data.Objects[0].FormattedText;
+		$("#subsrow_" + name).find(".substable_content").find("div").get(0).innerHTML = childRepresentationFromData(data.Objects[0]);
 	}})
 }
 
@@ -606,6 +606,10 @@ function edit_row(name, pid) {
 	if (thediv == null) {
 		return;
 	}
+	var theta = $(thediv).find("textarea").get(0);
+	if (theta != null) {
+		return;
+	}
 	$.ajax({ url: "get?nocols=1&id=" + encodeURIComponent(name), success: function(data, textStatus, req) {
 		data = JSON.parse(data.split("\n", 2)[1]);
 		var ta = document.createElement("textarea");
@@ -685,11 +689,7 @@ function fill_childrens(tbl, pid, data) {
 		// Contents
 		td = document.createElement("td");
 		td.classList.add("substable_content");
-		var title = "(empty)";
-		if (data[i].Title != "") {
-			title = data[i].Title;
-		}
-		td.innerHTML = "<div ondblclick='edit_row(\"" + data[i].Id + "\", \"" + pid + "\")' onmouseup='add_subitem(event, \"" + data[i].Id + "\", \"" + pid + "\", 0)' ondragenter='cancel_shit(event)' ondragover='cancel_shit(event)' ondragleave='cancel_shit(event)' ondrop='subs_drop(event, \"" + data[i].Id + "\", \"" + pid + "\", 0)'><b>" + title + "</b>" + data[i].FormattedText + "</div>";
+		td.innerHTML = "<div ondblclick='edit_row(\"" + data[i].Id + "\", \"" + pid + "\")' onmouseup='add_subitem(event, \"" + data[i].Id + "\", \"" + pid + "\", 0)' ondragenter='cancel_shit(event)' ondragover='cancel_shit(event)' ondragleave='cancel_shit(event)' ondrop='subs_drop(event, \"" + data[i].Id + "\", \"" + pid + "\", 0)'>" + childRepresentationFromData(data[i]) + "</div>";
 		
 		if (data[i].Children.length > 0) {
 			var stbl = document.createElement("table");
@@ -704,6 +704,11 @@ function fill_childrens(tbl, pid, data) {
 		
 		tbl.appendChild(row);
 	}
+}
+
+function childRepresentationFromData(data) {
+	var title = data.Title != "" ? data.Title : "(empty)";
+	return "<b>" + title + "</b>" + data.FormattedText;
 }
 
 function reload_childrens(pid, editName) {
