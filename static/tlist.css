@@ -145,3 +145,16 @@ table {
 .jstree-default.jstree-focused {
     background: black;
 }
+
+.treehelp {
+	font-size: xx-small;
+}
+
+.treehelp ul {
+	padding-left: 3em;
+	margin-top: 0px;
+}
+
+.treehelpid {
+	font-size: small;
+}

@@ -236,16 +236,27 @@ var EntryListEntryEditorHTML ExecutableTemplate = MakeExecutableTemplate("EntryL
              $("#edat_{{.Id|html}}").datepicker("option", "dateFormat", "yy-mm-dd");
           </script>
 		  &nbsp; Sort by: <input type='text' name='edsort' size=10 disabled='disabled'/>
-          &nbsp; ID: <a href='list?q=%23:id={{.Id}}'>{{.Id|html}}</a>
+          &nbsp; ID: <a href='list?q=%23:id={{.Id}}#{{.Id}}'>{{.Id|html}}</a>
           &nbsp; Timestamp: <img id='loading_{{.Id|html}}' style='display: none' src='loading.gif'/> <span id='ts_{{.Id|html}}'> </span></p>
 
           <p><input type='button' style='float: right' value='remove' onclick='javascript:remove_entry("{{.Id|html}}", event)'/>
           <input type='button' name='savebtn' value='save' onclick='javascript:save_editor_by_id("{{.Id|html}}", event)' disabled='disabled'/>
           <input type='button' value='reload' onclick='javascript:fill_editor("{{.Id|html}}", null)'/></p>
         </form>
-        <table id='subs_{{.Id|html}}' class='substable' style='display: none;'>
-          <tr><td>ciao</td></tr>
-        </table>
+        <div id='subs_{{.Id|html}}_container' style='display: none;'>
+        	<table id='subs_{{.Id|html}}' class='substable'>
+          		<tr><td>ciao</td></tr>
+        	</table>
+        	<div class="treehelp">Help:
+        		<ul>
+        		<li>Drag item number to reorder, drop onto other item number to place as sibling
+        		<li>Drag item number to reorder, drop onto folder icon to place as children
+        		<li>Double click item text to edit
+        		<li>Click and press enter to create new sibling item.
+        		</ul>
+        		<p class='treehelpid'>ID: <a href='list?q=%23:id={{.Id}}#{{.Id}}'>{{.Id|html}}</a></p>
+        	</div>
+        </div>
       </td>
     {{end}}
     {{with .heading}}

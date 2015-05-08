@@ -146,6 +146,13 @@ func GetServer(c http.ResponseWriter, req *http.Request, tl *Tasklist, id string
 
 func RemoveServer(c http.ResponseWriter, req *http.Request, tl *Tasklist, id string) {
 	tl.Remove(id)
+	v := req.URL.Query()["pid"]
+	if v != nil && len(v) == 1 {
+		pid := v[0]
+		// renumber children
+		childs := tl.GetChildren(pid)
+		tl.UpdateChildren(pid, childs)
+	}
 	io.WriteString(c, "removed")
 }
 

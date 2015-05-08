@@ -64,11 +64,12 @@ function subtree_save(name) {
 	$.ajax({type: "POST", url : "nf/update.json", data: content, success: function(data, textStatus, req) {
 		data = JSON.parse(data);
 		$("#subsrow_" + name).find(".substable_content").find("div").get(0).innerHTML = childRepresentationFromData(data.Objects[0]);
+		setselected(name);
 	}})
 }
 
 function subtree_remove(name, pid) {
-	$.ajax({ url: "remove?id=" + encodeURIComponent(name), success: function(data, textStatus, req) {
+	$.ajax({ url: "remove?id=" + encodeURIComponent(name) + "&pid=" + encodeURIComponent(pid), success: function(data, textStatus, req) {
 		if (data.match(/^removed/)) {
 			reload_childrens(pid, null);
 		}
@@ -87,6 +88,11 @@ function keytable(e) {
             var row = $(document.activeElement).parents("tr").get(0);
             var name = get_after_underscore(row.id);
             subtree_save(name);
+        } else {
+            var seldiv = $(".selected").get(0);
+            if (seldiv != null) {
+                seldiv.classList.remove("selected");
+            }
         }
         $("#searchpop").get(0).style['display'] = 'none';
         $("#addpop").get(0).style['display'] = 'none';
@@ -98,6 +104,21 @@ function keytable(e) {
                 $("#searchform").get(0).submit();
                 e.preventDefault();
                 return false;
+            }
+        } else {
+            var hltr = $(".selected").get(0);
+            if (hltr != null) {
+                var name = hltr.id.substring("subsrow_".length)
+                var pid = null;
+                for (var el = hltr.parentElement; el != null; el = el.parentElement) {
+                    if ((el.tagName.toUpperCase() == "TR") && (el.id.indexOf("editor_") == 0)) {
+                        pid = el.id.substring("editor_".length);
+                        break;
+                    }
+                }
+                $.ajax({ url: "newsubitem?id=" + encodeURIComponent(name) + "&child=0", success: function(data, textStatus, req) {
+                    reload_childrens(pid, data);
+                }});
             }
         }
         return true;
@@ -485,12 +506,12 @@ function click_ontology(event) {
 }
 
 function show_editor(id) {
-  $("#subs_" + id).first().get(0).style["display"] = "none";
+  $("#subs_" + id + '_container').first().get(0).style["display"] = "none";
   $("#ediv_" + id).first().get(0).style["display"] = "block";
 }
 
 function show_subs(id) {
-  $("#subs_" + id).first().get(0).style["display"] = "block";
+  $("#subs_" + id + '_container').first().get(0).style["display"] = "block";
   $("#ediv_" + id).first().get(0).style["display"] = "none";
 }
 
@@ -628,6 +649,17 @@ function edit_row(name, pid) {
 	}});
 }
 
+function setselected(name) {
+	var seldiv = $(".selected").get(0);
+	if (seldiv != null) {
+		seldiv.classList.remove("selected");
+	}
+	seldiv = $("#subsrow_" + name).get(0);
+	if (seldiv != null) {
+		seldiv.classList.add("selected")
+	}
+}
+
 function add_subitem(event, name, pid, child) {
 	if ((event != null) && (event.buttons != 4)) {
 		return false;
@@ -689,7 +721,7 @@ function fill_childrens(tbl, pid, data) {
 		// Contents
 		td = document.createElement("td");
 		td.classList.add("substable_content");
-		td.innerHTML = "<div ondblclick='edit_row(\"" + data[i].Id + "\", \"" + pid + "\")' onmouseup='add_subitem(event, \"" + data[i].Id + "\", \"" + pid + "\", 0)' ondragenter='cancel_shit(event)' ondragover='cancel_shit(event)' ondragleave='cancel_shit(event)' ondrop='subs_drop(event, \"" + data[i].Id + "\", \"" + pid + "\", 0)'>" + childRepresentationFromData(data[i]) + "</div>";
+		td.innerHTML = "<div onclick='setselected(\"" + data[i].Id + "\")' ondblclick='edit_row(\"" + data[i].Id + "\", \"" + pid + "\")' onmouseup='add_subitem(event, \"" + data[i].Id + "\", \"" + pid + "\", 0)' ondragenter='cancel_shit(event)' ondragover='cancel_shit(event)' ondragleave='cancel_shit(event)' ondrop='subs_drop(event, \"" + data[i].Id + "\", \"" + pid + "\", 0)'>" + childRepresentationFromData(data[i]) + "</div>";
 		
 		if (data[i].Children.length > 0) {
 			var stbl = document.createElement("table");
