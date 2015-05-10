@@ -317,6 +317,13 @@ function save_editor_by_id(name, event) {
     save_editor($("#ediv_"+name).get(0));
 }
 
+function explode_body(name) {
+    save_open_editor(true);
+    $.ajax({ type: "GET", url: "/explode?id=" + encodeURIComponent(name),  success: function(data, textStatus, req) {
+        // nothing to do
+    }});
+}
+
 function close_editor(row) {
     var ed = editor_from_row(row);
     save_editor(ed);

@@ -241,7 +241,8 @@ var EntryListEntryEditorHTML ExecutableTemplate = MakeExecutableTemplate("EntryL
 
           <p><input type='button' style='float: right' value='remove' onclick='javascript:remove_entry("{{.Id|html}}", event)'/>
           <input type='button' name='savebtn' value='save' onclick='javascript:save_editor_by_id("{{.Id|html}}", event)' disabled='disabled'/>
-          <input type='button' value='reload' onclick='javascript:fill_editor("{{.Id|html}}", null)'/></p>
+          <input type='button' value='reload' onclick='javascript:fill_editor("{{.Id|html}}", null)'/>
+          <input type='button' value='explode body' onclick='javascript:explode_body("{{.Id|html}}")'/></p>
         </form>
         <div id='subs_{{.Id|html}}_container' style='display: none;'>
         	<table id='subs_{{.Id|html}}' class='substable'>

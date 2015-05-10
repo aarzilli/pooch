@@ -156,6 +156,11 @@ func RemoveServer(c http.ResponseWriter, req *http.Request, tl *Tasklist, id str
 	io.WriteString(c, "removed")
 }
 
+func ExplodeBodyServer(c http.ResponseWriter, req *http.Request, tl *Tasklist, id string) {
+	tl.Explode(id)
+	io.WriteString(c, "exploded")
+}
+
 func QaddServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	entry := tl.ParseNew(CheckFormValue(req, "text"), req.FormValue("q"))
 
@@ -926,6 +931,7 @@ func SetupHandleFunc(wrapperTasklistServer func(TasklistServer) http.HandlerFunc
 	http.HandleFunc("/childs.json", WrapperServer(wrapperTasklistServer(ChildsServer)))
 	http.HandleFunc("/newsubitem", WrapperServer(wrapperTasklistServer(NewServer)))
 	http.HandleFunc("/movechild", WrapperServer(wrapperTasklistServer(MoveChildServer)))
+	http.HandleFunc("/explode", WrapperServer(wrapperTasklistWithIdServer(ExplodeBodyServer)))
 }
 
 func Serve(port string) {

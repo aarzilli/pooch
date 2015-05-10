@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"os"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -491,4 +492,37 @@ func (tl *Tasklist) ExtendedAddParse() *Entry {
 	e.SetText(split2[0])
 
 	return e
+}
+
+func explodeBody(body string, pid string) []*Entry {
+	r := []*Entry{}
+	cnt := 1
+
+	newChild := func(text string) {
+		c := strconv.Itoa(cnt)
+		entry := &Entry{"", text, "", NOW, nil, c, Columns{"sub/" + pid: c}}
+		r = append(r, entry)
+		cnt++
+	}
+
+	lines := strings.Split(body, "\n")
+	for i := range lines {
+		if len(lines[i]) == 0 {
+			continue
+		}
+		if lines[i][0] == '-' {
+			newChild(strings.TrimSpace(lines[i][1:]))
+		} else if lines[i][0] == ' ' && len(r) > 0 {
+			text := strings.TrimSpace(lines[i])
+			last := r[len(r)-1]
+			if last.Text() != "" {
+				text = last.Text() + "\n" + text
+			}
+			last.SetText(text)
+		} else {
+			newChild(strings.TrimSpace(lines[i][1:]))
+		}
+	}
+
+	return r
 }

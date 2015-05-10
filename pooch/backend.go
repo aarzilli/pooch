@@ -351,6 +351,17 @@ func (tl *Tasklist) Get(id string) *Entry {
 	return entry
 }
 
+func (tl *Tasklist) Explode(id string) {
+	entry := tl.Get(id)
+	childs := explodeBody(entry.Text(), entry.Id())
+	entry.SetText("")
+	tl.Update(entry, false)
+	for i := range childs {
+		childs[i].SetId(tl.MakeRandomId())
+		tl.Add(childs[i])
+	}
+}
+
 func (tl *Tasklist) GetListEx(stmt *sqlite.Stmt, code string, incsub bool) ([]*Entry, error) {
 	var err error
 
