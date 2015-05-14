@@ -107,7 +107,8 @@ function keytable(e) {
             }
         } else {
             var hltr = $(".selected").get(0);
-            if (hltr != null) {
+            console.log(document.activeElement);
+            if ((hltr != null) && ((document.activeElement == null) || (document.activeElement.tagName.toUpperCase() != "TEXTAREA"))) {
                 var name = hltr.id.substring("subsrow_".length)
                 var pid = null;
                 for (var el = hltr.parentElement; el != null; el = el.parentElement) {
@@ -119,6 +120,8 @@ function keytable(e) {
                 $.ajax({ url: "newsubitem?id=" + encodeURIComponent(name) + "&child=0", success: function(data, textStatus, req) {
                     reload_childrens(pid, data);
                 }});
+                e.preventDefault();
+                return false;
             }
         }
         return true;
