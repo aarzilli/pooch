@@ -81,6 +81,7 @@
 
 #ontonav_td ul {
 	padding-left: 20px;
+	list-style-type: none;
 }
 
 .tree_folder {
