@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"path"
 	"regexp"
+	"time"
 )
 
 type MultiuserDb struct {
@@ -265,6 +266,7 @@ func LoginServer(c http.ResponseWriter, req *http.Request) {
 		LoginHTML(map[string]string{"problem": ""}, c)
 	} else {
 		if !multiuserDb.Verify(req.FormValue("user"), req.FormValue("password")) {
+			time.Sleep(10 * time.Second)
 			LoginHTML(map[string]string{"problem": "No match for " + req.FormValue("user") + " and given password"}, c)
 		} else {
 			idCookie := AddIdCookie(c)

@@ -654,6 +654,7 @@ function edit_row(name, pid) {
 		buttons.innerHTML = "<input type='button' value='Save' onclick='subtree_save(\"" + name + "\")'>&nbsp;<input type='button' value='Delete' onclick='subtree_remove(\"" + name + "\", \"" + pid + "\")'> (" + name + ")";
 		thediv.appendChild(buttons);
 		
+		ta.setSelectionRange(0, 0);
 		ta.focus();
 		
 	}});
