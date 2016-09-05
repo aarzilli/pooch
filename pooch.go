@@ -6,7 +6,7 @@
 package main
 
 import (
-	. "./pooch"
+	. "pooch2/pooch"
 	"bufio"
 	"encoding/json"
 	"flag"

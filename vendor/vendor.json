@@ -1,0 +1,31 @@
+{
+	"comment": "",
+	"ignore": "test",
+	"package": [
+		{
+			"checksumSHA1": "kiElTAQ90j6hCTVBZas9jA253Qc=",
+			"path": "github.com/aarzilli/golua/lua",
+			"revision": "13f31dc0f4053bfc918fcf7a7a07c77c6c8bb933",
+			"revisionTime": "2016-08-07T11:58:29Z"
+		},
+		{
+			"checksumSHA1": "7UKA4roecSaaKWc9Z5/5/QcgWOI=",
+			"path": "github.com/carmark/gosqlite",
+			"revision": "c8f3509288e5f36cd7bc4e1d4c9b17cc21a1fdd1",
+			"revisionTime": "2013-05-31T03:59:47Z"
+		},
+		{
+			"checksumSHA1": "aJh6F3Zgy3pC6DtANAvF4LIXDPE=",
+			"path": "github.com/carmark/gosqlite/sqlite",
+			"revision": "c8f3509288e5f36cd7bc4e1d4c9b17cc21a1fdd1",
+			"revisionTime": "2013-05-31T03:59:47Z"
+		},
+		{
+			"checksumSHA1": "t7Rhm434BHEHhmpEWPFZkH4XaBg=",
+			"path": "rsc.io/rsc/fuse",
+			"revision": "e1cb635eaa1bed9efc1ec21c8537c46161abfcb8",
+			"revisionTime": "2016-02-25T01:49:24Z"
+		}
+	],
+	"rootPath": "pooch2"
+}

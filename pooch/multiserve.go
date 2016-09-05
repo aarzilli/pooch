@@ -6,13 +6,14 @@
 package pooch
 
 import (
-	"code.google.com/p/gosqlite/sqlite"
 	"crypto/sha512"
 	"fmt"
 	"net/http"
 	"path"
 	"regexp"
 	"time"
+
+	"github.com/carmark/gosqlite/sqlite"
 )
 
 type MultiuserDb struct {

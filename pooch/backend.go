@@ -6,18 +6,19 @@
 package pooch
 
 import (
-	"code.google.com/p/gosqlite/sqlite"
 	"crypto/rand"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/aarzilli/golua/lua"
 	"io"
 	"regexp"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/aarzilli/golua/lua"
+	"github.com/carmark/gosqlite/sqlite"
 )
 
 type Tasklist struct {
