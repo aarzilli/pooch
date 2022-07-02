@@ -1,0 +1,8 @@
+github.com/aarzilli/golua v0.0.0-20160807115829-13f31dc0f405 h1:pjMQ+p5hmLlG8a0nPS+u7wHCV1B5ysb7iiM/v4MNLZI=
+github.com/aarzilli/golua v0.0.0-20160807115829-13f31dc0f405/go.mod h1:SV7PRru1lATaCdZXNt5AZHw0uKiN1BoYBHrcctQ1Ouc=
+github.com/aarzilli/golua v0.0.0-20210507130708-11106aa57765 h1:N6gB4UCRBZz8twlJbMFiCKj0zX5Et2nFU/LRafT4x80=
+github.com/aarzilli/golua v0.0.0-20210507130708-11106aa57765/go.mod h1:hMjfaJVSqVnxenMlsxrq3Ni+vrm9Hs64tU4M7dhUoO4=
+github.com/carmark/gosqlite v0.0.0-20130531035947-c8f3509288e5 h1:DHlmZ4X/e0tKq+jUsmxM5pNpKU5E/X9Qr2NJGRhMa0w=
+github.com/carmark/gosqlite v0.0.0-20130531035947-c8f3509288e5/go.mod h1:QvbGu5ctiD29m63e9n24cPly+H8F3qAhM9YFT14IFjs=
+rsc.io/rsc v0.0.0-20160225014924-e1cb635eaa1b h1:qDms+aGLEkUTr/ccJ7BDcc4lJQUhV0O2SSVVcCHqhN4=
+rsc.io/rsc v0.0.0-20160225014924-e1cb635eaa1b/go.mod h1:nHU4RAWoD9u1Hr+vTW0mktVbANmwCPkTwT2xNpVs/70=

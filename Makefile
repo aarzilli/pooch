@@ -16,5 +16,5 @@ pooch/staticserve.go: $(staticservedeps)
 	perl make-staticserve.pl $(staticservedeps) > pooch/staticserve.go
 
 pooch2: $(GOFILES)
-	go build
+	go build -o pooch2
 

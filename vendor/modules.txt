@@ -1,0 +1,13 @@
+# github.com/aarzilli/golua v0.0.0-20210507130708-11106aa57765
+## explicit; go 1.15
+github.com/aarzilli/golua/lua
+github.com/aarzilli/golua/lua/lua51
+github.com/aarzilli/golua/lua/lua52
+github.com/aarzilli/golua/lua/lua53
+github.com/aarzilli/golua/lua/lua54
+# github.com/carmark/gosqlite v0.0.0-20130531035947-c8f3509288e5
+## explicit
+github.com/carmark/gosqlite/sqlite
+# rsc.io/rsc v0.0.0-20160225014924-e1cb635eaa1b
+## explicit
+rsc.io/rsc/fuse
