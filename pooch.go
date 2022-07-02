@@ -6,11 +6,11 @@
 package main
 
 import (
-	. "pooch2/pooch"
 	"bufio"
 	"encoding/json"
 	"flag"
 	"fmt"
+	. "github.com/aarzilli/pooch/pooch"
 	"io/ioutil"
 	"os"
 	"strconv"

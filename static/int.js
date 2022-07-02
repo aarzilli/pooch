@@ -59,7 +59,7 @@ function perform_toggle_on_keyevent(e) {
 }
 
 function subtree_save(name) {
-	var text = $("#subsrow_"+name).find("textarea").get(0).value;
+	var text = $("#subsrow_"+quoteName(name)).find("textarea").get(0).value;
 	var content = "id=" + encodeURIComponent("#id=" + name) + "&body=" + encodeURIComponent(text);
 	$.ajax({type: "POST", url : "nf/update.json", data: content, success: function(data, textStatus, req) {
 		data = JSON.parse(data);
@@ -144,7 +144,7 @@ function keytable(e) {
 }
 
 function remove_entry(name) {
-  var tbl = $("#editor_"+name).parent().parent().first().get(0);
+  var tbl = $("#editor_"+quoteName(name)).parent().parent().first().get(0);
   $.ajax({ url: "remove?id=" + encodeURIComponent(name), success: function(data, textStatus, req) {
 	if (data.match(/^removed/)) {
 	  //var maintable = $("#maintable").get(0);
@@ -175,15 +175,15 @@ function save_editor(form) {
     obj.sort = form.elements['edsort'].value;
     obj.id = form.elements['edid'].value;
     obj.priority = parseInt(form.elements['edprio'].value);
-    $("#loading_"+obj.id).get(0).style.display = "inline";
+    $("#loading_"+quoteName(obj.id)).get(0).style.display = "inline";
 
     $.ajax({ type: "POST", url: "/save", data: JSON.stringify(obj), success: function(data, textStatus, req) {
 	  if (data.match(/^saved-at-timestamp: /)) {
-	    $("#ts_"+obj.id).html(data.substr("saved-at-timestamp: ".length));
+	    $("#ts_"+quoteName(obj.id)).html(data.substr("saved-at-timestamp: ".length));
 	  } else {
-	    $("#ts_"+obj.id).html(" LAST SAVE FAILED: " + data);
+	    $("#ts_"+quoteName(obj.id)).html(" LAST SAVE FAILED: " + data);
 	  }
-	  $("#loading_"+obj.id).get(0).style.display = "none";
+	  $("#loading_"+quoteName(obj.id)).get(0).style.display = "none";
 	}});
 }
 
@@ -251,12 +251,12 @@ function count_lines(data) {
 }
 
 function fill_editor(name, contfn) {
-    $("#loading_"+name).get(0).style.display = "inline";
+    $("#loading_"+quoteName(name)).get(0).style.display = "inline";
     $.ajax({url: "get?id=" + encodeURIComponent(name), success: function(data, textStatus, req) {
         var timestamp = data.split("\n", 2)[0];
         var jsonObj = data.substr(timestamp.length);
         v = $.parseJSON(jsonObj);
-        var ed = $("#ediv_" + name).first().get(0);
+        var ed = $("#ediv_" + quoteName(name)).first().get(0);
         ed.elements['edtitle'].value = v.Title;
         ed.elements['edtext'].value = v.Text;
         ed.elements['edat'].value = v.TriggerAt;
@@ -264,11 +264,11 @@ function fill_editor(name, contfn) {
         ed.elements['edid'].value = v.Id;
         ed.elements['edprio'].value = v.Priority;
 
-        $("#ts_" + v.Id).html(timestamp);
+        $("#ts_" + quoteName(v.Id)).html(timestamp);
         change_editor_disabled(ed, "");
-        $("#loading_"+name).get(0).style.display = "none";
+        $("#loading_"+quoteName(name)).get(0).style.display = "none";
         $.ajax({url: "childs.json?id=" + encodeURIComponent(v.Id), success: function(data, textStatus, req) {
-            var tbl = $("#subs_" + v.Id).first().get(0);
+            var tbl = $("#subs_" + quoteName(v.Id)).first().get(0);
             data = JSON.parse(data);
             children_tree[v.Id] = data;
             fill_childrens(tbl, v.Id, data);
@@ -294,7 +294,7 @@ function fill_editor(name, contfn) {
 }
 
 function editor_from_row(row) {
-  return $("#ediv_"+row.id.substr("editor_".length)).get(0);
+  return $("#ediv_"+quoteName(row.id.substr("editor_".length))).get(0);
 }
 
 function save_open_editor(should_close_editor) {
@@ -317,7 +317,7 @@ function save_open_editor(should_close_editor) {
 }
 
 function save_editor_by_id(name, event) {
-    save_editor($("#ediv_"+name).get(0));
+    save_editor($("#ediv_"+quoteName(name)).get(0));
 }
 
 function explode_body(name) {
@@ -344,9 +344,9 @@ function close_editor(row) {
 }
 
 function toggle_editor(name, event, contfn) {
-    var row = $("#editor_"+name).get(0);
+    var row = $("#editor_"+quoteName(name)).get(0);
     if (row.style['display'] == 'none') {
-        var tbl = $("#editor_"+name).parent().parent().first().get(0);
+        var tbl = $("#editor_"+quoteName(name)).parent().parent().first().get(0);
         orows = tbl.getElementsByTagName("tr");
         for (var i in tbl.getElementsByTagName("tr")) {
             orow = orows[i];
@@ -369,20 +369,20 @@ function toggle_editor(name, event, contfn) {
 }
 
 function change_priority_to(name, priorityNum, priority) {
-    var epr = $('#epr_'+name);
+    var epr = $('#epr_'+quoteName(name));
     epr.val(priority);
     epr.attr("class", "prioritybutton priorityclass_" + priority);
 
     // changes the value saved inside the editor div so that saving the editor contents doesn't revert a changed priority
-    var ed = $("#ediv_"+name).get(0);
+    var ed = $("#ediv_"+quoteName(name)).get(0);
     if (ed != null) {
         ed.elements["edprio"].value = priorityNum;
     }
 }
 
 function guess_next_priority(name, special) {
-    var current = $('#epr_'+name).val();
-    var etime = $('#etime_'+name).get(0)
+    var current = $('#epr_'+quoteName(name)).val();
+    var etime = $('#etime_'+quoteName(name)).get(0)
     var etime_initial_char = '-';
     if (etime != null) {
         etime.innerHTML[0];
@@ -428,7 +428,7 @@ function guess_next_priority(name, special) {
 }
 
 function change_priority(name, event) {
-    var loadidc = $("#ploading_"+name).get(0);
+    var loadidc = $("#ploading_"+quoteName(name)).get(0);
     if (loadidc != null) {
         loadidc.style['visibility'] = 'visible';
     }
@@ -516,13 +516,13 @@ function click_ontology(event) {
 }
 
 function show_editor(id) {
-  $("#subs_" + id + '_container').first().get(0).style["display"] = "none";
-  $("#ediv_" + id).first().get(0).style["display"] = "block";
+  $("#subs_" + quoteName(id) + '_container').first().get(0).style["display"] = "none";
+  $("#ediv_" + quoteName(id)).first().get(0).style["display"] = "block";
 }
 
 function show_subs(id) {
-  $("#subs_" + id + '_container').first().get(0).style["display"] = "block";
-  $("#ediv_" + id).first().get(0).style["display"] = "none";
+  $("#subs_" + quoteName(id) + '_container').first().get(0).style["display"] = "block";
+  $("#ediv_" + quoteName(id)).first().get(0).style["display"] = "none";
 }
 
 function onload_open_function(v, start) {
@@ -616,7 +616,7 @@ function load_ontonav() {
 
 function subs_click_folder(name, event) {
 	var bodypara = $("#subsrow_" + name).find(".substable_content").find("p").get(0);
-	var subs = $("#subs_" + name).get(0);
+	var subs = $("#subs_" + quoteName(name)).get(0);
 	if (event.target.innerHTML == '\uf147') {
 		bodypara.style['display'] = 'none';
 		if (subs != null) {
@@ -783,3 +783,7 @@ window.onload = function() {
   var f = onload_open_function(v, 0);
   f();
 };
+
+function quoteName(name) {
+	return name.replace(/'/g, "\\'");
+}
