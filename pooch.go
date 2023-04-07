@@ -343,10 +343,14 @@ func CmdTsvUpdate(argv []string) {
 
 			entry := ParseTsvFormat(line, tl, tl.GetTimezone())
 			if tl.Exists(entry.Id()) {
-				entry2 := tl.Get(entry.Id())
-				entry.SetPriority(entry2.Priority())
-				//fmt.Printf("UPDATING\t%s\t%s\n", entry.Id(), entry.TriggerAt().Format("2006-01-02"))
-				tl.Update(entry, false)
+				if entry.Priority() == -1000 {
+					tl.Remove(entry.Id())
+				} else {
+					entry2 := tl.Get(entry.Id())
+					entry.SetPriority(entry2.Priority())
+					//fmt.Printf("UPDATING\t%s\t%s\n", entry.Id(), entry.TriggerAt().Format("2006-01-02"))
+					tl.Update(entry, false)
+				}
 			} else {
 				fmt.Printf("ADDING\t%s\t%s\n", entry.Id(), entry.TriggerAt().Format("2006-01-02"))
 				tl.Add(entry)

@@ -234,6 +234,7 @@ func TestParseSimpleExpr(z *testing.T) {
 	tse(z, "#blip>0", "blip", ">", "0")
 	tse(z, "#blip!>0", "blip", ">", "0")
 	tse(z, "#blip?", "blip", "", "")
+	tse(z, "#:when>2023-04-02", ":when", ">", "2023-04-02")
 }
 
 func TestParseAnd(z *testing.T) {
@@ -480,6 +481,8 @@ func TestNoQuerySelect(z *testing.T) {
 	tis(z, tl, "#bib#bab#bob", "\nWHERE\n   id IN (SELECT id FROM columns WHERE name = 'bib')\nAND\n   id IN (SELECT id FROM columns WHERE name = 'bab')\nAND\n   id IN (SELECT id FROM columns WHERE name = 'bob')\nAND\n   priority <> 5")
 
 	tis(z, tl, "#bib#bab#2010-10-02", "\nWHERE\n   id IN (SELECT id FROM columns WHERE name = 'bib')\nAND\n   id IN (SELECT id FROM columns WHERE name = 'bab')\nAND\n   trigger_at_field = '2010-10-02 00:00'\nAND\n   priority <> 5")
+	
+	tis(z, tl, "#:when>2023-03-01", "\nWHERE\n   trigger_at_field > '2023-03-01'\nAND\n   priority <> 5")
 }
 
 func TestExclusionSelect(z *testing.T) {

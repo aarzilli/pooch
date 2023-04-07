@@ -181,6 +181,9 @@ func (p *Parser) ParseOption(r *SimpleExpr) bool {
 			return false
 		}
 		r.name = p.tkzer.Next()
+		if r.name == "when" {
+			return false
+		}
 		if p.ParseToken("=") {
 			r.op = "="
 			r.value = p.tkzer.Next()
@@ -278,14 +281,20 @@ func (p *Parser) ParseTimeExpression(r *SimpleExpr) bool {
 
 func (p *Parser) ParseSimpleExpression(r *SimpleExpr) bool {
 	return p.ParseSpeculative(func() bool {
-		if p.tkzer.Next() != "#" {
-			return false
+		tok := p.tkzer.Next()
+		var tagName string
+		if tok == "#:" {
+			tagName = ":" + p.tkzer.Next()
+		} else {
+			if tok != "#" {
+				return false
+			}
+			tagName = p.tkzer.Next()
+			if !isTagChar(([]rune(tagName))[0]) {
+				return false
+			}
 		}
 
-		tagName := p.tkzer.Next()
-		if !isTagChar(([]rune(tagName))[0]) {
-			return false
-		}
 
 		isShowCols := false
 		if p.ParseToken("!") {
@@ -475,6 +484,9 @@ func ParseTsvFormat(in string, tl *Tasklist, timezone int) *Entry {
 	entry := tl.ParseNew(fields[1], "")
 
 	priority := ParsePriority(fields[2])
+	if fields[2] == "delete" {
+		priority = -1000
+	}
 
 	var triggerAt *time.Time = nil
 	var sort string
