@@ -16,7 +16,6 @@ import (
 	"strconv"
 	"strings"
 	"text/tabwriter"
-	//"runtime"
 )
 
 //import _ "http/pprof"
@@ -179,7 +178,35 @@ func HelpSearch() {
 	fmt.Fprintf(os.Stderr, "\tReturns a list of matching entries\n")
 	fmt.Fprintf(os.Stderr, "\t-t\tWrites output in tsv format\n")
 	fmt.Fprintf(os.Stderr, "\t-j\tPrints JSON\n")
-	fmt.Fprintf(os.Stderr, "Using a single - as the search string will make the program read the search string from standard input")
+	fmt.Fprintf(os.Stderr, `Using a single - as the search string will make the program read the search string from standard input.
+
+QUERY FORMAT
+
+`)
+
+	w := tabwriter.NewWriter(os.Stderr, 8, 8, 2, ' ', 0)
+	fmt.Fprintf(w, "#[colname]	Only include entries that have the given column name\n")
+	fmt.Fprintf(w, "#-[colname]	Exclude entries that have the given column name\n")
+	fmt.Fprintf(w, "#[priority]	Only include entries that have the given priority\n")
+	fmt.Fprintf(w, "#[time_expr]	Only include entries that match the given time\n")
+	fmt.Fprintf(w, "#[colname]?	Only include entries that have the given column name and show it in output\n")
+	fmt.Fprintf(w, "#[colname]=[value]	Only include entries that have the given column set to value\n")
+	fmt.Fprintf(w, "#[colname][op][value]	Like colname=value but compare the value instead, available operators are: < > = <= >= !=")
+	fmt.Fprintf(w, "\n")
+	fmt.Fprintf(w, "#:sort=[column]	Sorts output by [column]\n")
+	fmt.Fprintf(w, "#:sub	Includes subcategories\n")
+	fmt.Fprintf(w, "#:cal	Defaults to calendar view\n")
+	fmt.Fprintf(w, "#:ssort	Inverts default sort order\n")
+	fmt.Fprintf(w, "#:showidcol	Shows ID column\n")
+	fmt.Fprintf(w, "#:hidetimecol	Hides the time column\n")
+	fmt.Fprintf(w, "#:hideprioritycol	Hides the priority column\n")
+	fmt.Fprintf(w, "#:hidetimecol	Hides time column\n")
+	fmt.Fprintf(w, "#:w/done	Include entries with priority set to 'done'\n")
+	fmt.Fprintf(w, "\n")
+	fmt.Fprintf(w, "#%%[saved_search]	Recalls [saved_search]\n")
+	w.Flush()
+
+	fmt.Fprintf(os.Stderr, "Anywhere '#' is used '@' can also be used\n")
 }
 
 func CmdSaveSearch(args []string) {
