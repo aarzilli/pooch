@@ -50,6 +50,7 @@ type ParseResult struct {
 	command     string // text after the #! separator
 
 	showCols []string
+	sortCols []string
 
 	timezone int
 }
@@ -295,7 +296,6 @@ func (p *Parser) ParseSimpleExpression(r *SimpleExpr) bool {
 			}
 		}
 
-
 		isShowCols := false
 		if p.ParseToken("!") {
 			isShowCols = true
@@ -346,6 +346,9 @@ LOOP:
 		case p.ParseOption(simple):
 			if simple.value == "" {
 				p.result.options[simple.name] = ""
+			} else if simple.name == "sort" {
+				p.result.sortCols = append(p.result.sortCols, simple.value)
+				p.result.showCols = append(p.result.showCols, simple.value)
 			} else {
 				simple.name = ":" + simple.name
 				p.result.include.subExpr = append(p.result.include.subExpr, simple)

@@ -613,10 +613,10 @@ func LuaIntSearch(L *lua.State) int {
 		luaClausable = GetQueryObject(tl, 2)
 	}
 
-	theselect, _, _, _, _, _, _, perr := tl.ParseSearch(query, luaClausable)
+	theselect, _, _, _, _, _, _, _, perr := tl.ParseSearch(query, luaClausable)
 	Must(perr)
 
-	entries, serr := tl.Retrieve(theselect, "", false)
+	entries, serr := tl.Retrieve(theselect, "", false, nil)
 	Must(serr)
 
 	Logf(INFO, "Searching from lua interface <%s> clausable: <%v> yields %d results\n", query, luaClausable, len(entries))

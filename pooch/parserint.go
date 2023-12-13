@@ -298,6 +298,9 @@ func (expr *BoolExpr) IntoClauses(tl *Tasklist, depth string, negate bool, addDo
 			if ssubExpr.name == ":priority" {
 				hasPriorityClause = true
 			}
+			if ssubExpr.name == ":sort" {
+				continue
+			}
 		}
 
 		r = append(r, subExpr.IntoClause(tl, nextdepth, negate))
@@ -457,7 +460,7 @@ func (pr *ParseResult) IsEmpty() bool {
 	return true
 }
 
-func (tl *Tasklist) ParseSearch(queryText string, luaClausable Clausable) (string, string, string, bool, bool, []string, map[string]string, error) {
+func (tl *Tasklist) ParseSearch(queryText string, luaClausable Clausable) (string, string, string, bool, bool, []string, map[string]string, []string, error) {
 	pr := tl.ParseEx(queryText)
 	isEmpty := pr.IsEmpty()
 	theselect, extraOptions, err := pr.IntoSelect(tl, luaClausable)
@@ -471,7 +474,7 @@ func (tl *Tasklist) ParseSearch(queryText string, luaClausable Clausable) (strin
 		options[k] = v
 	}
 
-	return theselect, pr.command, trigger, pr.savedSearch != "", isEmpty, pr.showCols, options, err
+	return theselect, pr.command, trigger, pr.savedSearch != "", isEmpty, pr.showCols, options, pr.sortCols, err
 }
 
 func (tl *Tasklist) ExtendedAddParse() *Entry {

@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"io"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -363,7 +364,7 @@ func (tl *Tasklist) Explode(id string) {
 	}
 }
 
-func (tl *Tasklist) GetListEx(stmt *sqlite.Stmt, code string, incsub bool) ([]*Entry, error) {
+func (tl *Tasklist) GetListEx(stmt *sqlite.Stmt, code string, incsub bool, sortCols []string) ([]*Entry, error) {
 	var err error
 
 	if code != "" {
@@ -424,17 +425,30 @@ func (tl *Tasklist) GetListEx(stmt *sqlite.Stmt, code string, incsub bool) ([]*E
 
 		v = append(v, entry)
 	}
+
+	sort.SliceStable(v, func(i, j int) bool {
+		colsi, colsj := v[i].Columns(), v[j].Columns()
+		for k := range sortCols {
+			ci := colsi[sortCols[k]]
+			cj := colsj[sortCols[k]]
+			if ci != cj {
+				return ci < cj
+			}
+		}
+		return false
+	})
+
 	return v, err
 }
 
-func (tl *Tasklist) Retrieve(theselect, code string, incsub bool) ([]*Entry, error) {
+func (tl *Tasklist) Retrieve(theselect, code string, incsub bool, sortCols []string) ([]*Entry, error) {
 	stmt, serr := tl.conn.Prepare(theselect)
 	Must(serr)
 	defer stmt.Finalize()
 	serr = stmt.Exec()
 	Must(serr)
 
-	return tl.GetListEx(stmt, code, incsub)
+	return tl.GetListEx(stmt, code, incsub, sortCols)
 }
 
 func (tl *Tasklist) RetrieveErrors() []*ErrorEntry {
@@ -831,9 +845,9 @@ func (tl *Tasklist) OntoCheck(debug bool) []OntoCheckError {
 	if debug {
 		fmt.Printf("Retrieving full contents\n")
 	}
-	theselect, _, _, _, _, _, _, perr := tl.ParseSearch("#:w/done", nil)
+	theselect, _, _, _, _, _, _, sortCols, perr := tl.ParseSearch("#:w/done", nil)
 	Must(perr)
-	v, rerr := tl.Retrieve(theselect, "", false)
+	v, rerr := tl.Retrieve(theselect, "", false, sortCols)
 	Must(rerr)
 
 	if debug {

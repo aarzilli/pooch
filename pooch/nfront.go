@@ -242,11 +242,11 @@ func priorityObject(q string, p string) *Object {
 
 func queryToObjects(tl *Tasklist, q string, priority string) []*Object {
 	query := strings.Replace(q, "\r", "", -1)
-	theselect, code, _, _, _, _, options, perr := tl.ParseSearch(query, nil)
+	theselect, code, _, _, _, _, options, sortCols, perr := tl.ParseSearch(query, nil)
 	Must(perr)
 
 	_, incsub := options["sub"]
-	v, rerr := tl.Retrieve(theselect, code, incsub)
+	v, rerr := tl.Retrieve(theselect, code, incsub, sortCols)
 	Must(rerr)
 
 	os := []*Object{}

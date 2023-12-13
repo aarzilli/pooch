@@ -221,7 +221,7 @@ func ErrorLogServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 func ExplainServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	css := tl.GetSetting("theme")
 
-	theselect, code, _, isSavedSearch, isEmpty, showCols, options, err := tl.ParseSearch(req.FormValue("q"), nil)
+	theselect, code, _, isSavedSearch, isEmpty, showCols, options, _, err := tl.ParseSearch(req.FormValue("q"), nil)
 
 	myexplain := ""
 
@@ -392,7 +392,7 @@ func ListJsonServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	timezone := tl.GetTimezone()
 	query := strings.Replace(req.FormValue("q"), "\r", "", -1)
 
-	theselect, code, _, _, _, _, options, perr := tl.ParseSearch(query, nil)
+	theselect, code, _, _, _, _, options, sortCols, perr := tl.ParseSearch(query, nil)
 
 	answ.ParseError = perr
 	if perr != nil {
@@ -401,7 +401,7 @@ func ListJsonServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	}
 
 	_, incsub := options["sub"]
-	v, rerr := tl.Retrieve(theselect, code, incsub)
+	v, rerr := tl.Retrieve(theselect, code, incsub, sortCols)
 
 	answ.RetrieveError = rerr
 	if rerr != nil {
@@ -423,7 +423,7 @@ func ListServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	query := strings.Replace(req.FormValue("q"), "\r", "", -1)
 	timezone := tl.GetTimezone()
 
-	theselect, code, trigger, isSavedSearch, _, showCols, options, perr := tl.ParseSearch(query, nil)
+	theselect, code, trigger, isSavedSearch, _, showCols, options, sortCols, perr := tl.ParseSearch(query, nil)
 
 	calView := false
 
@@ -442,7 +442,7 @@ func ListServer(c http.ResponseWriter, req *http.Request, tl *Tasklist) {
 	}
 
 	_, incsub := options["sub"]
-	v, rerr := tl.Retrieve(theselect, code, incsub)
+	v, rerr := tl.Retrieve(theselect, code, incsub, sortCols)
 
 	_, subsort := options["ssort"]
 
@@ -637,7 +637,7 @@ func GetCalendarEvents(tl *Tasklist, query string, start, end string, endSecs in
 	pr.AddIncludeClause(&SimpleExpr{":when", "<", end, nil, 0, ""})
 	pr.options["w/done"] = "w/done"
 	theselect, _, _ := pr.IntoSelect(tl, nil)
-	v, _ := tl.Retrieve(theselect, pr.command, false)
+	v, _ := tl.Retrieve(theselect, pr.command, false, nil)
 
 	timezone := tl.GetTimezone()
 
