@@ -181,8 +181,17 @@ func (p *Parser) ParseOption(r *SimpleExpr) bool {
 		if p.tkzer.Next() != "#:" {
 			return false
 		}
+		negated := false
+		if p.ParseToken("-") {
+			negated = true
+		}
 		r.name = p.tkzer.Next()
 		if r.name == "when" {
+			if negated {
+				r.op = "null"
+				r.value = "null"
+				return true
+			}
 			return false
 		}
 		if p.ParseToken("=") {
@@ -348,7 +357,6 @@ LOOP:
 				p.result.options[simple.name] = ""
 			} else if simple.name == "sort" {
 				p.result.sortCols = append(p.result.sortCols, simple.value)
-				p.result.showCols = append(p.result.showCols, simple.value)
 			} else {
 				simple.name = ":" + simple.name
 				p.result.include.subExpr = append(p.result.include.subExpr, simple)

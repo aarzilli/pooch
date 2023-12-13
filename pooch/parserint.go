@@ -239,6 +239,8 @@ func (expr *SimpleExpr) IntoClauseEx(tl *Tasklist) string {
 	case ":when":
 		if expr.op == "notnull" {
 			return "trigger_at_field IS NOT NULL"
+		} else if expr.op == "null" {
+			return "(trigger_at_field IS NULL OR trigger_at_field == \"\")"
 		} else if sqlop, ok := OPERATOR_CHECK[expr.op]; ok {
 			value := expr.value
 			if expr.valueAsTime != nil {

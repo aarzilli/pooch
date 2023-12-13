@@ -194,6 +194,7 @@ QUERY FORMAT
 	fmt.Fprintf(w, "#[colname][op][value]	Like colname=value but compare the value instead, available operators are: < > = <= >= !=")
 	fmt.Fprintf(w, "\n")
 	fmt.Fprintf(w, "#:sort=[column]	Sorts output by [column]\n")
+	fmt.Fprintf(w, "#:-when	Excludes entries with a trigger time\n")
 	fmt.Fprintf(w, "#:sub	Includes subcategories\n")
 	fmt.Fprintf(w, "#:cal	Defaults to calendar view\n")
 	fmt.Fprintf(w, "#:ssort	Inverts default sort order\n")
